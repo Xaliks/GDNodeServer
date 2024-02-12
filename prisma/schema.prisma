@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DatabaseURI")
+}
+
+model Accounts {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  email     String   @unique
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  messageState       Int @default(0)
+  friendRequestState Int @default(0)
+  commentHistorySate Int @default(0)
+
+  youtube String?
+  twitter String?
+  twitch  String?
+
+  modBadge Int @default(0)
+}
+
+model Users {
+  id           Int     @id @default(autoincrement())
+  extId        String  @unique
+  username     String
+  isRegistered Boolean @default(false)
+
+  orbs          Int @default(0)
+  stars         Int @default(0)
+  moons         Int @default(0)
+  coins         Int @default(0)
+  diamonds      Int @default(0)
+  userCoins     Int @default(0)
+  demons        Int @default(0)
+  creatorPoints Int @default(0)
+  special       Int @default(0)
+
+  displayIcon     Int     @default(0)
+  displayIconType Int     @default(1)
+  cube            Int     @default(1)
+  ship            Int     @default(1)
+  ball            Int     @default(1)
+  ufo             Int     @default(1)
+  wave            Int     @default(1)
+  robot           Int     @default(1)
+  spider          Int     @default(1)
+  swing           Int     @default(1)
+  jetpack         Int     @default(1)
+  explosion       Int     @default(1)
+  glow            Boolean @default(false)
+
+  mainColor   Int @default(0)
+  secondColor Int @default(3)
+  glowColor   Int @default(-1)
+
+  totalSmallChests Int       @default(0)
+  lastSmallChest   DateTime?
+  totalBigChests   Int       @default(0)
+  lastBigChest     DateTime?
+}
+
+model Levels {
+  id            Int    @id @default(autoincrement())
+  gameVersion   Int
+  binaryVersion Int    @default(0)
+  name          String
+  description   String @default("")
+  version       Int    @default(0)
+  userId        Int
+  extId         String
+}
+
+model SavedData {
+  id Int @id
+
+  data String
+}
