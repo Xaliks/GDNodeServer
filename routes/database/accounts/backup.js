@@ -1,7 +1,7 @@
 const zlib = require("zlib");
 const Logger = require("../../../scripts/Logger");
-const { fromSafeBase64, requiredBodyMiddleware } = require("../../../scripts/security");
-const { secretMiddleware } = require("../../../scripts/middlewares");
+const { fromSafeBase64 } = require("../../../scripts/security");
+const { secretMiddleware, requiredBodyMiddleware } = require("../../../scripts/middlewares");
 const { upsertUser, database } = require("../../../scripts/database");
 
 const ResponseEnum = {
