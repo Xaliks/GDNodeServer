@@ -53,7 +53,7 @@ module.exports = {
 			 * - Шард не выпадет, если у игрока уже максимальное количество шардов
 			 */
 			item1Chance: (user) => 0.5,
-			item2Chance: (user) => 0.3,
+			item2Chance: (user) => 0.15,
 			key1Chance: (user) => 0.5,
 			key2Chance: (user) => 0.8,
 

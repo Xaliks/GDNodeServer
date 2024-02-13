@@ -1,6 +1,6 @@
 const Logger = require("../../scripts/Logger");
-const gdMiddleware = require("../../scripts/gdMiddleware");
-const database = require("../../scripts/database");
+const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
+const { database } = require("../../scripts/database");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -9,10 +9,9 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/updateGJAccSettings20.php",
-		beforeHandler: [gdMiddleware],
+		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2"])],
 		handler: async (req, reply) => {
 			const { accountID, gjp2 } = req.body;
-			if (!accountID || !gjp2) return reply.send("-1");
 
 			try {
 				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });

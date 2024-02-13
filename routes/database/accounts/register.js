@@ -1,7 +1,7 @@
 const Logger = require("../../../scripts/Logger");
 const { getGJP2 } = require("../../../scripts/security");
-const gdMiddleware = require("../../../scripts/gdMiddleware");
-const database = require("../../../scripts/database");
+const { secretMiddleware, requiredBodyMiddleware } = require("../../../scripts/middlewares");
+const { database } = require("../../../scripts/database");
 const { preActiveAccounts } = require("../../../config/config");
 
 const ResponseEnum = {
@@ -24,7 +24,7 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/registerGJAccount.php",
-		beforeHandler: [gdMiddleware],
+		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["userName", "password", "email"])],
 		handler: async (req, reply) => {
 			const { userName, password, email } = req.body;
 

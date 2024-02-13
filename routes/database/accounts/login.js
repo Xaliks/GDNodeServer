@@ -1,6 +1,6 @@
 const Logger = require("../../../scripts/Logger");
-const gdMiddleware = require("../../../scripts/gdMiddleware");
-const database = require("../../../scripts/database");
+const { secretMiddleware, requiredBodyMiddleware } = require("../../../scripts/middlewares");
+const { database, upsertUser } = require("../../../scripts/database");
 
 const ResponseEnum = {
 	Success: (accountId, userId) => `${accountId},${userId}`, // Success login
@@ -16,7 +16,7 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/loginGJAccount.php",
-		beforeHandler: [gdMiddleware],
+		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["udid", "userName", "gjp2"])],
 		handler: async (req, reply) => {
 			const { udid, userName, gjp2 } = req.body;
 
@@ -24,11 +24,11 @@ module.exports = (fastify) => {
 				const account = await database.accounts.findFirst({ where: { username: userName, password: gjp2 } });
 				if (!account) return reply.send(ResponseEnum.Failed);
 
-				const user = await database.users.upsert({
-					where: { extId: String(account.id) },
-					update: { username: userName, isRegistered: true },
-					create: { extId: String(account.id), username: userName, isRegistered: true },
-				});
+				const user = await upsertUser(
+					{ extId: String(account.id) },
+					{ username: userName, isRegistered: true },
+					{ extId: String(account.id), username: userName, isRegistered: true },
+				);
 
 				Logger.log(
 					"Account login",

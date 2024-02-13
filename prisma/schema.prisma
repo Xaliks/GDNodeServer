@@ -12,8 +12,9 @@ model Accounts {
   username  String   @unique
   password  String
   email     String   @unique
-  isActive  Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  isActive        Boolean @default(false)
 
   messageState       Int @default(0)
   friendRequestState Int @default(0)
@@ -28,9 +29,12 @@ model Accounts {
 
 model Users {
   id           Int     @id @default(autoincrement())
-  extId        String  @unique
-  username     String
+  extId        String
+  username     String  @default("Player")
+
   isRegistered Boolean @default(false)
+  isBanned        Boolean @default(false)
+  isCreatorBanned Boolean @default(false)
 
   orbs          Int @default(0)
   stars         Int @default(0)
@@ -80,5 +84,7 @@ model Levels {
 model SavedData {
   id Int @id
 
-  data String
+  data          String
+  gameVersion   String
+  binaryVersion String
 }

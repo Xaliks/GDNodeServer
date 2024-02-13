@@ -1,8 +1,8 @@
 const zlib = require("zlib");
-const { fromBase64 } = require("../../../scripts/security");
 const Logger = require("../../../scripts/Logger");
-const gdMiddleware = require("../../../scripts/gdMiddleware");
-const database = require("../../../scripts/database");
+const { fromSafeBase64, requiredBodyMiddleware } = require("../../../scripts/security");
+const { secretMiddleware } = require("../../../scripts/middlewares");
+const { upsertUser, database } = require("../../../scripts/database");
 
 const ResponseEnum = {
 	Success: "1", // Success backup
@@ -19,32 +19,33 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/backupGJAccountNew.php",
-		beforeHandler: [gdMiddleware],
+		beforeHandler: [
+			secretMiddleware,
+			requiredBodyMiddleware(["accountID", "gjp2", "saveData", "gameVersion", "binaryVersion"]),
+		],
 		handler: async (req, reply) => {
-			const { accountID, gjp2, saveData } = req.body;
+			const { accountID, gjp2, saveData, gameVersion, binaryVersion } = req.body;
 
 			try {
 				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
 				if (!account) return reply.send(ResponseEnum.LoginFailed);
 
-				const base64Data = saveData.split(";")[0].replaceAll("-", "+").replaceAll("_", "/");
-				const uncompressedData = zlib.unzipSync(fromBase64(base64Data)).toString();
+				const uncompressedData = zlib.unzipSync(fromSafeBase64(saveData.split(";")[0])).toString();
 
 				const orbs = parseInt(uncompressedData.match(/<\/s><k>14<\/k><s>(\d+)<\/s>/)?.[1]);
 				if (isNaN(orbs)) return reply.send(ResponseEnum.Failed);
 
-				const [user] = await database.$transaction([
-					database.users.upsert({
-						where: { extId: String(account.id) },
-						update: { orbs },
-						create: { extId: String(account.id), username: account.username, orbs },
-					}),
-					database.savedData.upsert({
-						where: { id: account.id },
-						update: { data: saveData },
-						create: { id: account.id, data: saveData },
-					}),
-				]);
+				const user = await upsertUser(
+					{ extId: String(account.id) },
+					{ orbs },
+					{ extId: String(account.id), username: account.username, orbs },
+				);
+
+				await database.savedData.upsert({
+					where: { id: account.id },
+					update: { data: saveData, gameVersion, binaryVersion },
+					create: { id: account.id, data: saveData, gameVersion, binaryVersion },
+				});
 
 				Logger.log(
 					"User backup",

@@ -19,6 +19,13 @@ function toBase64(string) {
 	return Buffer.from(string).toString("base64");
 }
 
+function fromSafeBase64(string) {
+	return fromBase64(string).replaceAll("-", "+").replaceAll("/", "_");
+}
+function toSafeBase64(string) {
+	return toBase64(string).replaceAll("+", "-").replaceAll("_", "/");
+}
+
 class XOR {
 	static text2ascii(input) {
 		return String(input)
@@ -57,5 +64,7 @@ module.exports = {
 	getSolo4,
 	fromBase64,
 	toBase64,
+	fromSafeBase64,
+	toSafeBase64,
 	XOR,
 };

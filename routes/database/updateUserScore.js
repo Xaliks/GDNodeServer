@@ -1,6 +1,6 @@
 const Logger = require("../../scripts/Logger");
-const gdMiddleware = require("../../scripts/gdMiddleware");
-const database = require("../../scripts/database");
+const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
+const { database, upsertUser } = require("../../scripts/database");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -9,17 +9,22 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/updateGJUserScore22.php",
-		beforeHandler: [gdMiddleware],
+		beforeHandler: [
+			secretMiddleware,
+			requiredBodyMiddleware(["stars", "userName", "demons", "icon", "color1", "color2", "udid"]),
+		],
 		handler: async (req, reply) => {
-			const { accountID, gjp2 } = req.body;
-			if (!accountID || !gjp2) return reply.send("-1");
+			const { accountID, udid, gjp2, userName } = req.body;
 
 			try {
-				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
-				if (!account) return reply.send("-1");
+				let account;
+				if (accountID && gjp2) {
+					account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
+				}
 
 				const userData = {
-					extId: accountID,
+					extId: String(account?.id ?? udid),
+					username: userName,
 					stars: parseInt(req.body.stars),
 					moons: parseInt(req.body.moons),
 					demons: parseInt(req.body.demons),
@@ -43,18 +48,14 @@ module.exports = (fastify) => {
 					spider: parseInt(req.body.accSpider),
 					swing: parseInt(req.body.accSwing),
 					jetpack: parseInt(req.body.accJetpack),
-					isRegistered: true,
+					isRegistered: Boolean(account),
 				};
 
-				const user = await database.users.upsert({
-					where: { extId: String(account.id) },
-					update: userData,
-					create: { ...userData, username: account.username },
-				});
+				const user = await upsertUser({ extId: userData.extId }, userData, userData);
 
 				Logger.log(
 					"User update",
-					`User ${Logger.color(Logger.colors.cyan)(user.username)}/${Logger.color(Logger.colors.gray)(account.id)}/${Logger.color(Logger.colors.gray)(user.id)} updated.`,
+					`User ${Logger.color(Logger.colors.cyan)(user.username)}/${Logger.color(Logger.colors.gray)(accountID ?? 0)}/${Logger.color(Logger.colors.gray)(user.id)} updated.`,
 				);
 
 				return reply.send(user.id);

@@ -1,7 +1,7 @@
 const _ = require("lodash");
-const { getSolo4, XOR, fromBase64, toBase64 } = require("../../scripts/security");
-const gdMiddleware = require("../../scripts/gdMiddleware");
-const database = require("../../scripts/database");
+const { getSolo4, XOR, fromBase64, toSafeBase64 } = require("../../scripts/security");
+const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
+const { getUser, database } = require("../../scripts/database");
 const { rewards, chestKeyItemValue } = require("../../config/config");
 
 /**
@@ -11,61 +11,60 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/getGJRewards.php",
-		beforeHandler: [gdMiddleware],
+		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["udid", "rewardType", "chk"])],
 		handler: async (req, reply) => {
-			const { udid, accountID, gjp2, rewardType, chk } = req.body;
+			const { udid, accountID, rewardType, chk, r1, r2 } = req.body;
 
-			const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
-			if (!account) return reply.send("-1");
+			let user = await getUser(String(accountID || udid));
 
-			const updateObject = {};
-			if (rewardType === "1") {
-				updateObject.lastSmallChest = new Date();
-				updateObject.totalSmallChests = { increment: 1 };
+			const totalSmallChests = Math.max(user.totalSmallChests, parseInt(r1) + 1);
+			const totalBigChests = Math.max(user.totalBigChests, parseInt(r2) + 1);
+
+			if (rewardType !== "0") {
+				const smallChestRemaining = getChestRemaining("1", user);
+				const bigChestRemaining = getChestRemaining("2", user);
+
+				if ((rewardType === "1" && smallChestRemaining > 0) || (rewardType === "2" && bigChestRemaining > 0)) {
+					return reply.send("-1");
+				}
+
+				user = await database.users.update({
+					where: { id: user.id },
+					data: {
+						[rewardType === "1" ? "lastSmallChest" : "lastBigChest"]: new Date(),
+						[rewardType === "1" ? "totalSmallChests" : "totalBigChests"]:
+							rewardType === "1" ? totalSmallChests : totalBigChests,
+					},
+				});
 			}
-			if (rewardType === "2") {
-				updateObject.lastBigChest = new Date();
-				updateObject.totalBigChests = { increment: 1 };
-			}
-			const user = await database.users.upsert({
-				where: { extId: String(account.id) },
-				update: updateObject,
-				create: { extId: String(account.id), username: account.username },
-			});
 
-			const { remaining: smallChestRemaining, stuff: smallChestStuff } = getChestStuff("1", user);
-			const { remaining: bigChestRemaining, stuff: bigChestStuff } = getChestStuff("2", user);
-
-			const result = toBase64(
+			const result = toSafeBase64(
 				XOR.cipher(
 					[
-						1,
+						"Xaliks", // random string
 						user.id,
 						XOR.cipher(fromBase64(chk.slice(5)), 59182),
 						udid,
-						account.id,
-						smallChestRemaining,
-						smallChestStuff,
-						user.totalSmallChests,
-						bigChestRemaining,
-						bigChestStuff,
-						user.totalBigChests,
+						accountID ?? "",
+						getChestRemaining("1", user),
+						getChestStuff("1", user),
+						totalSmallChests,
+						getChestRemaining("2", user),
+						getChestStuff("2", user),
+						totalBigChests,
 						rewardType,
 					].join(":"),
 					59182,
 				),
-			)
-				.replaceAll("+", "-")
-				.replaceAll("_", "/");
+			);
 
-			return reply.send(`SaKuJ${result}|${getSolo4(result)}`);
+			return reply.send(`XALIK${result}|${getSolo4(result)}`);
 		},
 	});
 };
 
 function getChestStuff(type, user) {
 	const chest = type === "1" ? rewards.smallChest : rewards.bigChest;
-	const lastUserChest = type === "1" ? user.lastSmallChest : user.lastBigChest;
 
 	const orbs = _.random(chest.minOrbs, chest.maxOrbs);
 	const diamonds = _.random(chest.minDiamonds, chest.maxDiamonds);
@@ -84,8 +83,12 @@ function getChestStuff(type, user) {
 		}
 	}
 
-	return {
-		remaining: lastUserChest ? chest.cooldown - Math.round((Date.now() - lastUserChest.getTime()) / 1_000) : 0,
-		stuff: `${orbs},${diamonds},${items.join(",")}`,
-	};
+	return `${orbs},${diamonds},${items.join(",")}`;
+}
+
+function getChestRemaining(type, user) {
+	const chest = type === "1" ? rewards.smallChest : rewards.bigChest;
+	const lastUserChest = type === "1" ? user.lastSmallChest : user.lastBigChest;
+
+	return lastUserChest ? chest.cooldown - Math.round((Date.now() - lastUserChest.getTime()) / 1_000) : 0;
 }

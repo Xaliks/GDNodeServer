@@ -1,5 +1,5 @@
-const gdMiddleware = require("../../scripts/gdMiddleware");
-const database = require("../../scripts/database");
+const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
+const { database } = require("../../scripts/database");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -8,24 +8,21 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/getGJUserInfo20.php",
-		beforeHandler: [gdMiddleware],
+		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["targetAccountID"])],
 		handler: async (req, reply) => {
-			const { uuid, targetAccountID } = req.body;
-			if (!uuid || !targetAccountID) return reply.send("-1");
+			const { targetAccountID } = req.body;
 
-			const [account, [user]] = await database.$transaction([
+			const [account, user] = await database.$transaction([
 				database.accounts.findFirst({ where: { id: parseInt(targetAccountID) } }),
-				database.$queryRaw`select *
-				from (
-					select *,
-						row_number() over(order by stars desc) as rank
-					from "public"."Users"
-				)
-				where id = ${parseInt(uuid)}
-				limit 1`,
+				database.users.findFirst({ where: { extId: targetAccountID } }),
 			]);
-
 			if (!account || !user) return reply.send("-1");
+
+			const [{ count: rank }] = await database.$queryRaw`select count(*)
+					from "public"."Users"
+					where "isRegistered" = true
+						and "isBanned" = false
+						and stars > ${user.stars}`;
 
 			return reply.send(
 				[
@@ -58,7 +55,7 @@ module.exports = (fastify) => {
 					[47, user.explosion],
 					[28, user.glow ? 1 : 0],
 					[29, 1], // idk
-					[30, user.rank], // rank leaderboard
+					[30, rank + 1], // rank leaderboard
 					[18, account.messageState], // 0 - all, 1 - friends, 2 - none
 					[19, account.friendRequestState], // 0 - accept, 1 - none
 					[50, account.commentHistorySate], // 0 - all, 1 - friends, 2 - me
