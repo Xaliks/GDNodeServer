@@ -18,11 +18,9 @@ module.exports = (fastify) => {
 			]);
 			if (!account || !user) return reply.send("-1");
 
-			const [{ count: rank }] = await database.$queryRaw`select count(*)
-					from "public"."Users"
-					where "isRegistered" = true
-						and "isBanned" = false
-						and stars > ${user.stars}`;
+			const rank = await database.users.count({
+				where: { isRegistered: true, isBanned: false, stars: { gt: user.stars } },
+			});
 
 			return reply.send(
 				[
