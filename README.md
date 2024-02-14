@@ -10,7 +10,7 @@
 - [ ] Users
     - [ ] Search
     - [x] Leaderboard
-    - [ ] Profile posts
+    - [x] Profile posts
     - [ ] Friend requests
     - [ ] Messages
 - [ ] Levels

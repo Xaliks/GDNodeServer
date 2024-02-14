@@ -100,6 +100,8 @@ module.exports = {
 		],
 	},
 
+	userCommentsPageSize: 10,
+
 	// Don't touch the lines below this one
 	chestKeyItemValue: Key,
 };

@@ -30,13 +30,13 @@ async function upsertUser(where, update, create) {
 
 async function getUser(extId, username) {
 	if (!username) {
-		let user = await database.users.findFirst({ where: { extId } });
-		if (!user) user = await database.users.create({ data: { extId } });
+		let user = await database.users.findFirst({ where: { extId: String(extId) } });
+		if (!user) user = await database.users.create({ data: { extId: String(extId) } });
 
 		return user;
 	}
 
-	return upsertUser({ extId }, { username }, { extId, username });
+	return upsertUser({ extId: String(extId) }, { username }, { extId: String(extId), username });
 }
 
 module.exports = {

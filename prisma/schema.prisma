@@ -14,7 +14,7 @@ model Accounts {
   email     String   @unique
   createdAt DateTime @default(now())
 
-  isActive        Boolean @default(false)
+  isActive Boolean @default(false)
 
   messageState       Int @default(0)
   friendRequestState Int @default(0)
@@ -28,11 +28,11 @@ model Accounts {
 }
 
 model Users {
-  id           Int     @id @default(autoincrement())
-  extId        String
-  username     String  @default("Player")
+  id       Int    @id @default(autoincrement())
+  extId    String
+  username String @default("Player")
 
-  isRegistered Boolean @default(false)
+  isRegistered    Boolean @default(false)
   isBanned        Boolean @default(false)
   isCreatorBanned Boolean @default(false)
 
@@ -68,6 +68,15 @@ model Users {
   lastSmallChest   DateTime?
   totalBigChests   Int       @default(0)
   lastBigChest     DateTime?
+}
+
+model AccountComments {
+  id        Int      @id @default(autoincrement())
+  accountId Int
+  content   String
+  createdAt DateTime @default(now())
+  likes     Int      @default(0)
+  isSpam    Boolean  @default(false)
 }
 
 model Levels {
