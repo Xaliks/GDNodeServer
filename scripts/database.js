@@ -28,7 +28,14 @@ async function upsertUser(where, update, create) {
 	return user;
 }
 
-function getUser(extId, username) {
+async function getUser(extId, username) {
+	if (!username) {
+		let user = await database.users.findFirst({ where: { extId } });
+		if (!user) user = await database.users.create({ data: { extId } });
+
+		return user;
+	}
+
 	return upsertUser({ extId }, { username }, { extId, username });
 }
 

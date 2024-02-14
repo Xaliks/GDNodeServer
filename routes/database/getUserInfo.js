@@ -1,5 +1,6 @@
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
 const { database } = require("../../scripts/database");
+const { showNotRegisteredUsersInLeaderboard } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -18,9 +19,9 @@ module.exports = (fastify) => {
 			]);
 			if (!account || !user) return reply.send("-1");
 
-			const rank = await database.users.count({
-				where: { isRegistered: true, isBanned: false, stars: { gt: user.stars } },
-			});
+			const where = { isBanned: false, stars: { gt: user.stars } };
+			if (!showNotRegisteredUsersInLeaderboard) where.isRegistered = true;
+			const rank = await database.users.count({ where });
 
 			return reply.send(
 				[
@@ -52,7 +53,7 @@ module.exports = (fastify) => {
 					[54, user.jetpack],
 					[47, user.explosion],
 					[28, user.glow ? 1 : 0],
-					[29, 1], // idk
+					[29, Boolean(account.id)],
 					[30, rank + 1], // rank leaderboard
 					[18, account.messageState], // 0 - all, 1 - friends, 2 - none
 					[19, account.friendRequestState], // 0 - accept, 1 - none

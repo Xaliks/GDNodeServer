@@ -19,6 +19,7 @@ module.exports = {
 	host: "http://localhost:59999",
 
 	preActiveAccounts: true,
+	showNotRegisteredUsersInLeaderboard: true,
 
 	rewards: {
 		smallChest: {

@@ -39,7 +39,7 @@ module.exports = (fastify) => {
 					[
 						"Xaliks", // random string
 						user.id,
-						XOR.cipher(fromBase64(chk.slice(5)), 19847),
+						XOR.cipher(fromBase64(chk.slice(5)).toString("utf8"), 19847),
 						udid,
 						account?.id ?? "",
 						Math.round((new Date().setHours(0, 0, 0, 0) + 24 * 60 * 60_000 - Date.now()) / 1_000),

@@ -1,4 +1,5 @@
 const _ = require("lodash");
+const Logger = require("../../scripts/Logger");
 const { getSolo4, XOR, fromBase64, toSafeBase64 } = require("../../scripts/security");
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
 const { getUser, database } = require("../../scripts/database");
@@ -15,50 +16,59 @@ module.exports = (fastify) => {
 		handler: async (req, reply) => {
 			const { udid, accountID, rewardType, chk, r1, r2 } = req.body;
 
-			let user = await getUser(String(accountID || udid));
+			try {
+				let user = await getUser(String(accountID || udid));
 
-			const totalSmallChests = Math.max(user.totalSmallChests, parseInt(r1) + 1);
-			const totalBigChests = Math.max(user.totalBigChests, parseInt(r2) + 1);
+				let totalSmallChests = parseInt(r1);
+				let totalBigChests = parseInt(r2);
 
-			if (rewardType !== "0") {
-				const smallChestRemaining = getChestRemaining("1", user);
-				const bigChestRemaining = getChestRemaining("2", user);
+				if (rewardType !== "0") {
+					totalSmallChests = Math.max(user.totalSmallChests, totalSmallChests + 1);
+					totalBigChests = Math.max(user.totalBigChests, totalBigChests + 1);
 
-				if ((rewardType === "1" && smallChestRemaining > 0) || (rewardType === "2" && bigChestRemaining > 0)) {
-					return reply.send("-1");
+					const smallChestRemaining = getChestRemaining("1", user);
+					const bigChestRemaining = getChestRemaining("2", user);
+
+					if ((rewardType === "1" && smallChestRemaining > 0) || (rewardType === "2" && bigChestRemaining > 0)) {
+						return reply.send("-1");
+					}
+
+					user = await database.users.update({
+						where: { id: user.id },
+						data: {
+							[rewardType === "1" ? "lastSmallChest" : "lastBigChest"]: new Date(),
+							[rewardType === "1" ? "totalSmallChests" : "totalBigChests"]:
+								rewardType === "1" ? totalSmallChests : totalBigChests,
+						},
+					});
 				}
 
-				user = await database.users.update({
-					where: { id: user.id },
-					data: {
-						[rewardType === "1" ? "lastSmallChest" : "lastBigChest"]: new Date(),
-						[rewardType === "1" ? "totalSmallChests" : "totalBigChests"]:
-							rewardType === "1" ? totalSmallChests : totalBigChests,
-					},
-				});
+				const result = toSafeBase64(
+					XOR.cipher(
+						[
+							"Xaliks", // random string
+							user.id,
+							XOR.cipher(fromBase64(chk.slice(5)).toString("utf8"), 59182),
+							udid,
+							accountID ?? "",
+							getChestRemaining("1", user),
+							getChestStuff("1", user),
+							totalSmallChests,
+							getChestRemaining("2", user),
+							getChestStuff("2", user),
+							totalBigChests,
+							rewardType,
+						].join(":"),
+						59182,
+					),
+				);
+
+				return reply.send(`XALIK${result}|${getSolo4(result)}`);
+			} catch (error) {
+				Logger.error("Get chests", req.body, error);
+
+				return reply.send("-1");
 			}
-
-			const result = toSafeBase64(
-				XOR.cipher(
-					[
-						"Xaliks", // random string
-						user.id,
-						XOR.cipher(fromBase64(chk.slice(5)), 59182),
-						udid,
-						accountID ?? "",
-						getChestRemaining("1", user),
-						getChestStuff("1", user),
-						totalSmallChests,
-						getChestRemaining("2", user),
-						getChestStuff("2", user),
-						totalBigChests,
-						rewardType,
-					].join(":"),
-					59182,
-				),
-			);
-
-			return reply.send(`XALIK${result}|${getSolo4(result)}`);
 		},
 	});
 };

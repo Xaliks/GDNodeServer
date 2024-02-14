@@ -8,8 +8,7 @@
     "@fastify/formbody": "^7.4.0",
     "@prisma/client": "^5.9.1",
     "fastify": "^4.26.0",
-    "lodash": "^4.17.21",
-    "zlib": "^1.0.5"
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

@@ -13,17 +13,17 @@ function getSolo4(string) {
 }
 
 function fromBase64(string) {
-	return Buffer.from(string, "base64").toString("utf8");
+	return Buffer.from(string, "base64"); // Don't use btoa
 }
 function toBase64(string) {
-	return Buffer.from(string).toString("base64");
+	return Buffer.from(string).toString("base64"); // Don't use atob
 }
 
 function fromSafeBase64(string) {
-	return fromBase64(string).replaceAll("-", "+").replaceAll("/", "_");
+	return fromBase64(string.replaceAll("-", "+").replaceAll("_", "/"));
 }
 function toSafeBase64(string) {
-	return toBase64(string).replaceAll("+", "-").replaceAll("_", "/");
+	return toBase64(string).replaceAll("+", "-").replaceAll("/", "_");
 }
 
 class XOR {

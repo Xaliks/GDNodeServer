@@ -47,7 +47,7 @@ model Users {
   special       Int @default(0)
 
   displayIcon     Int     @default(0)
-  displayIconType Int     @default(1)
+  displayIconType Int     @default(0)
   cube            Int     @default(1)
   ship            Int     @default(1)
   ball            Int     @default(1)
