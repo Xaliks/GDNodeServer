@@ -9,7 +9,7 @@
 	- [ ] Management Page
 - [ ] Users
     - [ ] Search
-    - [ ] Leaderboard
+    - [x] Leaderboard
     - [ ] Profile posts
     - [ ] Friend requests
     - [ ] Messages
