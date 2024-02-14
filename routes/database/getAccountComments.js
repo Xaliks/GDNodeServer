@@ -12,12 +12,19 @@ module.exports = (fastify) => {
 		url: "/getGJAccountComments20.php",
 		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "page"])],
 		handler: async (req, reply) => {
-			const { accountID, page } = req.body;
+			const {
+				accountID: [, targetAccountID],
+				page,
+			} = req.body;
 
-			const comments = await database.accountComments.findMany({ where: { accountId: parseInt(accountID) } });
+			const comments = await database.accountComments.findMany({
+				where: { accountId: parseInt(targetAccountID) },
+				take: userCommentsPageSize,
+				skip: page * userCommentsPageSize,
+			});
 			if (!comments.length) return reply.send("#0:0:0");
 
-			const user = await getUser(comments[0].accountId);
+			const user = await getUser(targetAccountID);
 
 			reply.send(
 				`${comments
@@ -29,7 +36,7 @@ module.exports = (fastify) => {
 							[5, 0], // dislikes
 							[6, comment.id],
 							[7, comment.isSpam ? 1 : 0],
-							[8, accountID],
+							[8, targetAccountID],
 							[9, timeToText(Date.now() - comment.createdAt.getTime())],
 						]
 							.map(([key, value]) => `${key}~${value}`)
