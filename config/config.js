@@ -106,6 +106,7 @@ module.exports = {
 	userMessageSubjectMaxSize: 35,
 	userMessageContentMaxSize: 200,
 	userMessagesPageSize: 10,
+	searchUsersPageSize: 10,
 
 	// Don't touch the lines below this one
 	chestKeyItemValue: Key,

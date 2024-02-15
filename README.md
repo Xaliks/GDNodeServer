@@ -8,7 +8,7 @@
     - [x] Update
 	- [ ] Management Page
 - [ ] Users
-    - [ ] Search
+    - [x] Search
     - [x] Leaderboard
     - [x] Profile posts
     - [ ] Friend requests
