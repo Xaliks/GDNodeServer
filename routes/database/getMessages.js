@@ -16,7 +16,8 @@ module.exports = (fastify) => {
 			const { accountID, gjp2 } = req.body;
 
 			const getSent = req.body.getSent === "1";
-			const page = parseInt(req.body.page) ?? 0;
+			const page = Math.max(req.body.page, 0);
+			let totalCount = Math.max(req.body.total, 0);
 
 			const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
 			if (!account) return reply.send("-1");
@@ -27,6 +28,13 @@ module.exports = (fastify) => {
 				skip: page * userMessagesPageSize,
 			});
 			if (!messages.length) return reply.send("-2");
+
+			if (messages.length < userMessagesPageSize) totalCount = page * userMessagesPageSize + messages.length;
+			else if (!totalCount) {
+				totalCount = await database.accountComments.count({
+					where: { [getSent ? "accountId" : "toAccountId"]: account.id },
+				});
+			}
 
 			const users = await database.users.findMany({
 				where: { extId: { in: messages.map((msg) => String(msg[getSent ? "toAccountId" : "accountId"])) } },
@@ -51,7 +59,7 @@ module.exports = (fastify) => {
 							.map(([key, value]) => `${key}:${value}`)
 							.join(":");
 					})
-					.join("|")}#${messages.length}:${page}:${userMessagesPageSize}`,
+					.join("|")}#${totalCount * userMessagesPageSize}:${page}:${userMessagesPageSize}`,
 			);
 
 			if (!getSent) {

@@ -12,7 +12,9 @@ module.exports = (fastify) => {
 		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["str"])],
 		handler: async (req, reply) => {
 			const { str } = req.body;
+
 			const page = parseInt(req.body.page) ?? 0;
+			let totalCount = Math.max(req.body.total, 0);
 
 			const users = await database.users.findMany({
 				where: { isRegistered: true, isBanned: false, username: { contains: str } },
@@ -22,9 +24,8 @@ module.exports = (fastify) => {
 			});
 			if (!users.length) return reply.send("-2");
 
-			let totalCount;
 			if (users.length < searchUsersPageSize) totalCount = page * searchUsersPageSize + users.length;
-			else {
+			else if (!totalCount) {
 				totalCount = await database.users.count({
 					where: { isRegistered: true, isBanned: false, username: { contains: str } },
 				});
@@ -54,7 +55,7 @@ module.exports = (fastify) => {
 							.map(([key, value]) => `${key}:${value}`)
 							.join(":");
 					})
-					.join("|")}#${totalCount}:${page}:${searchUsersPageSize}`,
+					.join("|")}#${totalCount}:${page * searchUsersPageSize}:${searchUsersPageSize}`,
 			);
 		},
 	});

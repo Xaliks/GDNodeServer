@@ -11,12 +11,14 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/getGJAccountComments20.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "page"])],
+		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID"])],
 		handler: async (req, reply) => {
 			const {
 				accountID: [, targetAccountID],
-				page,
 			} = req.body;
+
+			const page = Math.max(req.body.page, 0);
+			let totalCount = Math.max(req.body.total, 0);
 
 			const comments = await database.accountComments.findMany({
 				where: { accountId: parseInt(targetAccountID) },
@@ -24,6 +26,11 @@ module.exports = (fastify) => {
 				skip: page * userCommentsPageSize,
 			});
 			if (!comments.length) return reply.send("-2");
+
+			if (comments.length < userCommentsPageSize) totalCount = page * userCommentsPageSize + comments.length;
+			else if (!totalCount) {
+				totalCount = await database.accountComments.count({ where: { accountId: parseInt(targetAccountID) } });
+			}
 
 			const user = await getUser(targetAccountID);
 
@@ -43,7 +50,7 @@ module.exports = (fastify) => {
 							.map(([key, value]) => `${key}~${value}`)
 							.join("~");
 					})
-					.join("|")}#${comments.length}:${page}:${userCommentsPageSize}`,
+					.join("|")}#${totalCount}:${page * userCommentsPageSize}:${userCommentsPageSize}`,
 			);
 		},
 	});
