@@ -23,9 +23,9 @@ module.exports = (fastify) => {
 
 				const comment = await database.accountComments.create({ data: { accountId: account.id, content } });
 
-				Logger.error(
+				Logger.log(
 					"Create account comment",
-					`${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)}: ${Logger.color(Logger.colors.cyan)(comment.id)}/${Logger.color(Logger.colors.yellow)(content)}`,
+					`${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)}: ${Logger.color(Logger.colors.cyan)(comment.id)}`,
 				);
 
 				return reply.send("1");
