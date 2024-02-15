@@ -1,5 +1,5 @@
 const _ = require("lodash");
-const { getSolo3, XOR, fromBase64, toSafeBase64 } = require("../../scripts/security");
+const { getSolo3, cipher, fromBase64, toSafeBase64 } = require("../../scripts/security");
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
 const { getUser, database } = require("../../scripts/database");
 const { rewards } = require("../../config/config");
@@ -35,11 +35,11 @@ module.exports = (fastify) => {
 			);
 
 			const result = toSafeBase64(
-				XOR.cipher(
+				cipher(
 					[
 						"Xaliks", // random string
 						user.id,
-						XOR.cipher(fromBase64(chk.slice(5)).toString("utf8"), 19847),
+						cipher(fromBase64(chk.slice(5)).toString(), 19847),
 						udid,
 						account?.id ?? "",
 						Math.round((new Date().setHours(0, 0, 0, 0) + 24 * 60 * 60_000 - Date.now()) / 1_000),

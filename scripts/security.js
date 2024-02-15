@@ -26,36 +26,22 @@ function toSafeBase64(string) {
 	return toBase64(string).replaceAll("+", "-").replaceAll("/", "_");
 }
 
-class XOR {
-	static text2ascii(input) {
-		return String(input)
-			.split("")
-			.map((letter) => letter.charCodeAt());
-	}
-	static cipher(data, key) {
-		key = this.text2ascii(key);
-		data = this.text2ascii(data);
-		let cipher = "";
+function textToAscii(string) {
+	return String(string)
+		.split("")
+		.map((symbol) => symbol.charCodeAt());
+}
 
-		for (let i = 0; i < data.length; i++) {
-			cipher += String.fromCodePoint(data[i] ^ key[i % key.length]);
-		}
-		return cipher;
-	}
-	static encrypt(password, key = 37526) {
-		let encode = this.cipher(password, key);
-		encode = Buffer.from(encode).toString("base64");
-		encode = encode.replace(/\//g, "_").replace(/\+/g, "-");
+function cipher(_data, _key) {
+	const key = textToAscii(_key);
+	const data = textToAscii(_data);
 
-		return encode;
-	}
-	static decrypt(gjp, key = 37526) {
-		let decode = gjp.replace(/_/g, "/").replace(/-/g, "+");
-		decode = Buffer.from(decode, "base64").toString();
-		decode = this.cipher(decode, key);
+	let cipher = "";
 
-		return decode;
+	for (let i = 0; i < data.length; i++) {
+		cipher += String.fromCodePoint(data[i] ^ key[i % key.length]);
 	}
+	return cipher;
 }
 
 module.exports = {
@@ -66,5 +52,5 @@ module.exports = {
 	toBase64,
 	fromSafeBase64,
 	toSafeBase64,
-	XOR,
+	cipher,
 };

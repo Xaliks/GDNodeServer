@@ -21,7 +21,11 @@ module.exports = (fastify) => {
 
 			const where = { isBanned: false, stars: { gt: user.stars } };
 			if (!showNotRegisteredUsersInLeaderboard) where.isRegistered = true;
-			const rank = await database.users.count({ where });
+
+			const [rank, newMessagesCount] = await database.$transaction([
+				database.users.count({ where }),
+				database.messages.count({ where: { toAccountId: account.id, isNew: true } }),
+			]);
 
 			return reply.send(
 				[
@@ -61,7 +65,7 @@ module.exports = (fastify) => {
 					[31, 0], // friend state (0 - not friend; 1 - friend; 2 - INCOMING request; 3 - OUTGOING request)
 					[49, account.modBadge], // 0 - none; 1 - moderator; 2 - elder moderator; 3 - leaderboard moderator
 
-					[38, 8888], // new messages count
+					[38, newMessagesCount], // new messages count
 					[39, 999], // friend requests count
 					[40, 25], // new friends count
 				]

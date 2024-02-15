@@ -47,16 +47,16 @@ module.exports = {
 			 * Как работает подсчёт количества предметов
 			 *
 			 * 1. Считаем шанс item1Chance - Шанс выпадения ПЕРВОГО предмета. Если не выпал, то награда сундука - орбы и алмазы
-			 * 2. Считаем шанс item2Chance - Шанс выпадения ВТОРОГО предмета, ЕСЛИ ВЫПАЛ ПЕРВЫЙ
-			 * 3. На каждый предмет выбираем рандомный предмет из списка в `items`.
-			 * 3.1 Считаем шанс key1Chance - Шанс, что ПЕРВЫМ предметом выпадет ключ. Если выпадет не ключ, то выпадет шард
-			 * 3.2 Считаем шанс key2Chance - Шанс, что ВТОРЫМ предметом выпадет ключ. Если выпадет не ключ, то выпадет шард
-			 * - Шард не выпадет, если у игрока уже максимальное количество шардов
+			 * 2. Считаем шанс item2Chance - Шанс выпадения ВТОРОГО предмета, ЕСЛИ ВЫПАЛ ПЕРВЫЙ.
+			 * 3. Считаем шанс key1Chance - Шанс, что ПЕРВЫМ предметом выпадет ключ.
+			 * 4. Считаем шанс key2Chance - Шанс, что ВТОРЫМ предметом выпадет ключ, ЕСЛИ первый предмет это шард.
+			 *
+			 * ⚠ Шард не выпадет, если у игрока уже максимальное количество шардов
 			 */
-			item1Chance: (user) => 0.5,
+			item1Chance: (user) => 0.4,
 			item2Chance: (user) => 0.15,
-			key1Chance: (user) => 0.5,
-			key2Chance: (user) => 0.8,
+			key1Chance: (user) => 0.45,
+			key2Chance: (user) => 0.85,
 
 			cooldown: 4 * 60 * 60, // In seconds. 0 for no cooldown
 		},
@@ -78,10 +78,10 @@ module.exports = {
 				SoulShard,
 				// CrashShard,
 			],
-			item1Chance: (user) => 0.75,
-			item2Chance: (user) => 0.5,
-			key1Chance: (user) => 0.5,
-			key2Chance: (user) => 0.8,
+			item1Chance: (user) => 0.65,
+			item2Chance: (user) => 0.4,
+			key1Chance: (user) => 0.45,
+			key2Chance: (user) => 0.85,
 
 			cooldown: 24 * 60 * 60, // In seconds. 0 for no cooldown
 		},
@@ -100,7 +100,12 @@ module.exports = {
 		],
 	},
 
+	timeMaxCounts: 2, // -> years, months, days, hours, minutes, seconds
 	userCommentsPageSize: 10,
+	userCommentMaxSize: 140,
+	userMessageSubjectMaxSize: 35,
+	userMessageContentMaxSize: 200,
+	userMessagesPageSize: 10,
 
 	// Don't touch the lines below this one
 	chestKeyItemValue: Key,

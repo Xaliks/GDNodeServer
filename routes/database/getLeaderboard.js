@@ -20,9 +20,17 @@ module.exports = (fastify) => {
 			if (!showNotRegisteredUsersInLeaderboard) where.isRegistered = true;
 
 			if (type === "top") {
-				users = await database.users
-					.findMany({ where: { ...where, stars: { gt: 0 } }, orderBy: { stars: "desc" }, take })
-					.then((users) => users.map((user, i) => ({ ...user, rank: i + 1 })));
+				const totalUsers = await database.users.findMany({
+					where: { ...where, stars: { gt: 0 } },
+					orderBy: { stars: "desc" },
+					take,
+				});
+
+				if (totalUsers.length < take && !totalUsers.find((user) => user.extId === accountID || user.extId === udid)) {
+					const user = await getUser(accountID || udid);
+
+					users = [...totalUsers, user].map((user, i) => ({ ...user, rank: i + 1 }));
+				}
 			}
 
 			if (type === "friends") {
@@ -36,75 +44,75 @@ module.exports = (fastify) => {
 				if (!accountID && !udid) return reply.send("-1");
 
 				const user = await getUser(accountID || udid);
-				const userRank = await database.users.count({ where: { ...where, stars: { gte: user.stars } } });
-				user.rank = userRank;
+				const userRank = await database.users.count({ where: { ...where, stars: { gte: user.stars || 1 } } });
 
 				if (!user.stars) {
 					const greaterUsers = await database.users.findMany({
-						where: { ...where, stars: { gte: user.stars }, id: { not: user.id } },
+						where: { ...where, stars: { gt: 0 } },
 						orderBy: { stars: "asc" },
 						take,
 					});
 
-					users = [...greaterUsers, user].map((user, i) => ({ ...user, rank: userRank + i }));
-				}
-
-				const takeCount = Math.floor(take / 2);
-
-				let relativeUsers;
-				if (showNotRegisteredUsersInLeaderboard) {
-					relativeUsers = await database.$queryRaw`select * from (
-						(
-							select *
-							from "public"."Users"
-							where stars < ${user.stars}
-								and "isBanned" = false
-							order by stars desc
-							limit ${takeCount}
-						)
-						union
-						(
-							select *
-							from "public"."Users"
-							where stars >= ${user.stars}
-								and "isBanned" = false
-								and id != ${user.id}
-							order by stars asc
-							limit ${takeCount}
-						)
-					) order by stars desc`;
+					users = [...greaterUsers, user].map((user, i) => ({ ...user, rank: userRank - greaterUsers.length + i + 1 }));
 				} else {
-					relativeUsers = await database.$queryRaw`select * from (
-						(
-							select *
-							from "public"."Users"
-							where stars < ${user.stars}
-								and "isBanned" = false
-								and "isRegistered" = true
-							order by stars desc
-							limit ${takeCount}
-						)
-						union
-						(
-							select *
-							from "public"."Users"
-							where stars >= ${user.stars}
-								and "isBanned" = false
-								and "isRegistered" = true
-								and id != ${user.id}
-							order by stars asc
-							limit ${takeCount}
-						)
-					) order by stars desc`;
+					const takeCount = Math.floor(take / 2);
+
+					let relativeUsers;
+					if (showNotRegisteredUsersInLeaderboard) {
+						relativeUsers = await database.$queryRaw`select * from (
+							(
+								select *
+								from "public"."Users"
+								where stars < ${user.stars}
+									and "isBanned" = false
+								order by stars desc
+								limit ${takeCount}
+							)
+							union
+							(
+								select *
+								from "public"."Users"
+								where stars >= ${user.stars}
+									and "isBanned" = false
+									and id != ${user.id}
+								order by stars asc
+								limit ${takeCount}
+							)
+						) order by stars desc`;
+					} else {
+						relativeUsers = await database.$queryRaw`select * from (
+							(
+								select *
+								from "public"."Users"
+								where stars < ${user.stars}
+									and "isBanned" = false
+									and "isRegistered" = true
+								order by stars desc
+								limit ${takeCount}
+							)
+							union
+							(
+								select *
+								from "public"."Users"
+								where stars >= ${user.stars}
+									and "isBanned" = false
+									and "isRegistered" = true
+									and id != ${user.id}
+								order by stars asc
+								limit ${takeCount}
+							)
+						) order by stars desc`;
+					}
+
+					const [greaterUsers, lowerUsers] = _.partition(relativeUsers, (u) => u.stars >= user.stars);
+
+					user.rank = userRank;
+					users = [
+						...greaterUsers.map((user, i) => ({ ...user, rank: userRank - greaterUsers.length - i })),
+						user,
+						...lowerUsers.map((user, i) => ({ ...user, rank: userRank + i + 1 })),
+					];
 				}
-
-				const [greaterUsers, lowerUsers] = _.partition(relativeUsers, (u) => u.stars >= user.stars);
-
-				users = [
-					...greaterUsers.map((user, i) => ({ ...user, rank: userRank - greaterUsers.length - i })),
-					user,
-					...lowerUsers.map((user, i) => ({ ...user, rank: userRank + i + 1 })),
-				];
 			}
 
 			if (type === "creators") {

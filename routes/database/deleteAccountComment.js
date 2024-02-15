@@ -17,7 +17,12 @@ module.exports = (fastify) => {
 				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
 				if (!account) return reply.send("-1");
 
-				await database.accountComments.delete({ where: { id: parseInt(commentID) } });
+				const comment = await database.accountComments.delete({ where: { id: parseInt(commentID) } });
+
+				Logger.log(
+					"Delete account comment",
+					`${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)}: ${Logger.color(Logger.colors.cyan)(comment.id)}/${Logger.color(Logger.colors.yellow)(comment.content)}`,
+				);
 
 				return reply.send("1");
 			} catch (error) {

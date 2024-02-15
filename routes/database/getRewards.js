@@ -1,6 +1,6 @@
 const _ = require("lodash");
 const Logger = require("../../scripts/Logger");
-const { getSolo4, XOR, fromBase64, toSafeBase64 } = require("../../scripts/security");
+const { getSolo4, cipher, fromBase64, toSafeBase64 } = require("../../scripts/security");
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
 const { getUser, database } = require("../../scripts/database");
 const { rewards, chestKeyItemValue } = require("../../config/config");
@@ -23,15 +23,18 @@ module.exports = (fastify) => {
 				let totalBigChests = parseInt(r2);
 
 				if (rewardType !== "0") {
-					totalSmallChests = Math.max(user.totalSmallChests, totalSmallChests + 1);
-					totalBigChests = Math.max(user.totalBigChests, totalBigChests + 1);
-
 					const smallChestRemaining = getChestRemaining("1", user);
 					const bigChestRemaining = getChestRemaining("2", user);
 
 					if ((rewardType === "1" && smallChestRemaining > 0) || (rewardType === "2" && bigChestRemaining > 0)) {
 						return reply.send("-1");
 					}
+
+					totalSmallChests = Math.max(user.totalSmallChests, totalSmallChests);
+					totalBigChests = Math.max(user.totalBigChests, totalBigChests);
+
+					if (rewardType === "1") totalSmallChests++;
+					else totalBigChests++;
 
 					user = await database.users.update({
 						where: { id: user.id },
@@ -44,11 +47,11 @@ module.exports = (fastify) => {
 				}
 
 				const result = toSafeBase64(
-					XOR.cipher(
+					cipher(
 						[
 							"Xaliks", // random string
 							user.id,
-							XOR.cipher(fromBase64(chk.slice(5)).toString("utf8"), 59182),
+							cipher(fromBase64(chk.slice(5)).toString(), 59182),
 							udid,
 							accountID ?? "",
 							getChestRemaining("1", user),
