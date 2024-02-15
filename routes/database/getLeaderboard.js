@@ -20,17 +20,11 @@ module.exports = (fastify) => {
 			if (!showNotRegisteredUsersInLeaderboard) where.isRegistered = true;
 
 			if (type === "top") {
-				const totalUsers = await database.users.findMany({
+				users = await database.users.findMany({
 					where: { ...where, stars: { gt: 0 } },
 					orderBy: { stars: "desc" },
 					take,
 				});
-
-				if (totalUsers.length < take && !totalUsers.find((user) => user.extId === accountID || user.extId === udid)) {
-					const user = await getUser(accountID || udid);
-
-					users = [...totalUsers, user].map((user, i) => ({ ...user, rank: i + 1 }));
-				}
 			}
 
 			if (type === "friends") {
@@ -118,20 +112,22 @@ module.exports = (fastify) => {
 			}
 
 			if (type === "creators") {
-				users = await database.users
-					.findMany({ where: { ...where, creatorPoints: { gt: 0 } }, orderBy: { creatorPoints: "desc" }, take })
-					.then((users) => users.map((user, i) => ({ ...user, rank: i + 1 })));
+				users = await database.users.findMany({
+					where: { ...where, creatorPoints: { gt: 0 } },
+					orderBy: { creatorPoints: "desc" },
+					take,
+				});
 			}
 
 			return reply.send(
 				users
-					.map((user) => {
+					.map((user, i) => {
 						return [
 							[1, user.username],
 							[2, user.id],
 							[3, user.stars],
 							[4, user.demons],
-							[6, user.rank],
+							[6, user.rank ?? i + 1],
 							[7, user.extId],
 							[8, user.creatorPoints],
 							[9, user.displayIcon],
