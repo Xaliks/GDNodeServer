@@ -23,7 +23,7 @@ module.exports = (fastify) => {
 				take: userCommentsPageSize,
 				skip: page * userCommentsPageSize,
 			});
-			if (!comments.length) return reply.send("#0:0:0");
+			if (!comments.length) return reply.send("-2");
 
 			const user = await getUser(targetAccountID);
 
