@@ -64,6 +64,7 @@ module.exports = (fastify) => {
 								select *
 								from "public"."Users"
 								where stars < ${user.stars}
+									and stars > 0
 									and "isBanned" = false
 								order by stars desc
 								limit ${takeCount}
@@ -85,6 +86,7 @@ module.exports = (fastify) => {
 								select *
 								from "public"."Users"
 								where stars < ${user.stars}
+									and stars > 0
 									and "isBanned" = false
 									and "isRegistered" = true
 								order by stars desc
