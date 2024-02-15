@@ -31,7 +31,7 @@ module.exports = (fastify) => {
 
 			if (messages.length < userMessagesPageSize) totalCount = page * userMessagesPageSize + messages.length;
 			else if (!totalCount) {
-				totalCount = await database.accountComments.count({
+				totalCount = await database.messages.count({
 					where: { [getSent ? "accountId" : "toAccountId"]: account.id },
 				});
 			}
