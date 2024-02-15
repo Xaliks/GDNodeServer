@@ -1,5 +1,5 @@
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
-const { database } = require("../../scripts/database");
+const { database, getUser } = require("../../scripts/database");
 const { toSafeBase64, cipher } = require("../../scripts/security");
 const { dateToRelative } = require("../../scripts/util");
 const { userMessagesPageSize } = require("../../config/config");
@@ -26,26 +26,24 @@ module.exports = (fastify) => {
 				take: userMessagesPageSize,
 				skip: page * userMessagesPageSize,
 			});
-			if (!messages.length) return reply.send("#0:0:0");
+			if (!messages.length) return reply.send("-2");
 
-			const accounts = await database.accounts.findMany({
-				where: { id: { in: messages.map((msg) => msg[getSent ? "toAccountId" : "accountId"]) } },
+			const users = await database.users.findMany({
+				where: { extId: { in: messages.map((msg) => String(msg[getSent ? "toAccountId" : "accountId"])) } },
 			});
 
 			reply.send(
 				`${messages
 					.map((message) => {
+						const user = users.find((user) => user.extId === String(message[getSent ? "toAccountId" : "accountId"]));
+
 						return [
 							[1, message.id],
-							[2, message.accountId],
-							[3, message.toAccountId],
+							[2, user.extId],
+							[3, user.id],
 							[4, toSafeBase64(message.subject)],
 							[5, toSafeBase64(cipher(message.content, 14251))],
-							[
-								6,
-								accounts.find((account) => account.id === message[getSent ? "toAccountId" : "accountId"])?.username ??
-									"Player",
-							],
+							[6, user.username],
 							[7, dateToRelative(message.createdAt)],
 							[8, message.isNew ? 0 : 1],
 							[9, getSent ? 1 : 0],
@@ -78,23 +76,16 @@ module.exports = (fastify) => {
 			const message = await database.messages.findFirst({ where: { id: parseInt(messageID) } });
 			if (!message || (message.accountId === account.id && message.toAccountId === account.id)) return reply.send("-1");
 
-			let username = account.username;
-			if (message.toAccountId !== account.id || message.accountId !== account.id) {
-				const secondAccountId = message.toAccountId !== account.id ? message.toAccountId : message.accountId;
-				const secondAccount = await database.accounts.findFirst({ where: { id: secondAccountId } });
-
-				if (secondAccount) username = secondAccount.username;
-				else username = "Player";
-			}
+			const secondUser = await getUser(message.toAccountId !== account.id ? message.toAccountId : message.accountId);
 
 			reply.send(
 				[
 					[1, message.id],
-					[2, message.accountId],
-					[3, message.toAccountId],
+					[2, secondUser.extId],
+					[3, secondUser.id],
 					[4, toSafeBase64(message.subject)],
 					[5, toSafeBase64(cipher(message.content, 14251))],
-					[6, username],
+					[6, secondUser.username],
 					[7, dateToRelative(message.createdAt)],
 					[8, message.isNew ? 0 : 1],
 					[9, message.toAccountId === account.id ? 1 : 0],
