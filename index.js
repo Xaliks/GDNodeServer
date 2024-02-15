@@ -6,7 +6,10 @@ const config = require("./config/config");
 function log(request, ...message) {
 	if (process.env.EnableLogging) {
 		return Logger.log(
-			request.ws ? "WS" : request.method,
+			request.method,
+			request.headers["cookie"] === "gd=1;"
+				? Logger.color(Logger.colors.bgGreen)("  GD  ")
+				: Logger.color(Logger.colors.bgCyan)(" REST "),
 			`${Logger.color(Logger.colors.cyan)(request.ip)} -> ${Logger.color(Logger.colors.gray)(request.hostname)}${request.url}`,
 			...message,
 		);
