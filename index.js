@@ -3,11 +3,6 @@ const fastify = require("fastify")({ trustProxy: true });
 const Logger = require("./scripts/Logger");
 const config = require("./config/config");
 
-if (process.versions.node.split(".")[0] < 18) {
-	Logger.error("Node JS", "Версия Node JS Должна быть не меньше 18.0.0!");
-	process.exit(1);
-}
-
 function log(request, ...message) {
 	if (process.env.EnableLogging) {
 		return Logger.log(
@@ -47,19 +42,15 @@ function registerRoutes(path) {
 registerRoutes("routes");
 
 fastify.setNotFoundHandler((request, reply) => {
-	return reply.status(404).send({ error: "Not Found!" });
+	return reply.status(404).send("Not Found!");
 });
 
 fastify.setErrorHandler((error, request, reply) => {
-	if (error.validation) {
-		const message = error.validation.map((error) => `[${error.instancePath}] ${error.message}`);
-
-		return reply.status(400).send({ statusCode: error.statusCode, error: "Bad Request", message });
-	}
+	if (error.validation) return reply.status(400).send("-1");
 
 	Logger.error("Server", error);
 
-	return reply.status(500).send({ error: "Internal Error!" });
+	return reply.status(500).send("-500");
 });
 
 fastify.listen({ port: config.port }, (error, address) => {

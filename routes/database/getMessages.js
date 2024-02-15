@@ -64,4 +64,44 @@ module.exports = (fastify) => {
 			}
 		},
 	});
+
+	fastify.route({
+		method: ["POST"],
+		url: "/downloadGJMessage20.php",
+		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2", "message"])],
+		handler: async (req, reply) => {
+			const { accountID, gjp2, message: messageID } = req.body;
+
+			const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
+			if (!account) return reply.send("-1");
+
+			const message = await database.messages.findFirst({ where: { id: parseInt(messageID) } });
+			if (!message || (message.accountId === account.id && message.toAccountId === account.id)) return reply.send("-1");
+
+			let username = account.username;
+			if (message.toAccountId !== account.id || message.accountId !== account.id) {
+				const secondAccountId = message.toAccountId !== account.id ? message.toAccountId : message.accountId;
+				const secondAccount = await database.accounts.findFirst({ where: { id: secondAccountId } });
+
+				if (secondAccount) username = secondAccount.username;
+				else username = "Player";
+			}
+
+			reply.send(
+				[
+					[1, message.id],
+					[2, message.accountId],
+					[3, message.toAccountId],
+					[4, toSafeBase64(message.subject)],
+					[5, toSafeBase64(cipher(message.content, 14251))],
+					[6, username],
+					[7, dateToRelative(message.createdAt)],
+					[8, message.isNew ? 0 : 1],
+					[9, message.toAccountId === account.id ? 1 : 0],
+				]
+					.map(([key, value]) => `${key}:${value}`)
+					.join(":"),
+			);
+		},
+	});
 };

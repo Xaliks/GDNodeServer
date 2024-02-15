@@ -31,7 +31,7 @@ module.exports = (fastify) => {
 				if (!account) return reply.send(ResponseEnum.LoginFailed);
 
 				const [base64Data] = saveData.split(";");
-				const uncompressedData = zlib.gunzipSync(fromSafeBase64(base64Data)).toString("utf8");
+				const uncompressedData = zlib.gunzipSync(fromSafeBase64(base64Data)).toString();
 
 				const orbs = parseInt(uncompressedData.match(/<\/s><k>14<\/k><s>(\d+)<\/s>/)?.[1]);
 				if (isNaN(orbs)) return reply.send(ResponseEnum.Failed);

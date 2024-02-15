@@ -13,10 +13,10 @@ function getSolo4(string) {
 }
 
 function fromBase64(string) {
-	return Buffer.from(string, "base64"); // Don't use btoa
+	return Buffer.from(string, "base64"); // Don't use atob
 }
 function toBase64(string) {
-	return Buffer.from(string).toString("base64"); // Don't use atob
+	return Buffer.from(string).toString("base64"); // Don't use btoa
 }
 
 function fromSafeBase64(string) {

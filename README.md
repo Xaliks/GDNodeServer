@@ -19,8 +19,6 @@
     - [ ] Download
     - [ ] Upload
     - [ ] Comments
-- [ ] Saved levels
-- [ ] Saved packs
 - [x] Rewards
 - [x] Quests
 - [ ] Daily/Weekly levels
