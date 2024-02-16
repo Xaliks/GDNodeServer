@@ -14,19 +14,30 @@ module.exports = (fastify) => {
 		url: "/getGJRewards.php",
 		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["udid", "chk"])],
 		handler: async (req, reply) => {
-			const { udid, accountID, chk, r1, r2 } = req.body;
+			const { udid, accountID, gjp, chk, r1, r2 } = req.body;
 
 			try {
 				const rewardType = parseInt(req.body.rewardType) || 0;
-				let user = await getUser(accountID || udid);
+
+				let user;
+				let accountId = accountID ?? "";
+				if (accountID && gjp) {
+					const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp } });
+
+					if (account) {
+						user = await getUser(account.id);
+						accountId = account.id;
+					}
+				}
+				if (!user) user = await getUser(udid);
 
 				let totalSmallChests = parseInt(r1);
 				let totalBigChests = parseInt(r2);
 
-				const smallChestRemaining = getChestRemaining("1", user);
-				const bigChestRemaining = getChestRemaining("2", user);
-
 				if (rewardType !== 0) {
+					const smallChestRemaining = getChestRemaining(1, user);
+					const bigChestRemaining = getChestRemaining(2, user);
+
 					if ((rewardType === 1 && smallChestRemaining > 0) || (rewardType === 2 && bigChestRemaining > 0)) {
 						return reply.send("-1");
 					}
@@ -54,12 +65,12 @@ module.exports = (fastify) => {
 							user.id,
 							cipher(fromBase64(chk.slice(5)).toString(), 59182),
 							udid,
-							accountID ?? "",
-							smallChestRemaining,
-							rewardType === 1 ? getChestStuff(rewardType, user) : "",
+							accountId,
+							getChestRemaining(1, user),
+							getChestStuff(1, user),
 							totalSmallChests,
-							bigChestRemaining,
-							rewardType === 2 ? getChestStuff(rewardType, user) : "",
+							getChestRemaining(2, user),
+							getChestStuff(2, user),
 							totalBigChests,
 							rewardType,
 						].join(":"),
@@ -101,9 +112,8 @@ function getChestStuff(type, user) {
 }
 
 function getChestRemaining(type, user) {
-	const chest = type === "1" ? rewards.smallChest : rewards.bigChest;
-	const lastUserChest = type === "1" ? user.lastSmallChest : user.lastBigChest;
+	const chest = type === 1 ? rewards.smallChest : rewards.bigChest;
+	const lastUserChest = type === 1 ? user.lastSmallChest : user.lastBigChest;
 
-	if (!chest.cooldown) return 0;
-	return lastUserChest ? chest.cooldown - Math.round((Date.now() - lastUserChest.getTime()) / 1_000) : 0;
+	return lastUserChest ? Math.max(0, chest.cooldown - Math.round((Date.now() - lastUserChest.getTime()) / 1_000)) : 0;
 }
