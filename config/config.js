@@ -103,6 +103,8 @@ module.exports = {
 	timeMaxCounts: 2, // -> years, months, days, hours, minutes, seconds
 	userCommentsPageSize: 10,
 	userCommentMaxSize: 140,
+	userFriendRequestCommentMaxSize: 140,
+	userFriendRequestPageSize: 10,
 	userMessageSubjectMaxSize: 35,
 	userMessageContentMaxSize: 200,
 	userMessagesPageSize: 10,

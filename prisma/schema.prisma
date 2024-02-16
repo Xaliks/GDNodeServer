@@ -79,6 +79,15 @@ model AccountComments {
   isSpam    Boolean  @default(false)
 }
 
+model FriendRequests {
+  id          Int      @id @default(autoincrement())
+  accountId   Int
+  toAccountId Int
+  comment     String?
+  isNew       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
 model Messages {
   id          Int      @id @default(autoincrement())
   accountId   Int
@@ -90,12 +99,12 @@ model Messages {
 }
 
 model Levels {
-  id            Int    @id @default(autoincrement())
+  id            Int     @id @default(autoincrement())
   gameVersion   Int
-  binaryVersion Int    @default(0)
+  binaryVersion Int     @default(0)
   name          String
-  description   String @default("")
-  version       Int    @default(0)
+  description   String?
+  version       Int     @default(0)
   userId        Int
   extId         String
 }

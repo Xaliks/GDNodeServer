@@ -22,7 +22,7 @@ module.exports = (fastify) => {
 				account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
 			}
 
-			const user = await getUser(String(account?.id ?? udid), account?.username);
+			const user = await getUser(account?.id ?? udid, account?.username);
 
 			const quests = _.sampleSize(
 				rewards.quests.map((quest, i) => {

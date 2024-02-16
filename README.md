@@ -11,7 +11,9 @@
     - [x] Search
     - [x] Leaderboard
     - [x] Profile posts
-    - [ ] Friend requests
+    - [x] Friend requests
+    - [ ] Friends
+    - [ ] Blocks
     - [x] Messages
 - [ ] Levels
     - [ ] Search
