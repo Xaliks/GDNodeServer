@@ -17,16 +17,21 @@
     - [x] Messages
 - [ ] Levels
     - [ ] Search
-    - [ ] Load
     - [ ] Download
     - [ ] Upload
     - [ ] Comments
+    - [ ] Lists
+    - [ ] Daily/Weekly levels
+    - [ ] Gauntlets
+    - [ ] Map Packs
 - [x] Rewards
 - [x] Quests
-- [ ] Daily/Weekly levels
-- [ ] Gauntlets
-- [ ] Map Packs
-- [ ] Lists
-- [ ] Featured levels
+- [ ] User panel
+    - [ ] Custom songs
+    - [ ] Import level from boomlings
 - [ ] Admin panel
+    - [ ] Create quests
+    - [ ] Daily/Weekly levels
+    - [ ] Map packs
+    - [ ] Gauntlets
 - [ ] Update exe game file
