@@ -101,14 +101,15 @@ module.exports = {
 	},
 
 	timeMaxCounts: 2, // -> years, months, days, hours, minutes, seconds
-	userCommentsPageSize: 10,
-	userCommentMaxSize: 140,
-	userFriendRequestCommentMaxSize: 140,
-	userFriendRequestPageSize: 10,
-	userMessageSubjectMaxSize: 35,
-	userMessageContentMaxSize: 200,
-	userMessagesPageSize: 10,
-	searchUsersPageSize: 10,
+	userCommentsPageSize: 10, // Number of comments per page
+	userCommentMaxSize: 140, // Max length of user comment
+	userFriendsMax: 300, // User friends limit
+	userFriendRequestCommentMaxSize: 140, // Max length of friend request comment
+	userFriendRequestPageSize: 10, // Number of friend requests per page
+	userMessageSubjectMaxSize: 35, // Max length of message subject
+	userMessageContentMaxSize: 200, // Max length of message content
+	userMessagesPageSize: 10, // Number of messages per page
+	searchUsersPageSize: 10, // Number of users per page
 
 	// Don't touch the lines below this one
 	chestKeyItemValue: Key,

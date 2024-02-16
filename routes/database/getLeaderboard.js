@@ -31,7 +31,18 @@ module.exports = (fastify) => {
 				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
 				if (!account) return reply.send("-1");
 
-				users = [await database.users.findFirst()];
+				const friendIds = await database.friends
+					.findMany({ where: { OR: [{ accountId1: account.id }, { accountId2: account.id }] } })
+					.then((friends) =>
+						friends.map((friend) => (friend.accountId1 === account.id ? friend.accountId2 : friend.accountId1)),
+					);
+				if (!friendIds.length) return reply.send("");
+
+				users = await database.users.findMany({
+					where: { extId: { in: friendIds.concat(account.id).map((id) => String(id)) } },
+					orderBy: { stars: "desc" },
+					take,
+				});
 			}
 
 			if (type === "relative") {

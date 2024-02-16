@@ -27,9 +27,16 @@ module.exports = (fastify) => {
 				let canSend = true;
 				if (toAccount.messageState === 2) canSend = false;
 				else if (toAccount.messageState === 1) {
-					// Check if account is friend
+					const friendship = await database.friends.findFirst({
+						where: {
+							OR: [
+								{ accountId1: account.id, accountId2: toAccount.id },
+								{ accountId1: toAccount.id, accountId2: account.id },
+							],
+						},
+					});
 
-					canSend = false;
+					canSend = Boolean(friendship);
 				} else {
 					// Check if account blocked
 					if (false) {

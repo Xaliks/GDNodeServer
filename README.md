@@ -12,7 +12,7 @@
     - [x] Leaderboard
     - [x] Profile posts
     - [x] Friend requests
-    - [ ] Friends
+    - [x] Friends
     - [ ] Blocks
     - [x] Messages
 - [ ] Levels

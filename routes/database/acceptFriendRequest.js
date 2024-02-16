@@ -19,14 +19,14 @@ module.exports = (fastify) => {
 				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
 				if (!account) return reply.send("-1");
 
+				// Check if user blocked
+
 				const friendRequest = await database.friendRequests
-					.delete({
-						where: { id: parseInt(requestID), accountId: parseInt(targetAccountID), toAccountId: account.id },
-					})
+					.delete({ where: { id: parseInt(requestID), accountId: parseInt(targetAccountID), toAccountId: account.id } })
 					.catch(() => null);
 				if (!friendRequest) return reply.send("-1");
 
-				// Create friend
+				await database.friends.create({ data: { accountId1: account.id, accountId2: friendRequest.accountId } });
 
 				Logger.log(
 					"Accept friend request",
