@@ -12,36 +12,37 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/getGJRewards.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["udid", "rewardType", "chk"])],
+		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["udid", "chk"])],
 		handler: async (req, reply) => {
-			const { udid, accountID, rewardType, chk, r1, r2 } = req.body;
+			const { udid, accountID, chk, r1, r2 } = req.body;
 
 			try {
-				let user = await getUser(String(accountID || udid));
+				const rewardType = parseInt(req.body.rewardType) || 0;
+				let user = await getUser(accountID || udid);
 
 				let totalSmallChests = parseInt(r1);
 				let totalBigChests = parseInt(r2);
 
-				if (rewardType !== "0") {
-					const smallChestRemaining = getChestRemaining("1", user);
-					const bigChestRemaining = getChestRemaining("2", user);
+				const smallChestRemaining = getChestRemaining("1", user);
+				const bigChestRemaining = getChestRemaining("2", user);
 
-					if ((rewardType === "1" && smallChestRemaining > 0) || (rewardType === "2" && bigChestRemaining > 0)) {
+				if (rewardType !== 0) {
+					if ((rewardType === 1 && smallChestRemaining > 0) || (rewardType === 2 && bigChestRemaining > 0)) {
 						return reply.send("-1");
 					}
 
 					totalSmallChests = Math.max(user.totalSmallChests, totalSmallChests);
 					totalBigChests = Math.max(user.totalBigChests, totalBigChests);
 
-					if (rewardType === "1") totalSmallChests++;
+					if (rewardType === 1) totalSmallChests++;
 					else totalBigChests++;
 
 					user = await database.users.update({
 						where: { id: user.id },
 						data: {
-							[rewardType === "1" ? "lastSmallChest" : "lastBigChest"]: new Date(),
-							[rewardType === "1" ? "totalSmallChests" : "totalBigChests"]:
-								rewardType === "1" ? totalSmallChests : totalBigChests,
+							[rewardType === 1 ? "lastSmallChest" : "lastBigChest"]: new Date(),
+							[rewardType === 1 ? "totalSmallChests" : "totalBigChests"]:
+								rewardType === 1 ? totalSmallChests : totalBigChests,
 						},
 					});
 				}
@@ -54,11 +55,11 @@ module.exports = (fastify) => {
 							cipher(fromBase64(chk.slice(5)).toString(), 59182),
 							udid,
 							accountID ?? "",
-							getChestRemaining("1", user),
-							getChestStuff("1", user),
+							smallChestRemaining,
+							rewardType === 1 ? getChestStuff(rewardType, user) : "",
 							totalSmallChests,
-							getChestRemaining("2", user),
-							getChestStuff("2", user),
+							bigChestRemaining,
+							rewardType === 2 ? getChestStuff(rewardType, user) : "",
 							totalBigChests,
 							rewardType,
 						].join(":"),
@@ -77,7 +78,7 @@ module.exports = (fastify) => {
 };
 
 function getChestStuff(type, user) {
-	const chest = type === "1" ? rewards.smallChest : rewards.bigChest;
+	const chest = type === 1 ? rewards.smallChest : rewards.bigChest;
 
 	const orbs = _.random(chest.minOrbs, chest.maxOrbs);
 	const diamonds = _.random(chest.minDiamonds, chest.maxDiamonds);
@@ -103,5 +104,6 @@ function getChestRemaining(type, user) {
 	const chest = type === "1" ? rewards.smallChest : rewards.bigChest;
 	const lastUserChest = type === "1" ? user.lastSmallChest : user.lastBigChest;
 
+	if (!chest.cooldown) return 0;
 	return lastUserChest ? chest.cooldown - Math.round((Date.now() - lastUserChest.getTime()) / 1_000) : 0;
 }
