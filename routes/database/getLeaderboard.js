@@ -21,8 +21,8 @@ module.exports = (fastify) => {
 
 			if (type === "top") {
 				users = await database.users.findMany({
-					where: { ...where, stars: { gt: 0 } },
-					orderBy: { stars: "desc" },
+					where: { ...where, OR: [{ stars: { gt: 0 } }, { moons: { gt: 0 } }] },
+					orderBy: [{ stars: "desc" }, { moons: "desc" }],
 					take,
 				});
 			}
@@ -40,7 +40,7 @@ module.exports = (fastify) => {
 
 				users = await database.users.findMany({
 					where: { extId: { in: friendIds.concat(account.id).map((id) => String(id)) } },
-					orderBy: { stars: "desc" },
+					orderBy: [{ stars: "desc" }, { moons: "desc" }],
 					take,
 				});
 			}
