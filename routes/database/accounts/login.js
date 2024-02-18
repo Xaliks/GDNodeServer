@@ -37,15 +37,10 @@ module.exports = (fastify) => {
 
 				reply.send(ResponseEnum.Success(account.id, user.id));
 
-				if (!isNaN(udid)) {
-					const userByUdid = await database.users.findFirst({ where: { extId: udid } });
-					if (userByUdid) {
-						await database.levels.updateMany({
-							where: { userId: userByUdid.id },
-							data: { extId: String(account.id), userId: user.id },
-						});
-					}
-				}
+				await database.levels.updateMany({
+					where: { extId: udid },
+					data: { extId: String(account.id), userId: user.id },
+				});
 			} catch (error) {
 				Logger.error("Account login", error);
 

@@ -25,7 +25,16 @@ module.exports = (fastify) => {
 				if (!toAccount) return reply.send("-1");
 
 				if (toAccount.friendRequestState === 1) return reply.send("-1");
-				// Check if the user is blocked
+
+				const blocked = await database.blocks.findFirst({
+					where: {
+						OR: [
+							{ accountId: account.id, targetAccountId: toAccount.id },
+							{ accountId: toAccount.id, targetAccountId: account.id },
+						],
+					},
+				});
+				if (blocked) return reply.send("-1");
 
 				let comment = null;
 				if (base64Comment) comment = fromSafeBase64(base64Comment).toString().slice(0, userFriendRequestCommentMaxSize);

@@ -44,6 +44,18 @@ function cipher(_data, _key) {
 	return cipher;
 }
 
+function decodeSavedGameData(path) {
+	return require("zlib")
+		.gunzipSync(
+			fromSafeBase64(
+				Buffer.from(require("fs").readFileSync(path))
+					.map((data) => data ^ 11)
+					.toString(),
+			),
+		)
+		.toString();
+}
+
 module.exports = {
 	getGJP2,
 	getSolo3,
@@ -53,4 +65,6 @@ module.exports = {
 	fromSafeBase64,
 	toSafeBase64,
 	cipher,
+
+	decodeSavedGameData,
 };

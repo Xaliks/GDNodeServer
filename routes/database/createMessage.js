@@ -38,10 +38,16 @@ module.exports = (fastify) => {
 
 					canSend = Boolean(friendship);
 				} else {
-					// Check if account blocked
-					if (false) {
-						canSend = false;
-					}
+					const blocked = await database.blocks.findFirst({
+						where: {
+							OR: [
+								{ accountId: account.id, targetAccountId: toAccount.id },
+								{ accountId: toAccount.id, targetAccountId: account.id },
+							],
+						},
+					});
+
+					canSend = Boolean(blocked);
 				}
 
 				if (!canSend) return reply.send("-1");

@@ -55,7 +55,7 @@ module.exports = (fastify) => {
 
 				Logger.log(
 					"User update",
-					`User ${Logger.color(Logger.colors.cyan)(user.username)}/${Logger.color(Logger.colors.gray)(accountID ?? 0)}/${Logger.color(Logger.colors.gray)(user.id)} updated.`,
+					`User ${Logger.color(Logger.colors.cyan)(userData.username)}/${Logger.color(Logger.colors.gray)(account?.id ?? 0)}/${Logger.color(Logger.colors.gray)(user.id)} updated.`,
 				);
 
 				return reply.send(user.id);

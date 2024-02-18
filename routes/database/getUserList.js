@@ -1,4 +1,3 @@
-const _ = require("lodash");
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
 const { database } = require("../../scripts/database");
 
@@ -23,52 +22,39 @@ module.exports = (fastify) => {
 				const friends = await database.friends.findMany({
 					where: { OR: [{ accountId1: account.id }, { accountId2: account.id }] },
 				});
+				if (!friends.length) return reply.send("-2");
 
-				const [newFriends1, newFriends2] = _.partition(
-					friends.filter((friendship) => {
-						if (friendship.accountId1 === account.id) return friendship.isNewFor1;
-						return friendship.isNewFor2;
-					}),
-					(friendship) => friendship.accountId1 === account.id,
-				);
-				const transaction = [
-					database.users.findMany({
+				const newFriends = friends.filter((friendship) => {
+					if (friendship.accountId1 === account.id) return friendship.isNewFor1;
+					return friendship.isNewFor2;
+				});
+
+				users = await database.users
+					.findMany({
 						where: {
 							id: {
-								in: friends
-									.map((friendship) => [friendship.accountId1, friendship.accountId2])
-									.flat()
-									.filter((id) => id !== account.id),
+								in: friends.map((friendship) => {
+									if (friendship.accountId1 === account.id) return friendship.accountId2;
+									return friendship.accountId1;
+								}),
 							},
 						},
-					}),
-				];
-				if (newFriends1.length) {
-					transaction.push(
-						database.friends.updateMany({
-							where: { id: { in: newFriends1.map((friendship) => friendship.id) } },
-							data: { isNewFor1: false },
-						}),
+					})
+					.then((friends) =>
+						friends.map((user) => ({
+							...user,
+							isNew: newFriends.find(
+								(friendship) => friendship.accountId1 === user.id || friendship.accountId2 === user.id,
+							),
+						})),
 					);
-				}
-				if (newFriends2.length) {
-					transaction.push(
-						database.friends.updateMany({
-							where: { id: { in: newFriends2.map((friendship) => friendship.id) } },
-							data: { isNewFor2: false },
-						}),
-					);
-				}
-
-				const [usersWithoutNew] = await database.$transaction(transaction);
-				users = usersWithoutNew.map((user) => ({
-					...user,
-					isNew:
-						newFriends1.find((friendship) => friendship.isNewFor1) ||
-						newFriends2.find((friendship) => friendship.isNewFor2),
-				}));
 			}
-			// blocked users - type 1
+			if (type === 1) {
+				const blocks = await database.blocks.findMany({ where: { accountId: account.id } });
+				if (!blocks.length) return reply.send("-2");
+
+				users = await database.users.findMany({ where: { extId: String(blocks.map((block) => block.targetAccountId)) } });
+			}
 
 			if (!users.length) return reply.send("-2");
 

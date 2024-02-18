@@ -19,8 +19,6 @@ module.exports = (fastify) => {
 				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
 				if (!account) return reply.send("-1");
 
-				// Check if user blocked
-
 				const friendRequest = await database.friendRequests
 					.delete({ where: { id: parseInt(requestID), accountId: parseInt(targetAccountID), toAccountId: account.id } })
 					.catch(() => null);

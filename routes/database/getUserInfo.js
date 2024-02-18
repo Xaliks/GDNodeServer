@@ -1,5 +1,5 @@
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
-const { database } = require("../../scripts/database");
+const { database, upsertUser } = require("../../scripts/database");
 const { showNotRegisteredUsersInLeaderboard } = require("../../config/config");
 
 /**
@@ -13,14 +13,30 @@ module.exports = (fastify) => {
 		handler: async (req, reply) => {
 			const { accountID, gjp2, targetAccountID } = req.body;
 
-			const [account, user] = await database.$transaction([
-				database.accounts.findFirst({ where: { id: parseInt(targetAccountID) } }),
-				database.users.findFirst({ where: { extId: targetAccountID } }),
-			]);
-			if (!account || !user) return reply.send("-1");
+			const account = await database.accounts.findFirst({ where: { id: parseInt(targetAccountID) } });
+			if (!account) return reply.send("-1");
+
+			const user = await upsertUser(
+				{ extId: String(account.id) },
+				{ isRegistered: true },
+				{ extId: String(account.id), username: account.username, isRegistered: true },
+			);
 
 			let isMe = false;
 			if (accountID === targetAccountID && account.password === gjp2) isMe = true;
+
+			if (!isMe) {
+				const blocked = await database.blocks.findFirst({
+					where: {
+						OR: [
+							{ accountId: account.id, targetAccountId: parseInt(accountID) },
+							{ accountId: parseInt(accountID), targetAccountId: account.id },
+						],
+					},
+				});
+
+				if (blocked) return reply.send("-1");
+			}
 
 			const where = { isBanned: false, stars: { gt: user.stars } };
 			if (!showNotRegisteredUsersInLeaderboard) where.isRegistered = true;
@@ -86,7 +102,7 @@ module.exports = (fastify) => {
 				[54, user.jetpack],
 				[47, user.explosion],
 				[28, user.glow ? 1 : 0],
-				[29, Boolean(account.id)],
+				[29, Boolean(account.id) ? 1 : 0],
 				[30, rank + 1], // rank leaderboard
 				[18, account.messageState], // 0 - all, 1 - friends, 2 - none
 				[19, account.friendRequestState], // 0 - accept, 1 - none

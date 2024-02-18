@@ -7,13 +7,13 @@
 	- [x] Backup
     - [x] Update
 	- [ ] Management Page
-- [ ] Users
+- [x] Users
     - [x] Search
     - [x] Leaderboard
     - [x] Profile posts
     - [x] Friend requests
     - [x] Friends
-    - [ ] Blocks
+    - [x] Blocks
     - [x] Messages
 - [ ] Levels
     - [ ] Search

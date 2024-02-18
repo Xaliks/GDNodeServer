@@ -36,7 +36,6 @@ module.exports = (fastify) => {
 					.then((friends) =>
 						friends.map((friend) => (friend.accountId1 === account.id ? friend.accountId2 : friend.accountId1)),
 					);
-				if (!friendIds.length) return reply.send("");
 
 				users = await database.users.findMany({
 					where: { extId: { in: friendIds.concat(account.id).map((id) => String(id)) } },
@@ -124,7 +123,7 @@ module.exports = (fastify) => {
 
 			if (type === "creators") {
 				users = await database.users.findMany({
-					where: { ...where, creatorPoints: { gt: 0 } },
+					where: { ...where, isCreatorBanned: false, creatorPoints: { gt: 0 } },
 					orderBy: { creatorPoints: "desc" },
 					take,
 				});

@@ -14,15 +14,15 @@ module.exports = (fastify) => {
 		url: "/getGJRewards.php",
 		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["udid", "chk"])],
 		handler: async (req, reply) => {
-			const { udid, accountID, gjp, chk, r1, r2 } = req.body;
+			const { udid, accountID, gjp2, chk, r1, r2 } = req.body;
 
 			try {
 				const rewardType = parseInt(req.body.rewardType) || 0;
 
 				let user;
 				let accountId = accountID ?? "";
-				if (accountID && gjp) {
-					const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp } });
+				if (accountID && gjp2) {
+					const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
 
 					if (account) {
 						user = await getUser(account.id);
