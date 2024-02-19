@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "build": "npm install && npx prisma db push",
+    "dbUpdate": "npx prisma migrate deploy",
+    "dbPush": "npx prisma db push",
     "start": "node .",
     "dev": "cross-env EnableLogging=true nodemon ."
   },

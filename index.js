@@ -25,9 +25,9 @@ fastify.addHook("onRequest", (request, reply, done) => {
 	done();
 });
 
-function registerRoutes(path) {
+function registerRoutes(path, urlPath) {
 	fs.readdirSync(path).forEach((file) => {
-		if (fs.statSync(`${path}/${file}`).isDirectory()) registerRoutes(`${path}/${file}`);
+		if (fs.statSync(`${path}/${file}`).isDirectory()) registerRoutes(`${path}/${file}`, urlPath);
 
 		if (file.endsWith(".js")) {
 			fastify.register(
@@ -36,13 +36,13 @@ function registerRoutes(path) {
 
 					done();
 				},
-				{ prefix: path.replace("routes", config.path) },
+				{ prefix: path.replace("routes", urlPath) },
 			);
 		}
 	});
 }
 
-registerRoutes("routes");
+registerRoutes("routes/database", config.databasePath);
 
 fastify.setNotFoundHandler((request, reply) => {
 	return reply.status(404).send("Not Found!");

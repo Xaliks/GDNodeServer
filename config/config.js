@@ -15,8 +15,9 @@ const SoulShard = 14;
 module.exports = {
 	port: 59999,
 	secret: "Wmfd2893gb7",
-	path: "th",
+	databasePath: "gd_database", // if your full url (like http://localhost:59999) length is not matching to 33, then use it /
 	host: "http://localhost:59999",
+	// In this case, it will be "http://localhost:59999/gd_database" - 33 symbols, no more, no less.
 
 	preActiveAccounts: true,
 	showNotRegisteredUsersInLeaderboard: true,

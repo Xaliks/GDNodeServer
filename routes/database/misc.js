@@ -6,6 +6,6 @@ const config = require("../../config/config");
  */
 module.exports = (fastify) => {
 	fastify.post("/getAccountURL.php", { beforeHandler: secretMiddleware }, (req, reply) =>
-		reply.send(`${config.host}/${config.path}`),
+		reply.send(`${config.host}/${config.databasePath}`),
 	);
 };
