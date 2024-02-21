@@ -1,6 +1,6 @@
 const Logger = require("../../scripts/Logger");
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
-const { database } = require("../../scripts/database");
+const { database, getUser } = require("../../scripts/database");
 const { toSafeBase64 } = require("../../scripts/security");
 const { dateToRelative } = require("../../scripts/util");
 const { userFriendRequestPageSize } = require("../../config/config");
@@ -14,13 +14,11 @@ module.exports = (fastify) => {
 		url: "/getGJFriendRequests20.php",
 		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2"])],
 		handler: async (req, reply) => {
-			const { accountID, gjp2 } = req.body;
-
 			const getSent = req.body.getSent === "1";
 			const page = Math.max(req.body.page, 0);
 			let totalCount = Math.max(req.body.total, 0);
 
-			const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
+			const { account } = await getUser(req.body, false);
 			if (!account) return reply.send("-1");
 
 			const friendRequests = await database.friendRequests.findMany({

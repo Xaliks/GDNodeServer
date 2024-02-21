@@ -29,7 +29,7 @@ model Accounts {
 
 model Users {
   id       Int    @id @default(autoincrement())
-  extId    String
+  extId    String @unique
   username String @default("Player")
 
   isRegistered    Boolean @default(false)
@@ -86,6 +86,8 @@ model FriendRequests {
   comment     String?
   isNew       Boolean  @default(true)
   createdAt   DateTime @default(now())
+
+  @@unique([accountId, toAccountId])
 }
 
 model Friends {
@@ -94,6 +96,8 @@ model Friends {
   accountId2 Int
   isNewFor1  Boolean @default(true)
   isNewFor2  Boolean @default(true)
+
+  @@unique([accountId1, accountId2])
 }
 
 model Blocks {
@@ -122,7 +126,6 @@ model Levels {
   description   String?
   version       Int     @default(0)
   userId        Int
-  extId         String
 }
 
 model SavedData {

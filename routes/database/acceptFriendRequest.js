@@ -1,6 +1,6 @@
 const Logger = require("../../scripts/Logger");
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
-const { database } = require("../../scripts/database");
+const { database, getUser } = require("../../scripts/database");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -11,16 +11,16 @@ module.exports = (fastify) => {
 		url: "/acceptGJFriendRequest20.php",
 		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2", "requestID", "targetAccountID"])],
 		handler: async (req, reply) => {
-			const { accountID, gjp2, targetAccountID, requestID } = req.body;
+			const { accountID, targetAccountID, requestID } = req.body;
 
 			if (accountID === targetAccountID) return reply.send("-1");
 
 			try {
-				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
+				const { account } = await getUser(req.body, false);
 				if (!account) return reply.send("-1");
 
 				const friendRequest = await database.friendRequests
-					.delete({ where: { id: parseInt(requestID), accountId: parseInt(targetAccountID), toAccountId: account.id } })
+					.delete({ where: { id: Number(requestID), accountId: Number(targetAccountID), toAccountId: account.id } })
 					.catch(() => null);
 				if (!friendRequest) return reply.send("-1");
 

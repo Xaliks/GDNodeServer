@@ -1,6 +1,6 @@
 const Logger = require("../../scripts/Logger");
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
-const { database } = require("../../scripts/database");
+const { database, getUser } = require("../../scripts/database");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -11,10 +11,10 @@ module.exports = (fastify) => {
 		url: "/deleteGJMessages20.php",
 		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2"])],
 		handler: async (req, reply) => {
-			const { accountID, gjp2, isSender, messages, messageID } = req.body;
+			const { isSender, messages, messageID } = req.body;
 
 			try {
-				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
+				const { account } = await getUser(req.body, false);
 				if (!account) return reply.send("-1");
 
 				const isSent = isSender === "1";

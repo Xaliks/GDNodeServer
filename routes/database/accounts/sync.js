@@ -1,6 +1,6 @@
 const Logger = require("../../../scripts/Logger");
 const { secretMiddleware, requiredBodyMiddleware } = require("../../../scripts/middlewares");
-const { database } = require("../../../scripts/database");
+const { database, getUser } = require("../../../scripts/database");
 
 const ResponseEnum = {
 	Success: (savedData, gameVersion, binaryVersion) => `${savedData};${gameVersion};${binaryVersion};a;a`, // Sync successful
@@ -19,10 +19,8 @@ module.exports = (fastify) => {
 		url: "/syncGJAccountNew.php",
 		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2"])],
 		handler: async (req, reply) => {
-			const { accountID, gjp2 } = req.body;
-
 			try {
-				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
+				const { account } = await getUser(req.body);
 				if (!account) return reply.send(ResponseEnum.LoginFailed);
 
 				const savedData = await database.savedData.findFirst({ where: { id: account.id } });

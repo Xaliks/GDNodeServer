@@ -1,5 +1,7 @@
 ### TODO:
 
+- [ ] Fastify schema validation
+- [ ] Ratelimit
 - [ ] Accounts
 	- [x] Login
 	- [x] Register

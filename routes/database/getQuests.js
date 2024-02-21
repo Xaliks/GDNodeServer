@@ -1,7 +1,7 @@
 const _ = require("lodash");
 const { getSolo3, cipher, fromBase64, toSafeBase64 } = require("../../scripts/security");
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
-const { getUser, database } = require("../../scripts/database");
+const { getUser } = require("../../scripts/database");
 const { rewards } = require("../../config/config");
 
 const startQuestsTimestamp = new Date("2024-02-12T00:00:00.000Z");
@@ -15,14 +15,10 @@ module.exports = (fastify) => {
 		url: "/getGJChallenges.php",
 		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["udid", "chk"])],
 		handler: async (req, reply) => {
-			const { udid, accountID, gjp2, chk } = req.body;
+			const { udid, accountID, chk } = req.body;
 
-			let account;
-			if (accountID && gjp2) {
-				account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
-			}
-
-			const user = await getUser(account?.id ?? udid, account?.username);
+			const { account, user } = await getUser(req.body);
+			if (account === 0) return reply.send("-1");
 
 			const quests = _.sampleSize(
 				rewards.quests.map((quest, i) => {
@@ -31,7 +27,7 @@ module.exports = (fastify) => {
 
 					return [id, type, quest.amount, quest.reward, quest.name].join(",");
 				}),
-				3,
+				9,
 			);
 
 			const result = toSafeBase64(
@@ -41,7 +37,7 @@ module.exports = (fastify) => {
 						user.id,
 						cipher(fromBase64(chk.slice(5)).toString(), 19847),
 						udid,
-						account?.id ?? "",
+						accountID ?? "",
 						Math.round((new Date().setHours(0, 0, 0, 0) + 24 * 60 * 60_000 - Date.now()) / 1_000),
 						...quests.slice(0, 3),
 					].join(":"),

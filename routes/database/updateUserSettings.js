@@ -9,25 +9,28 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/updateGJAccSettings20.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2"])],
+		beforeHandler: [
+			secretMiddleware,
+			requiredBodyMiddleware(["accountID", "gjp2", "mS", "frS", "cS", "yt", "twitter", "twitch"]),
+		],
 		handler: async (req, reply) => {
-			const { accountID, gjp2 } = req.body;
+			const { accountID, gjp2, mS, frS, cS, yt, twitter, twitch } = req.body;
 
 			try {
-				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
+				const account = await database.accounts
+					.update({
+						where: { id: parseInt(accountID), password: gjp2 },
+						data: {
+							messageState: parseInt(mS),
+							friendRequestState: parseInt(frS),
+							commentHistorySate: parseInt(cS),
+							youtube: yt,
+							twitter,
+							twitch,
+						},
+					})
+					.catch(() => null);
 				if (!account) return reply.send("-1");
-
-				await database.accounts.update({
-					where: { id: account.id },
-					data: {
-						messageState: parseInt(req.body.mS),
-						friendRequestState: parseInt(req.body.frS),
-						commentHistorySate: parseInt(req.body.cS),
-						youtube: req.body.yt,
-						twitter: req.body.twitter,
-						twitch: req.body.twitch,
-					},
-				});
 
 				Logger.log(
 					"User update",

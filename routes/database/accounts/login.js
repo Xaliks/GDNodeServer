@@ -1,6 +1,6 @@
 const Logger = require("../../../scripts/Logger");
 const { secretMiddleware, requiredBodyMiddleware } = require("../../../scripts/middlewares");
-const { database, upsertUser } = require("../../../scripts/database");
+const { getUser } = require("../../../scripts/database");
 
 const ResponseEnum = {
 	Success: (accountId, userId) => `${accountId},${userId}`, // Success login
@@ -18,29 +18,21 @@ module.exports = (fastify) => {
 		url: "/loginGJAccount.php",
 		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["udid", "userName", "gjp2"])],
 		handler: async (req, reply) => {
-			const { udid, userName, gjp2 } = req.body;
-
 			try {
-				const account = await database.accounts.findFirst({ where: { username: userName, password: gjp2 } });
+				const { account, user } = await getUser(req.body);
 				if (!account) return reply.send(ResponseEnum.Failed);
-
-				const user = await upsertUser(
-					{ extId: String(account.id) },
-					{ username: userName, isRegistered: true },
-					{ extId: String(account.id), username: userName, isRegistered: true },
-				);
 
 				Logger.log(
 					"Account login",
-					`User ${Logger.color(Logger.colors.cyan)(userName)}/${Logger.color(Logger.colors.gray)(account.id)}/${Logger.color(Logger.colors.gray)(user.id)} logged in.`,
+					`User ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)}/${Logger.color(Logger.colors.gray)(user.id)} logged in.`,
 				);
 
 				reply.send(ResponseEnum.Success(account.id, user.id));
 
-				await database.levels.updateMany({
-					where: { extId: udid },
-					data: { extId: String(account.id), userId: user.id },
-				});
+				// await database.levels.updateMany({
+				// 	where: { extId: udid },
+				// 	data: { extId: String(account.id), userId: user.id },
+				// });
 			} catch (error) {
 				Logger.error("Account login", error);
 

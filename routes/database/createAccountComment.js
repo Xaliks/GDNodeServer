@@ -1,6 +1,6 @@
 const Logger = require("../../scripts/Logger");
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
-const { database } = require("../../scripts/database");
+const { database, getUser } = require("../../scripts/database");
 const { fromSafeBase64 } = require("../../scripts/security");
 const { userCommentMaxSize } = require("../../config/config");
 
@@ -13,10 +13,10 @@ module.exports = (fastify) => {
 		url: "/uploadGJAccComment20.php",
 		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2", "comment"])],
 		handler: async (req, reply) => {
-			const { accountID, gjp2, comment: base64Content } = req.body;
+			const { comment: base64Content } = req.body;
 
 			try {
-				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
+				const { account } = await getUser(req.body, false);
 				if (!account) return reply.send("-1");
 
 				const content = fromSafeBase64(base64Content).toString().slice(0, userCommentMaxSize);

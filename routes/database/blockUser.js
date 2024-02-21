@@ -1,6 +1,6 @@
 const Logger = require("../../scripts/Logger");
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
-const { database } = require("../../scripts/database");
+const { database, getUser } = require("../../scripts/database");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -11,12 +11,12 @@ module.exports = (fastify) => {
 		url: "/blockGJUser20.php",
 		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2", "targetAccountID"])],
 		handler: async (req, reply) => {
-			const { accountID, gjp2, targetAccountID } = req.body;
+			const { accountID, targetAccountID } = req.body;
 
 			if (accountID === targetAccountID) return reply.send("-1");
 
 			try {
-				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
+				const { account } = await getUser(req.body, false);
 				if (!account) return reply.send("-1");
 
 				// I know there is no need to check if an account exists or not, but I don't want to store a lot of blocks with non-existent accounts.

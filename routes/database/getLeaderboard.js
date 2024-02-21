@@ -12,7 +12,7 @@ module.exports = (fastify) => {
 		url: "/getGJScores20.php",
 		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["type", "count"])],
 		handler: async (req, reply) => {
-			const { type, count, accountID, gjp2, udid } = req.body;
+			const { type, count, accountID, udid } = req.body;
 
 			let users = [];
 			const take = Math.min(count, 200);
@@ -28,7 +28,7 @@ module.exports = (fastify) => {
 			}
 
 			if (type === "friends") {
-				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
+				const { account } = await getUser(req.body, false);
 				if (!account) return reply.send("-1");
 
 				const friendIds = await database.friends
@@ -47,7 +47,9 @@ module.exports = (fastify) => {
 			if (type === "relative") {
 				if (!accountID && !udid) return reply.send("-1");
 
-				const user = await getUser(accountID || udid);
+				const { account, user } = await getUser(req.body);
+				if (account === 0) return reply.send("-1");
+
 				const userRank = await database.users.count({ where: { ...where, stars: { gte: user.stars || 1 } } });
 
 				if (!user.stars) {
@@ -135,10 +137,12 @@ module.exports = (fastify) => {
 						return [
 							[1, user.username],
 							[2, user.id],
+							[7, user.extId],
+							[16, Number(user.extId) || 0],
+
 							[3, user.stars],
 							[4, user.demons],
 							[6, user.rank ?? i + 1],
-							[7, user.extId],
 							[8, user.creatorPoints],
 							[9, user.displayIcon],
 							[10, user.mainColor],
@@ -146,7 +150,6 @@ module.exports = (fastify) => {
 							[13, user.coins],
 							[14, user.displayIconType],
 							[15, user.special],
-							[16, isNaN(user.extId) ? 0 : user.extId],
 							[17, user.userCoins],
 							[46, user.diamonds],
 							[52, user.moons],

@@ -1,46 +1,46 @@
-// eslint-disable-next-line no-unused-vars
-const { PrismaClient, Prisma } = require("@prisma/client");
+const { PrismaClient } = require("@prisma/client");
 
-const database = new PrismaClient();
+const database = new PrismaClient({ log: ["query"] });
 
-/**
- * @param {Prisma.UsersWhereInput} where
- * @param {Prisma.UsersUpdateInput} update
- * @param {Prisma.UsersCreateInput} create
- * @returns {Promise<Prisma.UsersGetPayload>}
- */
-async function upsertUser(where, update, create) {
-	let user;
+async function getUser(body, returnUser = true, createUserData = {}) {
+	let user = null;
+	let account = null;
 
-	if (Object.keys(update).length || Object.keys(create).length) {
-		let count = 0;
-		if (Object.keys(update).length) {
-			count = await database.users.updateMany({ where, data: update }).then((result) => result.count);
-		} else user = await database.users.findFirst({ where });
+	const accountId = Number(body?.accountID);
+	const password = body?.gjp2;
+	const udid = body?.udid;
 
-		if (!count && !user && Object.keys(create).length) {
-			user = await database.users.create({ data: create });
+	if (password) {
+		if (accountId) {
+			account = await database.accounts.findFirst({ where: { id: accountId, password } });
+		} else if (body.userName) {
+			account = await database.accounts.findFirst({ where: { username: body.userName, password } });
+		}
+
+		if (!account) return { user, account: 0 };
+	}
+
+	if (returnUser) {
+		if (account) {
+			if (!("username" in createUserData)) createUserData.username = account.username;
+
+			user = await database.users.findFirst({ where: { extId: String(account.id) } });
+
+			if (!user?.isRegistered || user.username !== account.username) {
+				user = await database.users.upsert({
+					where: { extId: String(account.id) },
+					update: { isRegistered: true, username: account.username },
+					create: { extId: String(account.id), isRegistered: true, ...createUserData },
+				});
+			}
+		} else if (udid) {
+			user = await database.users.findFirst({ where: { extId: udid } });
+
+			if (!user) user = await database.users.create({ data: { extId: udid, ...createUserData } });
 		}
 	}
 
-	if (!user) user = await database.users.findFirst({ where });
-
-	return user;
+	return { user, account };
 }
 
-async function getUser(extId, username) {
-	if (!username) {
-		let user = await database.users.findFirst({ where: { extId: String(extId) } });
-		if (!user) user = await database.users.create({ data: { extId: String(extId) } });
-
-		return user;
-	}
-
-	return upsertUser({ extId: String(extId) }, { username }, { extId: String(extId), username });
-}
-
-module.exports = {
-	database,
-	upsertUser,
-	getUser,
-};
+module.exports = { database, getUser };

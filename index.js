@@ -26,20 +26,26 @@ fastify.addHook("onRequest", (request, reply, done) => {
 });
 
 function registerRoutes(path, urlPath) {
-	fs.readdirSync(path).forEach((file) => {
-		if (fs.statSync(`${path}/${file}`).isDirectory()) registerRoutes(`${path}/${file}`, urlPath);
+	const originalPath = path;
 
-		if (file.endsWith(".js")) {
-			fastify.register(
-				(api, options, done) => {
-					require(`./${path}/${file}`)(api);
+	function recurse(path, urlPath) {
+		fs.readdirSync(path).forEach((file) => {
+			if (fs.statSync(`${path}/${file}`).isDirectory()) recurse(`${path}/${file}`, urlPath);
 
-					done();
-				},
-				{ prefix: path.replace("routes", urlPath) },
-			);
-		}
-	});
+			if (file.endsWith(".js")) {
+				fastify.register(
+					(api, options, done) => {
+						require(`./${path}/${file}`)(api);
+
+						done();
+					},
+					{ prefix: path.replace(originalPath, urlPath) },
+				);
+			}
+		});
+	}
+
+	return recurse(path, urlPath);
 }
 
 registerRoutes("routes/database", config.databasePath);

@@ -1,6 +1,6 @@
 const Logger = require("../../scripts/Logger");
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
-const { database } = require("../../scripts/database");
+const { database, getUser } = require("../../scripts/database");
 const { fromSafeBase64 } = require("../../scripts/security");
 const { userFriendRequestCommentMaxSize } = require("../../config/config");
 
@@ -13,12 +13,12 @@ module.exports = (fastify) => {
 		url: "/uploadFriendRequest20.php",
 		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2", "toAccountID"])],
 		handler: async (req, reply) => {
-			const { accountID, gjp2, toAccountID, comment: base64Comment } = req.body;
+			const { accountID, toAccountID, comment: base64Comment } = req.body;
 
 			if (accountID === toAccountID) return reply.send("-1");
 
 			try {
-				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
+				const { account } = await getUser(req.body, false);
 				if (!account) return reply.send("-1");
 
 				const toAccount = await database.accounts.findFirst({ where: { id: parseInt(toAccountID) } });

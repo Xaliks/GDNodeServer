@@ -14,22 +14,14 @@ module.exports = (fastify) => {
 		url: "/getGJRewards.php",
 		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["udid", "chk"])],
 		handler: async (req, reply) => {
-			const { udid, accountID, gjp2, chk, r1, r2 } = req.body;
+			const { udid, accountID, chk, r1, r2 } = req.body;
 
 			try {
 				const rewardType = parseInt(req.body.rewardType) || 0;
 
-				let user;
-				let accountId = accountID ?? "";
-				if (accountID && gjp2) {
-					const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
-
-					if (account) {
-						user = await getUser(account.id);
-						accountId = account.id;
-					}
-				}
-				if (!user) user = await getUser(udid);
+				// eslint-disable-next-line prefer-const
+				let { account, user } = await getUser(req.body);
+				if (account === 0) return reply.send("-1");
 
 				let totalSmallChests = parseInt(r1);
 				let totalBigChests = parseInt(r2);
@@ -65,7 +57,7 @@ module.exports = (fastify) => {
 							user.id,
 							cipher(fromBase64(chk.slice(5)).toString(), 59182),
 							udid,
-							accountId,
+							accountID ?? "",
 							getChestRemaining(1, user),
 							getChestStuff(1, user),
 							totalSmallChests,

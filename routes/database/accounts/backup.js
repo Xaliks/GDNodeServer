@@ -2,7 +2,7 @@ const zlib = require("node:zlib");
 const Logger = require("../../../scripts/Logger");
 const { fromSafeBase64 } = require("../../../scripts/security");
 const { secretMiddleware, requiredBodyMiddleware } = require("../../../scripts/middlewares");
-const { upsertUser, database } = require("../../../scripts/database");
+const { database, getUser } = require("../../../scripts/database");
 
 const ResponseEnum = {
 	Success: "1", // Success backup
@@ -24,29 +24,25 @@ module.exports = (fastify) => {
 			requiredBodyMiddleware(["accountID", "gjp2", "saveData", "gameVersion", "binaryVersion"]),
 		],
 		handler: async (req, reply) => {
-			const { accountID, gjp2, saveData, gameVersion, binaryVersion } = req.body;
+			const { saveData, gameVersion, binaryVersion } = req.body;
 
 			try {
-				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
+				const { account, user } = await getUser(req.body);
 				if (!account) return reply.send(ResponseEnum.LoginFailed);
 
 				const [base64Data] = saveData.split(";");
 				const uncompressedData = zlib.gunzipSync(fromSafeBase64(base64Data)).toString();
 
-				const orbs = parseInt(uncompressedData.match(/<\/s><k>14<\/k><s>(\d+)<\/s>/)?.[1]);
-				if (isNaN(orbs)) return reply.send(ResponseEnum.Failed);
+				const orbs = Number(uncompressedData.match(/<\/s><k>14<\/k><s>(\d+)<\/s>/)?.[1]) || 0;
 
-				const user = await upsertUser(
-					{ extId: String(account.id) },
-					{ orbs },
-					{ extId: String(account.id), username: account.username, orbs },
-				);
-
-				await database.savedData.upsert({
-					where: { id: account.id },
-					update: { data: saveData, gameVersion, binaryVersion },
-					create: { id: account.id, data: saveData, gameVersion, binaryVersion },
-				});
+				await database.$transaction([
+					database.savedData.upsert({
+						where: { id: account.id },
+						update: { data: saveData, gameVersion, binaryVersion },
+						create: { id: account.id, data: saveData, gameVersion, binaryVersion },
+					}),
+					database.users.update({ where: { id: user.id }, data: { orbs } }),
+				]);
 
 				Logger.log(
 					"User backup",

@@ -1,6 +1,6 @@
 const Logger = require("../../scripts/Logger");
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
-const { database } = require("../../scripts/database");
+const { database, getUser } = require("../../scripts/database");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -11,23 +11,20 @@ module.exports = (fastify) => {
 		url: "/removeGJFriend20.php",
 		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2", "targetAccountID"])],
 		handler: async (req, reply) => {
-			const { accountID, gjp2, targetAccountID } = req.body;
+			const { targetAccountID } = req.body;
 
 			try {
-				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
+				const { account } = await getUser(req.body, false);
 				if (!account) return reply.send("-1");
 
-				const [friendship] = await database.$queryRaw`
-					delete from public."Friends"
-					where (
-						"accountId1" = ${parseInt(targetAccountID)}
-							and "accountId2" = ${parseInt(accountID)}
-					)
-					or (
-						"accountId1" = ${parseInt(accountID)}
-							and "accountId2" = ${parseInt(targetAccountID)}
-					)
-					returning id, "accountId1", "accountId2"`;
+				const friendship = await database.friends.delete({
+					where: {
+						OR: [
+							{ accountId1: parseInt(targetAccountID), accountId2: account.id },
+							{ accountId1: account.id, accountId2: parseInt(targetAccountID) },
+						],
+					},
+				});
 				if (!friendship) return reply.send("-1");
 
 				Logger.log(

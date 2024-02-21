@@ -1,5 +1,6 @@
+const _ = require("lodash");
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
-const { database } = require("../../scripts/database");
+const { database, getUser } = require("../../scripts/database");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -10,9 +11,7 @@ module.exports = (fastify) => {
 		url: "/getGJUserList20.php",
 		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2", "type"])],
 		handler: async (req, reply) => {
-			const { accountID, gjp2 } = req.body;
-
-			const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
+			const { account } = await getUser(req.body, false);
 			if (!account) return reply.send("-1");
 
 			const type = parseInt(req.body.type) || 0;
@@ -48,12 +47,34 @@ module.exports = (fastify) => {
 							),
 						})),
 					);
+
+				const [newFriends1, newFriends2] = _.partition(newFriends, (friendship) => friendship.accountId1 === account.id);
+				const transaction = [];
+				if (newFriends1.length) {
+					transaction.push(
+						database.friends.updateMany({
+							where: { id: { in: newFriends1.map((friendship) => friendship.id) } },
+							data: { isNewFor1: false },
+						}),
+					);
+				}
+				if (newFriends2.length) {
+					transaction.push(
+						database.friends.updateMany({
+							where: { id: { in: newFriends2.map((friendship) => friendship.id) } },
+							data: { isNewFor2: false },
+						}),
+					);
+				}
+				if (transaction.length) database.$transaction(transaction);
 			}
 			if (type === 1) {
 				const blocks = await database.blocks.findMany({ where: { accountId: account.id } });
 				if (!blocks.length) return reply.send("-2");
 
-				users = await database.users.findMany({ where: { extId: String(blocks.map((block) => block.targetAccountId)) } });
+				users = await database.users.findMany({
+					where: { extId: { in: blocks.map((block) => String(block.targetAccountId)) } },
+				});
 			}
 
 			if (!users.length) return reply.send("-2");

@@ -27,14 +27,11 @@ module.exports = (fastify) => {
 			if (targetAccount.commentHistorySate !== 0) {
 				if (!accountID || !gjp2) return reply.send("-1");
 
-				let account;
 				if (targetAccountID === accountID) {
-					if (targetAccount.password !== gjp2) return reply.send("#0:0:0");
-
-					account = targetAccount;
+					if (targetAccount.password !== gjp2) return reply.send("-1");
 				} else {
 					if (targetAccount.commentHistorySate === 1) {
-						account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
+						const { account } = await getUser({ accountID, gjp2 }, false);
 						if (!account) return reply.send("-1");
 
 						const friendship = await database.friends.findFirst({
@@ -52,7 +49,7 @@ module.exports = (fastify) => {
 			}
 
 			const comments = await database.accountComments.findMany({
-				where: { accountId: parseInt(targetAccountID) },
+				where: { accountId: targetAccount.id },
 				take: userCommentsPageSize,
 				skip: page * userCommentsPageSize,
 			});
@@ -60,10 +57,10 @@ module.exports = (fastify) => {
 
 			if (comments.length < userCommentsPageSize) totalCount = page * userCommentsPageSize + comments.length;
 			else if (!totalCount) {
-				totalCount = await database.accountComments.count({ where: { accountId: parseInt(targetAccountID) } });
+				totalCount = await database.accountComments.count({ where: { accountId: targetAccount.id } });
 			}
 
-			const user = await getUser(targetAccountID);
+			const user = await database.users.findFirst({ where: { extId: String(targetAccount.id) } });
 
 			reply.send(
 				`${comments

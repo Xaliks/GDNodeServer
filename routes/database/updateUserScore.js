@@ -1,6 +1,6 @@
 const Logger = require("../../scripts/Logger");
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
-const { database, upsertUser } = require("../../scripts/database");
+const { database, getUser } = require("../../scripts/database");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -11,26 +11,43 @@ module.exports = (fastify) => {
 		url: "/updateGJUserScore22.php",
 		beforeHandler: [
 			secretMiddleware,
-			requiredBodyMiddleware(["stars", "userName", "demons", "icon", "color1", "color2", "udid"]),
+			requiredBodyMiddleware([
+				"accountID",
+				"gjp2",
+				"stars",
+				"demons",
+				"diamonds",
+				"icon",
+				"iconType",
+				"coins",
+				"userCoins",
+				"accIcon",
+				"accShip",
+				"accBall",
+				"accBird",
+				"accDart",
+				"accRobot",
+				"accGlow",
+				"accSpider",
+				"accExplosion",
+				"seed2",
+			]),
 		],
 		handler: async (req, reply) => {
-			const { accountID, udid, gjp2, userName } = req.body;
+			const { userName } = req.body;
 
 			try {
-				let account;
-				if (accountID && gjp2) {
-					account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
-				}
+				const { account, user } = await getUser(req.body);
+				if (account === 0 || (!account && user.isRegistered)) return reply.send("-1");
 
 				const userData = {
-					extId: String(account?.id ?? udid),
-					username: userName,
+					username: account?.username || userName,
 					stars: parseInt(req.body.stars),
 					moons: parseInt(req.body.moons),
 					demons: parseInt(req.body.demons),
 					coins: parseInt(req.body.coins),
 					userCoins: parseInt(req.body.userCoins),
-					special: parseInt(req.body.special), // idk
+					special: parseInt(req.body.special),
 					diamonds: parseInt(req.body.diamonds),
 					displayIcon: parseInt(req.body.icon),
 					displayIconType: parseInt(req.body.iconType),
@@ -51,7 +68,7 @@ module.exports = (fastify) => {
 					isRegistered: Boolean(account),
 				};
 
-				const user = await upsertUser({ extId: userData.extId }, userData, userData);
+				await database.users.update({ where: { id: user.id }, data: userData });
 
 				Logger.log(
 					"User update",

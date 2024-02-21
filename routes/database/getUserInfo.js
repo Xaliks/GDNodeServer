@@ -1,5 +1,5 @@
 const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
-const { database, upsertUser } = require("../../scripts/database");
+const { database } = require("../../scripts/database");
 const { showNotRegisteredUsersInLeaderboard } = require("../../config/config");
 
 /**
@@ -13,14 +13,8 @@ module.exports = (fastify) => {
 		handler: async (req, reply) => {
 			const { accountID, gjp2, targetAccountID } = req.body;
 
-			const account = await database.accounts.findFirst({ where: { id: parseInt(targetAccountID) } });
+			const account = await database.accounts.findFirst({ where: { id: parseInt(targetAccountID), isActive: true } });
 			if (!account) return reply.send("-1");
-
-			const user = await upsertUser(
-				{ extId: String(account.id) },
-				{ isRegistered: true },
-				{ extId: String(account.id), username: account.username, isRegistered: true },
-			);
 
 			let isMe = false;
 			if (accountID === targetAccountID && account.password === gjp2) isMe = true;
@@ -38,6 +32,8 @@ module.exports = (fastify) => {
 				if (blocked) return reply.send("-1");
 			}
 
+			const user = await database.users.findFirst({ where: { extId: String(account.id) } });
+
 			const where = { isBanned: false, stars: { gt: user.stars } };
 			if (!showNotRegisteredUsersInLeaderboard) where.isRegistered = true;
 			const rank = await database.users.count({ where });
@@ -47,6 +43,7 @@ module.exports = (fastify) => {
 			let newFriendsCount;
 			let friendRequest;
 			let friendship;
+			let friendState = 0;
 
 			if (isMe) {
 				[newMessagesCount, newFriendRequestsCount, newFriendsCount] = await database.$transaction([
@@ -62,16 +59,19 @@ module.exports = (fastify) => {
 					}),
 				]);
 			} else {
-				[friendRequest, friendship] = await database.$transaction([
-					database.friendRequests.findFirst({ where: { OR: [{ accountId: account.id }, { toAccountId: account.id }] } }),
-					database.friends.findFirst({ where: { OR: [{ accountId1: account.id }, { accountId2: account.id }] } }),
-				]);
-			}
+				friendship = await database.friends.findFirst({
+					where: { OR: [{ accountId1: account.id }, { accountId2: account.id }] },
+				});
+				if (friendship) friendState = 1;
+				else {
+					friendRequest = await database.friendRequests.findFirst({
+						where: { OR: [{ accountId: account.id }, { toAccountId: account.id }] },
+					});
 
-			let friendState = 0;
-			if (friendship) friendState = 1;
-			else if (friendRequest?.toAccountId === account.id) friendState = 2;
-			else if (friendRequest?.accountId === account.id) friendState = 3;
+					if (friendRequest?.toAccountId === account.id) friendState = 2;
+					else if (friendRequest?.accountId === account.id) friendState = 3;
+				}
+			}
 
 			const result = [
 				[1, account.username],
