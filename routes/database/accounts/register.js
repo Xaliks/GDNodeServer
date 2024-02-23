@@ -1,8 +1,7 @@
 const Logger = require("../../../scripts/Logger");
 const { getGJP2 } = require("../../../scripts/security");
-const { secretMiddleware, requiredBodyMiddleware } = require("../../../scripts/middlewares");
 const { database } = require("../../../scripts/database");
-const { preActiveAccounts } = require("../../../config/config");
+const { preActiveAccounts, accountSecret, emailRegex, passwordRegex, usernameRegex } = require("../../../config/config");
 
 const ResponseEnum = {
 	Success: "1", // Success registration
@@ -24,9 +23,27 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/registerGJAccount.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["userName", "password", "email"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: accountSecret },
+					userName: { type: "string" },
+					password: { type: "string" },
+					email: { type: "string" },
+				},
+				required: ["secret", "userName", "password", "email"],
+			},
+		},
 		handler: async (req, reply) => {
 			const { userName, password, email } = req.body;
+
+			if (userName.length < 3) return reply.send(ResponseEnum.ShortUsername);
+			if (password.length < 6) return reply.send(ResponseEnum.ShortPassword);
+			if (!usernameRegex.test(userName)) return reply.send(ResponseEnum.InvalidUsername);
+			if (!emailRegex.test(email)) return reply.send(ResponseEnum.InvalidEmail);
+			if (!passwordRegex.test(password)) return reply.send(ResponseEnum.InvalidPassword);
 
 			const existingAccount = await database.accounts.findFirst({ where: { OR: [{ email }, { username: userName }] } });
 			if (existingAccount?.email === email) return reply.send(ResponseEnum.EmailInUse);

@@ -1,8 +1,8 @@
 const zlib = require("node:zlib");
-const Logger = require("../../../scripts/Logger");
-const { fromSafeBase64 } = require("../../../scripts/security");
-const { secretMiddleware, requiredBodyMiddleware } = require("../../../scripts/middlewares");
-const { database, getUser } = require("../../../scripts/database");
+const Logger = require("../../../../scripts/Logger");
+const { fromSafeBase64 } = require("../../../../scripts/security");
+const { accountSecret, gjp2Pattern, safeBase64Pattern } = require("../../../../config/config");
+const { database, getUser } = require("../../../../scripts/database");
 
 const ResponseEnum = {
 	Success: "1", // Success backup
@@ -19,10 +19,21 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/backupGJAccountNew.php",
-		beforeHandler: [
-			secretMiddleware,
-			requiredBodyMiddleware(["accountID", "gjp2", "saveData", "gameVersion", "binaryVersion"]),
-		],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: accountSecret },
+					accountID: { type: "number", minimum: 1 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					saveData: { type: "string", pattern: `${safeBase64Pattern.slice(0, -1)};${safeBase64Pattern.slice(1)}` },
+					gameVersion: { type: "string" },
+					binaryVersion: { type: "string" },
+				},
+				required: ["secret", "accountID", "gjp2", "saveData", "gameVersion", "binaryVersion"],
+			},
+		},
 		handler: async (req, reply) => {
 			const { saveData, gameVersion, binaryVersion } = req.body;
 
@@ -46,7 +57,7 @@ module.exports = (fastify) => {
 
 				Logger.log(
 					"User backup",
-					`User ${Logger.color(Logger.colors.cyan)(user.username)}/${Logger.color(Logger.colors.gray)(account.id)}/${Logger.color(Logger.colors.gray)(user.id)} saved.`,
+					`User: ${Logger.color(Logger.colors.cyan)(user.username)}/${Logger.color(Logger.colors.gray)(account.id)}/${Logger.color(Logger.colors.gray)(user.id)}`,
 				);
 
 				return reply.send(ResponseEnum.Success);

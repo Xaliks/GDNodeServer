@@ -1,8 +1,7 @@
 const Logger = require("../../scripts/Logger");
-const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
 const { database, getUser } = require("../../scripts/database");
 const { fromSafeBase64 } = require("../../scripts/security");
-const { userCommentMaxSize } = require("../../config/config");
+const { userCommentMaxSize, secret, gjp2Pattern, safeBase64Pattern } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -11,7 +10,20 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/uploadGJAccComment20.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2", "comment"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					accountID: { type: "number", minimum: 1 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					toAccountID: { type: "number", minimum: 1 },
+					comment: { type: "string", pattern: safeBase64Pattern }, // comment can be empty string
+				},
+				required: ["secret", "accountID", "gjp2", "comment"],
+			},
+		},
 		handler: async (req, reply) => {
 			const { comment: base64Content } = req.body;
 
@@ -25,7 +37,8 @@ module.exports = (fastify) => {
 
 				Logger.log(
 					"Create account comment",
-					`${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)}: ${Logger.color(Logger.colors.cyan)(comment.id)}`,
+					`ID: ${Logger.color(Logger.colors.cyan)(comment.id)},`,
+					`Account: ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)}`,
 				);
 
 				return reply.send("1");

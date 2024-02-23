@@ -1,9 +1,8 @@
 const Logger = require("../../scripts/Logger");
-const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
 const { database, getUser } = require("../../scripts/database");
 const { toSafeBase64 } = require("../../scripts/security");
 const { dateToRelative } = require("../../scripts/util");
-const { userFriendRequestPageSize } = require("../../config/config");
+const { userFriendRequestPageSize, secret, gjp2Pattern } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -12,11 +11,25 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/getGJFriendRequests20.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					accountID: { type: "number", minimum: 1 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					page: { type: "number", minimum: 0, default: 0 },
+					total: { type: "number", minimum: 0, default: 0 },
+				},
+				required: ["secret", "accountID", "gjp2"],
+			},
+		},
 		handler: async (req, reply) => {
+			const { page, total } = req.body;
+
 			const getSent = req.body.getSent === "1";
-			const page = Math.max(req.body.page, 0);
-			let totalCount = Math.max(req.body.total, 0);
+			let totalCount = total;
 
 			const { account } = await getUser(req.body, false);
 			if (!account) return reply.send("-1");
@@ -25,6 +38,7 @@ module.exports = (fastify) => {
 				where: { [getSent ? "accountId" : "toAccountId"]: account.id },
 				take: userFriendRequestPageSize,
 				skip: page * userFriendRequestPageSize,
+				orderBy: { id: "desc" },
 			});
 			if (!friendRequests.length) return reply.send("-2");
 
@@ -77,19 +91,28 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/readGJFriendRequest20.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2", "requestID"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					accountID: { type: "number", minimum: 1 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					requestID: { type: "number", minimum: 1 },
+				},
+				required: ["secret", "accountID", "gjp2", "requestID"],
+			},
+		},
 		handler: async (req, reply) => {
-			const { accountID, gjp2, requestID } = req.body;
+			const { requestID } = req.body;
 
 			try {
-				const account = await database.accounts.findFirst({ where: { id: parseInt(accountID), password: gjp2 } });
+				const { account } = await getUser(req.body, false);
 				if (!account) return reply.send("-1");
 
 				const friendRequest = await database.friendRequests
-					.update({
-						where: { id: parseInt(requestID), toAccountId: account.id },
-						data: { isNew: false },
-					})
+					.update({ where: { id: requestID, toAccountId: account.id }, data: { isNew: false } })
 					.catch(() => null);
 				if (!friendRequest) return reply.send("-1");
 

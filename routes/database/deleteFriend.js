@@ -1,5 +1,5 @@
 const Logger = require("../../scripts/Logger");
-const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
+const { secret, gjp2Pattern } = require("../../config/config");
 const { database, getUser } = require("../../scripts/database");
 
 /**
@@ -9,29 +9,41 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/removeGJFriend20.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2", "targetAccountID"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					accountID: { type: "number", minimum: 1 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					targetAccountID: { type: "number", minimum: 1 },
+				},
+				required: ["secret", "accountID", "gjp2", "targetAccountID"],
+			},
+		},
 		handler: async (req, reply) => {
-			const { targetAccountID } = req.body;
+			const { accountID, targetAccountID } = req.body;
+
+			if (accountID === targetAccountID) return reply.send("-1");
 
 			try {
 				const { account } = await getUser(req.body, false);
 				if (!account) return reply.send("-1");
 
-				const friendship = await database.friends.delete({
+				await database.friends.deleteMany({
 					where: {
 						OR: [
-							{ accountId1: parseInt(targetAccountID), accountId2: account.id },
-							{ accountId1: account.id, accountId2: parseInt(targetAccountID) },
+							{ accountId1: targetAccountID, accountId2: account.id },
+							{ accountId1: account.id, accountId2: targetAccountID },
 						],
 					},
 				});
-				if (!friendship) return reply.send("-1");
 
 				Logger.log(
 					"Remove friend",
-					`ID: ${Logger.color(Logger.colors.cyan)(friendship.id)}\n`,
-					`Account1: ${Logger.color(Logger.colors.gray)(friendship.accountId1)}\n`,
-					`Account2: ${Logger.color(Logger.colors.gray)(friendship.accountId2)}`,
+					`Account1: ${Logger.color(Logger.colors.gray)(account.id)}\n`,
+					`Account2: ${Logger.color(Logger.colors.gray)(targetAccountID)}`,
 				);
 
 				return reply.send("1");

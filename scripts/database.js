@@ -6,13 +6,13 @@ async function getUser(body, returnUser = true, createUserData = {}) {
 	let user = null;
 	let account = null;
 
-	const accountId = Number(body?.accountID);
+	const accountId = body?.accountID;
 	const password = body?.gjp2;
 	const udid = body?.udid;
 
 	if (password) {
 		if (accountId) {
-			account = await database.accounts.findFirst({ where: { id: accountId, password } });
+			account = await database.accounts.findFirst({ where: { id: Number(accountId), password } });
 		} else if (body.userName) {
 			account = await database.accounts.findFirst({ where: { username: body.userName, password } });
 		}

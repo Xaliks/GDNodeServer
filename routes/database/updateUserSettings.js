@@ -1,5 +1,5 @@
 const Logger = require("../../scripts/Logger");
-const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
+const { accountSecret, gjp2Pattern } = require("../../config/config");
 const { database } = require("../../scripts/database");
 
 /**
@@ -9,25 +9,32 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/updateGJAccSettings20.php",
-		beforeHandler: [
-			secretMiddleware,
-			requiredBodyMiddleware(["accountID", "gjp2", "mS", "frS", "cS", "yt", "twitter", "twitch"]),
-		],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: accountSecret },
+					accountID: { type: "number", minimum: 1 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					mS: { type: "number", enum: [0, 1, 2] },
+					frS: { type: "number", enum: [0, 1] },
+					cS: { type: "number", enum: [0, 1, 2] },
+					yt: { type: "string" },
+					twitter: { type: "string" },
+					twitch: { type: "string" },
+				},
+				required: ["secret", "accountID", "gjp2", "mS", "frS", "cS", "yt", "twitter", "twitch"],
+			},
+		},
 		handler: async (req, reply) => {
 			const { accountID, gjp2, mS, frS, cS, yt, twitter, twitch } = req.body;
 
 			try {
 				const account = await database.accounts
 					.update({
-						where: { id: parseInt(accountID), password: gjp2 },
-						data: {
-							messageState: parseInt(mS),
-							friendRequestState: parseInt(frS),
-							commentHistorySate: parseInt(cS),
-							youtube: yt,
-							twitter,
-							twitch,
-						},
+						where: { id: accountID, password: gjp2 },
+						data: { messageState: mS, friendRequestState: frS, commentHistorySate: cS, youtube: yt, twitter, twitch },
 					})
 					.catch(() => null);
 				if (!account) return reply.send("-1");

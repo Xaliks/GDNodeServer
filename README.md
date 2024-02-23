@@ -1,6 +1,6 @@
 ### TODO:
 
-- [ ] Fastify schema validation
+- [x] Fastify schema validation
 - [ ] Ratelimit
 - [ ] Accounts
 	- [x] Login
@@ -10,13 +10,6 @@
     - [x] Update
 	- [ ] Management Page
 - [x] Users
-    - [x] Search
-    - [x] Leaderboard
-    - [x] Profile posts
-    - [x] Friend requests
-    - [x] Friends
-    - [x] Blocks
-    - [x] Messages
 - [ ] Levels
     - [ ] Search
     - [ ] Download
@@ -36,4 +29,18 @@
     - [ ] Daily/Weekly levels
     - [ ] Map packs
     - [ ] Gauntlets
+- [ ] Test
+    - [x] 2.2
+    - [ ] 2.1
+    - [ ] 2.0
+    - [ ] 1.9
+    - [ ] 1.8
+    - [ ] 1.7
+    - [ ] 1.6
+    - [ ] 1.5
+    - [ ] 1.4
+    - [ ] 1.3
+    - [ ] 1.2
+    - [ ] 1.1
+    - [ ] 1.0
 - [ ] Update exe game file

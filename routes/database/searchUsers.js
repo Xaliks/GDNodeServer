@@ -1,6 +1,5 @@
-const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
 const { database } = require("../../scripts/database");
-const { searchUsersPageSize } = require("../../config/config");
+const { secret, searchUsersPageSize, usernameRegex } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -9,15 +8,26 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/getGJUsers20.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["str"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					str: { type: "string", pattern: usernameRegex.source },
+					page: { type: "number", minimum: 0, default: 0 },
+					total: { type: "number", minimum: 0, default: 0 },
+				},
+				required: ["secret", "str"],
+			},
+		},
 		handler: async (req, reply) => {
-			const { str } = req.body;
+			const { str, page, total } = req.body;
 
-			const page = parseInt(req.body.page) ?? 0;
-			let totalCount = Math.max(req.body.total, 0);
+			let totalCount = total;
 
 			const users = await database.users.findMany({
-				where: { isRegistered: true, isBanned: false, username: { contains: str } },
+				where: { isRegistered: true, isBanned: false, username: { contains: str, mode: "insensitive" } },
 				orderBy: { stars: "desc" },
 				skip: page * searchUsersPageSize,
 				take: searchUsersPageSize,
@@ -27,7 +37,7 @@ module.exports = (fastify) => {
 			if (users.length < searchUsersPageSize) totalCount = page * searchUsersPageSize + users.length;
 			else if (!totalCount) {
 				totalCount = await database.users.count({
-					where: { isRegistered: true, isBanned: false, username: { contains: str } },
+					where: { isRegistered: true, isBanned: false, username: { contains: str, mode: "insensitive" } },
 				});
 			}
 

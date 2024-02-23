@@ -1,9 +1,8 @@
 const _ = require("lodash");
 const Logger = require("../../scripts/Logger");
 const { getSolo4, cipher, fromBase64, toSafeBase64 } = require("../../scripts/security");
-const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
 const { getUser, database } = require("../../scripts/database");
-const { rewards, chestKeyItemValue } = require("../../config/config");
+const { rewards, chestKeyItemValue, secret, gjp2Pattern, udidPattern } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -12,19 +11,33 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/getGJRewards.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["udid", "chk"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					accountID: { type: "number", minimum: 1 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					udid: { type: "string", pattern: udidPattern },
+					chk: { type: "string", pattern: "^[A-Za-z0-9+/]{4,}={0,2}$" },
+					rewardType: { type: "number", default: 0 },
+					r1: { type: "number", default: 0 },
+					r2: { type: "number", default: 0 },
+				},
+				required: ["secret", "udid", "chk"],
+			},
+		},
 		handler: async (req, reply) => {
-			const { udid, accountID, chk, r1, r2 } = req.body;
+			const { udid, accountID, chk, r1, r2, rewardType } = req.body;
 
 			try {
-				const rewardType = parseInt(req.body.rewardType) || 0;
-
 				// eslint-disable-next-line prefer-const
 				let { account, user } = await getUser(req.body);
 				if (account === 0) return reply.send("-1");
 
-				let totalSmallChests = parseInt(r1);
-				let totalBigChests = parseInt(r2);
+				let totalSmallChests = Math.max(user.totalSmallChests, r1);
+				let totalBigChests = Math.max(user.totalSmallChests, r2);
 
 				if (rewardType !== 0) {
 					const smallChestRemaining = getChestRemaining(1, user);
@@ -33,9 +46,6 @@ module.exports = (fastify) => {
 					if ((rewardType === 1 && smallChestRemaining > 0) || (rewardType === 2 && bigChestRemaining > 0)) {
 						return reply.send("-1");
 					}
-
-					totalSmallChests = Math.max(user.totalSmallChests, totalSmallChests);
-					totalBigChests = Math.max(user.totalBigChests, totalBigChests);
 
 					if (rewardType === 1) totalSmallChests++;
 					else totalBigChests++;

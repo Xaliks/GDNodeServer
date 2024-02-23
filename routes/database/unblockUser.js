@@ -1,5 +1,5 @@
 const Logger = require("../../scripts/Logger");
-const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
+const { secret, gjp2Pattern } = require("../../config/config");
 const { database, getUser } = require("../../scripts/database");
 
 /**
@@ -9,10 +9,21 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/unblockGJUser20.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2", "targetAccountID"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					accountID: { type: "number", minimum: 1 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					targetAccountID: { type: "number", minimum: 1 },
+				},
+				required: ["secret", "accountID", "gjp2", "targetAccountID"],
+			},
+		},
 		handler: async (req, reply) => {
 			const { accountID, targetAccountID } = req.body;
-
 			if (accountID === targetAccountID) return reply.send("-1");
 
 			try {
@@ -21,7 +32,7 @@ module.exports = (fastify) => {
 
 				const block = await database.blocks
 					.delete({
-						where: { accountId_targetAccountId: { accountId: account.id, targetAccountId: parseInt(targetAccountID) } },
+						where: { accountId_targetAccountId: { accountId: account.id, targetAccountId: targetAccountID } },
 					})
 					.catch(() => null);
 				if (!block) return reply.send("1");

@@ -1,6 +1,5 @@
-const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
 const { database } = require("../../scripts/database");
-const { showNotRegisteredUsersInLeaderboard } = require("../../config/config");
+const { showNotRegisteredUsersInLeaderboard, secret, gjp2Pattern } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -9,22 +8,34 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/getGJUserInfo20.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["targetAccountID"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					accountID: { type: "number", minimum: 1 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					targetAccountID: { type: "number", minimum: 1 },
+				},
+				required: ["secret", "targetAccountID"],
+			},
+		},
 		handler: async (req, reply) => {
 			const { accountID, gjp2, targetAccountID } = req.body;
 
-			const account = await database.accounts.findFirst({ where: { id: parseInt(targetAccountID), isActive: true } });
+			const account = await database.accounts.findFirst({ where: { id: targetAccountID, isActive: true } });
 			if (!account) return reply.send("-1");
 
 			let isMe = false;
 			if (accountID === targetAccountID && account.password === gjp2) isMe = true;
 
-			if (!isMe) {
+			if (!isMe && accountID) {
 				const blocked = await database.blocks.findFirst({
 					where: {
 						OR: [
-							{ accountId: account.id, targetAccountId: parseInt(accountID) },
-							{ accountId: parseInt(accountID), targetAccountId: account.id },
+							{ accountId: account.id, targetAccountId: accountID },
+							{ accountId: accountID, targetAccountId: account.id },
 						],
 					},
 				});

@@ -1,5 +1,5 @@
 const Logger = require("../../../scripts/Logger");
-const { secretMiddleware, requiredBodyMiddleware } = require("../../../scripts/middlewares");
+const { accountSecret, gjp2Pattern, udidPattern, usernameRegex } = require("../../../config/config");
 const { getUser } = require("../../../scripts/database");
 
 const ResponseEnum = {
@@ -16,15 +16,29 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/loginGJAccount.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["udid", "userName", "gjp2"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: accountSecret },
+					userName: { type: "string", pattern: usernameRegex.source },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					udid: { type: "string", pattern: udidPattern },
+					sID: { type: "number" }, // steam id
+				},
+				required: ["secret", "userName", "gjp2", "udid"],
+			},
+		},
 		handler: async (req, reply) => {
 			try {
 				const { account, user } = await getUser(req.body);
 				if (!account) return reply.send(ResponseEnum.Failed);
+				if (user.isBanned) return reply.send(ResponseEnum.AccountDisabled);
 
 				Logger.log(
 					"Account login",
-					`User ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)}/${Logger.color(Logger.colors.gray)(user.id)} logged in.`,
+					`User: ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)}/${Logger.color(Logger.colors.gray)(user.id)}`,
 				);
 
 				reply.send(ResponseEnum.Success(account.id, user.id));

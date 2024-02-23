@@ -1,5 +1,5 @@
 const Logger = require("../../scripts/Logger");
-const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
+const { secret, gjp2Pattern } = require("../../config/config");
 const { database, getUser } = require("../../scripts/database");
 
 /**
@@ -9,7 +9,19 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/blockGJUser20.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2", "targetAccountID"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					accountID: { type: "number", minimum: 1 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					targetAccountID: { type: "number", minimum: 1 },
+				},
+				required: ["secret", "accountID", "gjp2", "targetAccountID"],
+			},
+		},
 		handler: async (req, reply) => {
 			const { accountID, targetAccountID } = req.body;
 
@@ -19,9 +31,8 @@ module.exports = (fastify) => {
 				const { account } = await getUser(req.body, false);
 				if (!account) return reply.send("-1");
 
-				// I know there is no need to check if an account exists or not, but I don't want to store a lot of blocks with non-existent accounts.
-				const targetAccount = await database.accounts.findFirst({ where: { id: parseInt(targetAccountID) } });
-				if (!targetAccount) return reply.send("-1");
+				const targetAccount = await database.accounts.findFirst({ where: { id: targetAccountID } });
+				if (!targetAccount) return reply.send("1");
 
 				const [block] = await database.$transaction([
 					database.blocks.upsert({

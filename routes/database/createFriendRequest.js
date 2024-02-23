@@ -1,8 +1,7 @@
 const Logger = require("../../scripts/Logger");
-const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
 const { database, getUser } = require("../../scripts/database");
 const { fromSafeBase64 } = require("../../scripts/security");
-const { userFriendRequestCommentMaxSize } = require("../../config/config");
+const { userFriendRequestCommentMaxSize, secret, gjp2Pattern, safeBase64Pattern } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -11,7 +10,20 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/uploadFriendRequest20.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2", "toAccountID"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					accountID: { type: "number", minimum: 1 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					toAccountID: { type: "number", minimum: 1 },
+					comment: { type: "string", pattern: `|${safeBase64Pattern}` }, // comment can be empty string
+				},
+				required: ["secret", "accountID", "gjp2", "toAccountID"],
+			},
+		},
 		handler: async (req, reply) => {
 			const { accountID, toAccountID, comment: base64Comment } = req.body;
 
@@ -21,7 +33,7 @@ module.exports = (fastify) => {
 				const { account } = await getUser(req.body, false);
 				if (!account) return reply.send("-1");
 
-				const toAccount = await database.accounts.findFirst({ where: { id: parseInt(toAccountID) } });
+				const toAccount = await database.accounts.findFirst({ where: { id: toAccountID } });
 				if (!toAccount) return reply.send("-1");
 
 				if (toAccount.friendRequestState === 1) return reply.send("-1");
@@ -39,8 +51,10 @@ module.exports = (fastify) => {
 				let comment = null;
 				if (base64Comment) comment = fromSafeBase64(base64Comment).toString().slice(0, userFriendRequestCommentMaxSize);
 
-				const friendRequest = await database.friendRequests.create({
-					data: { accountId: account.id, toAccountId: toAccount.id, comment },
+				const friendRequest = await database.friendRequests.upsert({
+					where: { accountId_toAccountId: { accountId: account.id, toAccountId: toAccount.id } },
+					update: { comment },
+					create: { accountId: account.id, toAccountId: toAccount.id, comment },
 				});
 
 				Logger.log(

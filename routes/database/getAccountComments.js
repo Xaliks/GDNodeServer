@@ -1,8 +1,7 @@
-const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
 const { database, getUser } = require("../../scripts/database");
 const { toSafeBase64 } = require("../../scripts/security");
 const { dateToRelative } = require("../../scripts/util");
-const { userCommentsPageSize } = require("../../config/config");
+const { userCommentsPageSize, secret, gjp2Pattern } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -11,47 +10,57 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/getGJAccountComments20.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					accountID: { type: "array", items: { type: "number", minimum: 1 }, minItems: 1, maxItems: 2 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					page: { type: "number", minimum: 0, default: 0 },
+					total: { type: "number", minimum: 0, default: 0 },
+				},
+				required: ["secret", "accountID"],
+			},
+		},
 		handler: async (req, reply) => {
-			const {
-				accountID: [accountID, targetAccountID],
-				gjp2,
-			} = req.body;
+			const { accountID, gjp2, page, total } = req.body;
 
-			const page = Math.max(req.body.page, 0) || 0;
-			let totalCount = Math.max(req.body.total, 0) || 0;
+			const targetAccountId = accountID.length === 1 ? accountID[0] : accountID[1];
+			const accountId = accountID.length === 1 ? null : accountID[0];
+			let totalCount = total;
 
-			const targetAccount = await database.accounts.findFirst({ where: { id: parseInt(targetAccountID) } });
+			const targetAccount = await database.accounts.findFirst({ where: { id: targetAccountId } });
 			if (!targetAccount) return reply.send("-1");
 
 			if (targetAccount.commentHistorySate !== 0) {
-				if (!accountID || !gjp2) return reply.send("-1");
+				if (!accountId || !gjp2) return reply.send("-1");
 
-				if (targetAccountID === accountID) {
+				if (targetAccountId === accountId) {
 					if (targetAccount.password !== gjp2) return reply.send("-1");
-				} else {
-					if (targetAccount.commentHistorySate === 1) {
-						const { account } = await getUser({ accountID, gjp2 }, false);
-						if (!account) return reply.send("-1");
+				} else if (targetAccount.commentHistorySate === 1) {
+					const { account } = await getUser({ accountID: accountId, gjp2 }, false);
+					if (!account) return reply.send("-1");
 
-						const friendship = await database.friends.findFirst({
-							where: {
-								OR: [
-									{ accountId1: account.id, accountId2: targetAccount.id },
-									{ accountId1: targetAccount.id, accountId2: account.id },
-								],
-							},
-						});
+					const friendship = await database.friends.findFirst({
+						where: {
+							OR: [
+								{ accountId1: account.id, accountId2: targetAccount.id },
+								{ accountId1: targetAccount.id, accountId2: account.id },
+							],
+						},
+					});
 
-						if (!friendship) return reply.send("#0:0:0");
-					} else return reply.send("#0:0:0");
-				}
+					if (!friendship) return reply.send("#0:0:0");
+				} else return reply.send("#0:0:0");
 			}
 
 			const comments = await database.accountComments.findMany({
 				where: { accountId: targetAccount.id },
 				take: userCommentsPageSize,
 				skip: page * userCommentsPageSize,
+				orderBy: { id: "desc" },
 			});
 			if (!comments.length) return reply.send("#0:0:0");
 
@@ -72,7 +81,7 @@ module.exports = (fastify) => {
 							[5, 0], // dislikes
 							[6, comment.id],
 							[7, comment.isSpam ? 1 : 0],
-							[8, targetAccountID],
+							[8, targetAccountId],
 							[9, dateToRelative(comment.createdAt)],
 						]
 							.map(([key, value]) => `${key}~${value}`)

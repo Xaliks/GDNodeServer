@@ -1,8 +1,7 @@
 const _ = require("lodash");
 const { getSolo3, cipher, fromBase64, toSafeBase64 } = require("../../scripts/security");
-const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
 const { getUser } = require("../../scripts/database");
-const { rewards } = require("../../config/config");
+const { rewards, secret, gjp2Pattern, udidPattern } = require("../../config/config");
 
 const startQuestsTimestamp = new Date("2024-02-12T00:00:00.000Z");
 
@@ -13,7 +12,20 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/getGJChallenges.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["udid", "chk"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					accountID: { type: "number", minimum: 1 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					udid: { type: "string", pattern: udidPattern },
+					chk: { type: "string", pattern: "^[A-Za-z0-9+/]{4,}={0,2}$" },
+				},
+				required: ["secret", "udid", "chk"],
+			},
+		},
 		handler: async (req, reply) => {
 			const { udid, accountID, chk } = req.body;
 
@@ -27,7 +39,7 @@ module.exports = (fastify) => {
 
 					return [id, type, quest.amount, quest.reward, quest.name].join(",");
 				}),
-				9,
+				3,
 			);
 
 			const result = toSafeBase64(
@@ -39,7 +51,7 @@ module.exports = (fastify) => {
 						udid,
 						accountID ?? "",
 						Math.round((new Date().setHours(0, 0, 0, 0) + 24 * 60 * 60_000 - Date.now()) / 1_000),
-						...quests.slice(0, 3),
+						...quests,
 					].join(":"),
 					19847,
 				),

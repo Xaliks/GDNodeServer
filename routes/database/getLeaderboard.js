@@ -1,7 +1,6 @@
 const _ = require("lodash");
-const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
 const { database, getUser } = require("../../scripts/database");
-const { showNotRegisteredUsersInLeaderboard } = require("../../config/config");
+const { showNotRegisteredUsersInLeaderboard, secret, gjp2Pattern, udidPattern } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -10,12 +9,25 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/getGJScores20.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["type", "count"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					accountID: { type: "number", minimum: 1 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					udid: { type: "string", pattern: udidPattern },
+					type: { type: "string", enum: ["top", "friends", "relative", "creators"], default: "top" },
+					count: { type: "number", minimum: 1, maximum: 200, default: 100 },
+				},
+				required: ["secret", "accountID", "gjp2"],
+			},
+		},
 		handler: async (req, reply) => {
-			const { type, count, accountID, udid } = req.body;
+			const { type, count: take, accountID, udid } = req.body;
 
 			let users = [];
-			const take = Math.min(count, 200);
 			const where = { isBanned: false };
 			if (!showNotRegisteredUsersInLeaderboard) where.isRegistered = true;
 
@@ -28,6 +40,8 @@ module.exports = (fastify) => {
 			}
 
 			if (type === "friends") {
+				if (!accountID || !req.body.gjp2) return reply.send("-1");
+
 				const { account } = await getUser(req.body, false);
 				if (!account) return reply.send("-1");
 

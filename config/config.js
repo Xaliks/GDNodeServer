@@ -14,7 +14,6 @@ const SoulShard = 14;
 
 module.exports = {
 	port: 59999,
-	secret: "Wmfd2893gb7",
 	databasePath: "gd_database", // if your full url (like http://localhost:59999) length is not matching to 33, then use it /
 	host: "http://localhost:59999",
 	// In this case, it will be "http://localhost:59999/gd_database" - 33 symbols, no more, no less.
@@ -113,5 +112,17 @@ module.exports = {
 	searchUsersPageSize: 10, // Number of users per page
 
 	// Don't touch the lines below this one
+	secret: "Wmfd2893gb7",
+	accountSecret: "Wmfv3899gc9",
+	gjp2Pattern: "^[0-9a-f]{40}$",
+	udidPattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+	safeBase64Pattern: "^[A-Za-z0-9-_]{4,}={0,2}$",
+	base64Pattern: "^[A-Za-z0-9+/]{4,}={0,2}$",
 	chestKeyItemValue: Key,
+	// https://emailregex.com
+	emailRegex:
+		/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+	// From login form
+	usernameRegex: /^[a-zA-Z0-9]{3,15}$/,
+	passwordRegex: /^[ -_a-zA-Z0-9]{6,20}$/,
 };

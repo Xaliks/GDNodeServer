@@ -1,5 +1,5 @@
 const Logger = require("../../scripts/Logger");
-const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
+const { secret, gjp2Pattern } = require("../../config/config");
 const { database, getUser } = require("../../scripts/database");
 
 /**
@@ -9,11 +9,22 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/deleteGJFriendRequests20.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2", "targetAccountID"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					accountID: { type: "number", minimum: 1 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					targetAccountID: { type: "number", minimum: 1 },
+					isSender: { type: "number", enum: [0, 1], default: 0 },
+				},
+				required: ["secret", "accountID", "gjp2", "targetAccountID"],
+			},
+		},
 		handler: async (req, reply) => {
-			const { accountID, targetAccountID } = req.body;
-
-			const isSender = req.body.isSender && req.body.isSender === "1";
+			const { accountID, targetAccountID, isSender } = req.body;
 
 			if (accountID === targetAccountID) return reply.send("-1");
 
@@ -21,21 +32,17 @@ module.exports = (fastify) => {
 				const { account } = await getUser(req.body, false);
 				if (!account) return reply.send("-1");
 
-				const friendRequest = await database.friendRequests.delete({
+				await database.friendRequests.deleteMany({
 					where: {
-						accountId_toAccountId: {
-							accountId: isSender ? account.id : Number(targetAccountID),
-							toAccountId: isSender ? Number(targetAccountID) : account.id,
-						},
+						accountId: isSender ? account.id : targetAccountID,
+						toAccountId: isSender ? targetAccountID : account.id,
 					},
 				});
-				if (!friendRequest) return reply.send("-1");
 
 				Logger.log(
 					"Delete friend request",
-					`ID: ${Logger.color(Logger.colors.cyan)(friendRequest.id)}\n`,
-					`From: ${Logger.color(Logger.colors.gray)(friendRequest.accountId)}\n`,
-					`To: ${Logger.color(Logger.colors.gray)(friendRequest.toAccountId)}`,
+					`From: ${Logger.color(Logger.colors.gray)(isSender ? account.id : targetAccountID)}\n`,
+					`To: ${Logger.color(Logger.colors.gray)(isSender ? targetAccountID : account.id)}`,
 				);
 
 				return reply.send("1");

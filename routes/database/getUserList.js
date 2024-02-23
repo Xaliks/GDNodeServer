@@ -1,5 +1,5 @@
 const _ = require("lodash");
-const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
+const { secret, gjp2Pattern } = require("../../config/config");
 const { database, getUser } = require("../../scripts/database");
 
 /**
@@ -9,12 +9,25 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/getGJUserList20.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2", "type"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					accountID: { type: "number", minimum: 1 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					type: { type: "number", enum: [0, 1], default: 0 },
+				},
+				required: ["secret", "accountID", "gjp2"],
+			},
+		},
 		handler: async (req, reply) => {
+			const { type } = req.body;
+
 			const { account } = await getUser(req.body, false);
 			if (!account) return reply.send("-1");
 
-			const type = parseInt(req.body.type) || 0;
 			let users = [];
 
 			if (type === 0) {

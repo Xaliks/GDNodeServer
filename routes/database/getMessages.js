@@ -1,8 +1,7 @@
-const { secretMiddleware, requiredBodyMiddleware } = require("../../scripts/middlewares");
 const { database, getUser } = require("../../scripts/database");
 const { toSafeBase64, cipher } = require("../../scripts/security");
 const { dateToRelative } = require("../../scripts/util");
-const { userMessagesPageSize } = require("../../config/config");
+const { userMessagesPageSize, secret, gjp2Pattern } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -11,11 +10,25 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/getGJMessages20.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					accountID: { type: "number", minimum: 1 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					page: { type: "number", minimum: 0, default: 0 },
+					total: { type: "number", minimum: 0, default: 0 },
+				},
+				required: ["secret", "accountID", "gjp2"],
+			},
+		},
 		handler: async (req, reply) => {
+			const { page, total } = req.body;
+
 			const getSent = req.body.getSent === "1";
-			const page = Math.max(req.body.page, 0);
-			let totalCount = Math.max(req.body.total, 0);
+			let totalCount = total;
 
 			const { account } = await getUser(req.body, false);
 			if (!account) return reply.send("-1");
@@ -24,6 +37,7 @@ module.exports = (fastify) => {
 				where: { [getSent ? "accountId" : "toAccountId"]: account.id },
 				take: userMessagesPageSize,
 				skip: page * userMessagesPageSize,
+				orderBy: { id: "desc" },
 			});
 			if (!messages.length) return reply.send("-2");
 
@@ -72,14 +86,26 @@ module.exports = (fastify) => {
 	fastify.route({
 		method: ["POST"],
 		url: "/downloadGJMessage20.php",
-		beforeHandler: [secretMiddleware, requiredBodyMiddleware(["accountID", "gjp2", "message"])],
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					accountID: { type: "number", minimum: 1 },
+					gjp2: { type: "string", pattern: gjp2Pattern },
+					message: { type: "number", minimum: 1 },
+				},
+				required: ["secret", "accountID", "gjp2", "message"],
+			},
+		},
 		handler: async (req, reply) => {
 			const { message: messageID } = req.body;
 
 			const { account } = await getUser(req.body, false);
 			if (!account) return reply.send("-1");
 
-			const message = await database.messages.findFirst({ where: { id: parseInt(messageID) } });
+			const message = await database.messages.findFirst({ where: { id: messageID } });
 			if (!message || (message.accountId === account.id && message.toAccountId === account.id)) return reply.send("-1");
 
 			const secondUser = await database.users.findFirst({
