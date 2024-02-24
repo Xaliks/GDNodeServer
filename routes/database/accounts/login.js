@@ -42,11 +42,6 @@ module.exports = (fastify) => {
 				);
 
 				reply.send(ResponseEnum.Success(account.id, user.id));
-
-				// await database.levels.updateMany({
-				// 	where: { extId: udid },
-				// 	data: { extId: String(account.id), userId: user.id },
-				// });
 			} catch (error) {
 				Logger.error("Account login", error);
 

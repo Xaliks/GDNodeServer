@@ -110,6 +110,7 @@ module.exports = {
 	userMessageContentMaxSize: 200, // Max length of message content
 	userMessagesPageSize: 10, // Number of messages per page
 	searchUsersPageSize: 10, // Number of users per page
+	searchLevelsPageSize: 10, // Number of levels per page
 
 	// Don't touch the lines below this one
 	secret: "Wmfd2893gb7",
@@ -118,6 +119,8 @@ module.exports = {
 	udidPattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
 	safeBase64Pattern: "^[A-Za-z0-9-_]{4,}={0,2}$",
 	base64Pattern: "^[A-Za-z0-9+/]{4,}={0,2}$",
+	levelNamePattern: "^[ a-zA-Z0-9]{1,20}$",
+	separatedNumbersPattern: "^(?:\\d+,)*\\d+$",
 	chestKeyItemValue: Key,
 	// https://emailregex.com
 	emailRegex:

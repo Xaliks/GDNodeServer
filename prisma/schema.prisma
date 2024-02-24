@@ -119,19 +119,76 @@ model Messages {
 }
 
 model Levels {
-  id            Int     @id @default(autoincrement())
-  gameVersion   Int
-  binaryVersion Int     @default(0)
-  name          String
-  description   String?
-  version       Int     @default(0)
-  userId        Int
+  id               Int         @id @default(autoincrement())
+  gameVersion      Int
+  binaryVersion    Int         @default(0)
+  accountId        Int
+  name             String
+  description      String?
+  version          Int         @default(1)
+  length           LevelLength @default(Tiny)
+  officialSongId   Int         @default(0)
+  songId           Int         @default(0)
+  objectCount      Int         @default(0)
+  password         String      @default("0")
+  originalLevelId  Int         @default(0)
+  coins            Int         @default(0)
+  requestedStars   Int
+  stars            Int         @default(0)
+  unlistedState    Int         @default(0)
+  editorTime       Int         @default(0)
+  editorTimeCopies Int         @default(0)
+
+  difficulty LevelDifficulty @default(NA)
+  likes      Int             @default(0)
+  dislikes   Int             @default(0)
+  downloads  Int             @default(0)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  isLDM       Boolean @default(false)
+  isTwoPlayer Boolean @default(false)
+  isAuto      Boolean @default(false)
+  isFeatured  Boolean @default(false)
+  isLegendary Boolean @default(false)
+  isEpic      Boolean @default(false)
+
+  @@unique([accountId, name])
+}
+
+enum LevelDifficulty {
+  NA
+  Auto
+  Easy
+  Normal
+  Hard
+  Harder
+  Insane
+  EasyDemon
+  MediumDemon
+  HardDemon
+  InsaneDemon
+  ExtremeDemon
+}
+
+enum LevelLength {
+  Tiny
+  Short
+  Medium
+  Long
+  XL
+  Platformer
+}
+
+model LevelsData {
+  id   Int    @id
+  data String
 }
 
 model SavedData {
   id Int @id
 
   data          String
-  gameVersion   String
-  binaryVersion String
+  gameVersion   Int
+  binaryVersion Int
 }

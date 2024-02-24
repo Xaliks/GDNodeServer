@@ -4,6 +4,10 @@ function getGJP2(string) {
 	return crypto.createHash("sha1").update(`${string}mI29fmAnxgTs`).digest("hex");
 }
 
+function getSolo2(string) {
+	return crypto.createHash("sha1").update(`${string}xI25fpAapCQg`).digest("hex");
+}
+
 function getSolo3(string) {
 	return crypto.createHash("sha1").update(`${string}oC36fpYaPtdg`).digest("hex");
 }
@@ -58,6 +62,7 @@ function decodeSavedGameData(path) {
 
 module.exports = {
 	getGJP2,
+	getSolo2,
 	getSolo3,
 	getSolo4,
 	fromBase64,

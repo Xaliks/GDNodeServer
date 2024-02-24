@@ -59,7 +59,7 @@ fastify.setErrorHandler((error, request, reply) => {
 
 	Logger.error("Server", error);
 
-	return reply.status(500).send("-500");
+	return reply.status(500).send("-1");
 });
 
 fastify.listen({ port: config.port }, (error, address) => {

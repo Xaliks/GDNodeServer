@@ -1,5 +1,5 @@
 const Logger = require("../../scripts/Logger");
-const { secret, gjp2Pattern } = require("../../config/config");
+const { secret, gjp2Pattern, separatedNumbersPattern } = require("../../config/config");
 const { database, getUser } = require("../../scripts/database");
 
 /**
@@ -19,7 +19,7 @@ module.exports = (fastify) => {
 					gjp2: { type: "string", pattern: gjp2Pattern },
 					isSender: { type: "number", enum: [0, 1], default: 0 },
 					messageID: { type: "number", minimum: 1 },
-					messages: { type: "string", pattern: "^(?:\\d+,)*\\d+$" },
+					messages: { type: "string", pattern: separatedNumbersPattern },
 				},
 				required: ["secret", "accountID", "gjp2"],
 			},
