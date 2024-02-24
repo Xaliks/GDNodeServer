@@ -11,9 +11,9 @@
 	- [ ] Management Page
 - [x] Users
 - [ ] Levels
-    - [ ] Search
+    - [x] Search
     - [ ] Download
-    - [ ] Upload
+    - [x] Upload
     - [ ] Comments
     - [ ] Lists
     - [ ] Daily/Weekly levels

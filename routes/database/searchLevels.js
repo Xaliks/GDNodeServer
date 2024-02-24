@@ -78,7 +78,6 @@ module.exports = (fastify) => {
 			},
 		},
 		handler: async (req, reply) => {
-			console.log(req.body);
 			const {
 				type,
 				str,
