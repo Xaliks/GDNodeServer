@@ -21,7 +21,7 @@ module.exports = (fastify) => {
 					type: { type: "string", enum: ["top", "friends", "relative", "creators"], default: "top" },
 					count: { type: "number", minimum: 1, maximum: 200, default: 100 },
 				},
-				required: ["secret", "accountID", "gjp2"],
+				required: ["secret"],
 			},
 		},
 		handler: async (req, reply) => {
