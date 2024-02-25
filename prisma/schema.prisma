@@ -119,25 +119,26 @@ model Messages {
 }
 
 model Levels {
-  id               Int         @id @default(autoincrement())
+  id               Int             @id @default(autoincrement())
   gameVersion      Int
-  binaryVersion    Int         @default(0)
+  binaryVersion    Int             @default(0)
   accountId        Int
   name             String
   description      String?
-  version          Int         @default(1)
-  length           LevelLength @default(Tiny)
-  officialSongId   Int         @default(0)
-  songId           Int         @default(0)
-  objectCount      Int         @default(0)
-  password         String      @default("0")
-  originalLevelId  Int         @default(0)
-  coins            Int         @default(0)
+  version          Int             @default(1)
+  length           LevelLength     @default(Tiny)
+  officialSongId   Int             @default(0)
+  songId           Int             @default(0)
+  objectCount      Int             @default(0)
+  password         String          @default("0")
+  originalLevelId  Int             @default(0)
+  coins            Int             @default(0)
   requestedStars   Int
-  stars            Int         @default(0)
-  unlistedState    Int         @default(0)
-  editorTime       Int         @default(0)
-  editorTimeCopies Int         @default(0)
+  stars            Int             @default(0)
+  visibility       LevelVisibility @default(Listed)
+  editorTime       Int             @default(0)
+  editorTimeCopies Int             @default(0)
+  extraString      String?
 
   difficulty LevelDifficulty @default(NA)
   likes      Int             @default(0)
@@ -145,12 +146,14 @@ model Levels {
   downloads  Int             @default(0)
   createdAt  DateTime        @default(now())
   updatedAt  DateTime        @updatedAt
+  ratedAt    DateTime?
 
   isLDM       Boolean @default(false)
   isTwoPlayer Boolean @default(false)
   isAuto      Boolean @default(false)
   isFeatured  Boolean @default(false)
   isLegendary Boolean @default(false)
+  isMythic    Boolean @default(false)
   isEpic      Boolean @default(false)
 
   @@unique([accountId, name])
@@ -178,6 +181,12 @@ enum LevelLength {
   Long
   XL
   Platformer
+}
+
+enum LevelVisibility {
+  Listed
+  FriendsOnly
+  Unlisted
 }
 
 model LevelsData {

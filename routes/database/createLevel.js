@@ -1,16 +1,8 @@
 const Logger = require("../../scripts/Logger");
 const { database, getUser } = require("../../scripts/database");
 const { fromSafeBase64 } = require("../../scripts/security");
+const { Constants } = require("../../scripts/util");
 const { secret, gjp2Pattern, levelNamePattern, base64Pattern, safeBase64Pattern } = require("../../config/config");
-
-const lengthToString = {
-	0: "Tiny",
-	1: "Short",
-	2: "Medium",
-	3: "Long",
-	4: "XL",
-	5: "Platformer",
-};
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -32,7 +24,7 @@ module.exports = (fastify) => {
 					levelName: { type: "string", pattern: levelNamePattern },
 					levelDesc: { type: "string", pattern: `|${safeBase64Pattern}`, default: "" },
 					levelVersion: { type: "number", minimum: 1 },
-					levelLength: { type: "number", minimum: 0 },
+					levelLength: { type: "number", enum: Constants.levelLength.values() },
 					audioTrack: { type: "number", minimum: 0 }, // official song
 					songID: { type: "number", minimum: 0 }, // newgrounds song id
 					auto: { type: "number", enum: [0, 1], default: 0 },
@@ -42,11 +34,11 @@ module.exports = (fastify) => {
 					objects: { type: "number", minimum: 1 },
 					coins: { type: "number", enum: [0, 1, 2, 3] },
 					requestedStars: { type: "number", enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
-					unlisted: { type: "number", enum: [0, 1, 2] }, // 0 - listed; 1 - friends only; 2 - unlisted
+					unlisted: { type: "number", enum: Constants.levelVisibility.values() },
 					wt: { type: "number", default: 0 }, // time spent in the editor (local copy) seconds
 					wt2: { type: "number", default: 0 }, // time spent in the editor (previous copies) seconds
 					ldm: { type: "number", enum: [0, 1] },
-					// ts: ???
+					extraString: { type: "string", default: "29_29_29_40_29_29_29_29_29_29_29_29_29_29_29_29" },
 					seed: { type: "string", pattern: "^[0-9a-zA-Z]{10}$" },
 					seed2: { type: "string", pattern: base64Pattern },
 					levelString: { type: "string", pattern: safeBase64Pattern },
@@ -97,6 +89,7 @@ module.exports = (fastify) => {
 				ldm,
 				twoPlayer,
 				auto,
+				extraString,
 			} = req.body;
 
 			try {
@@ -113,7 +106,7 @@ module.exports = (fastify) => {
 					name: levelName,
 					description: levelDescription || null,
 					version: levelVersion,
-					length: lengthToString[levelLength],
+					length: Constants.levelLength[levelLength],
 					officialSongId: audioTrack,
 					songId: songID,
 					objectCount: objects,
@@ -121,12 +114,13 @@ module.exports = (fastify) => {
 					originalLevelId: original,
 					coins,
 					requestedStars,
-					unlistedState: unlisted,
+					visibility: Constants.levelVisibility[unlisted],
 					editorTime: wt,
 					editorTimeCopies: wt2,
 					isLDM: ldm === 1,
 					isTwoPlayer: twoPlayer === 1,
 					isAuto: auto === 1,
+					extraString,
 				};
 
 				const existingLevel = await database.levels.findFirst({ where: { accountId: account.id, name: levelName } });

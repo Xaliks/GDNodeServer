@@ -2,7 +2,7 @@ const _ = require("lodash");
 const Logger = require("../../scripts/Logger");
 const { getSolo4, cipher, fromBase64, toSafeBase64 } = require("../../scripts/security");
 const { getUser, database } = require("../../scripts/database");
-const { rewards, chestKeyItemValue, secret, gjp2Pattern, udidPattern } = require("../../config/config");
+const { rewards, chestKeyItemValue, secret, gjp2Pattern, udidPattern, base64Pattern } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -20,7 +20,7 @@ module.exports = (fastify) => {
 					accountID: { type: "number", minimum: 1 },
 					gjp2: { type: "string", pattern: gjp2Pattern },
 					udid: { type: "string", pattern: udidPattern },
-					chk: { type: "string", pattern: "^[A-Za-z0-9+/]{4,}={0,2}$" },
+					chk: { type: "string", pattern: base64Pattern },
 					rewardType: { type: "number", default: 0 },
 					r1: { type: "number", default: 0 },
 					r2: { type: "number", default: 0 },

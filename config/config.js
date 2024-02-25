@@ -112,6 +112,14 @@ module.exports = {
 	searchUsersPageSize: 10, // Number of users per page
 	searchLevelsPageSize: 10, // Number of levels per page
 
+	magicLevelRequirements: {
+		length: "Medium", // Minimum length of the level (Tiny | Short | Medium | Long | XL). Default: Medium
+		objects: 10000, // Minimum number of the objects. Default: 10000
+		LDM: true, // Level must have LDM (true | false). Default: true
+		original: true, // Level must be original (true | false). Default: true
+		editorTime: 2700, // Seconds spent in the editor. Default: 2700 (45 min)
+	},
+
 	// Don't touch the lines below this one
 	secret: "Wmfd2893gb7",
 	accountSecret: "Wmfv3899gc9",

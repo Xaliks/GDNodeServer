@@ -1,7 +1,7 @@
 const _ = require("lodash");
 const { getSolo3, cipher, fromBase64, toSafeBase64 } = require("../../scripts/security");
 const { getUser } = require("../../scripts/database");
-const { rewards, secret, gjp2Pattern, udidPattern } = require("../../config/config");
+const { rewards, secret, gjp2Pattern, udidPattern, base64Pattern } = require("../../config/config");
 
 const startQuestsTimestamp = new Date("2024-02-12T00:00:00.000Z");
 
@@ -21,7 +21,7 @@ module.exports = (fastify) => {
 					accountID: { type: "number", minimum: 1 },
 					gjp2: { type: "string", pattern: gjp2Pattern },
 					udid: { type: "string", pattern: udidPattern },
-					chk: { type: "string", pattern: "^[A-Za-z0-9+/]{4,}={0,2}$" },
+					chk: { type: "string", pattern: base64Pattern },
 				},
 				required: ["secret", "udid", "chk"],
 			},

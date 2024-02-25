@@ -34,6 +34,74 @@ function dateToRelative(_date, unitCount = timeMaxCounts) {
 	return `${text.slice(0, Math.min(text.length, unitCount) - 1).join(", ")} and ${text.at(Math.min(text.length, unitCount) - 1)}`;
 }
 
+function reverseObject(obj) {
+	const _obj = obj;
+	const result = Object.entries(_obj).reduce((obj, [key, value]) => {
+		obj[key] = value;
+		obj[value] = key;
+		return obj;
+	}, {});
+
+	return {
+		...result,
+		values: () => Object.values(_obj),
+		entries: () => Object.entries(_obj),
+		keys: () => Object.keys(_obj),
+	};
+}
+
 module.exports = {
 	dateToRelative,
+	reverseObject,
+	Constants: {
+		levelLength: reverseObject({
+			Tiny: 0,
+			Short: 1,
+			Medium: 2,
+			Long: 3,
+			XL: 4,
+			Platformer: 5,
+		}),
+		levelVisibility: reverseObject({
+			Listed: 0,
+			FriendsOnly: 1,
+			Unlisted: 2,
+		}),
+		returnLevelDifficulty: reverseObject({
+			NA: 0,
+			Easy: 10,
+			Normal: 20,
+			Hard: 30,
+			Harder: 40,
+			Insane: 50,
+			EasyDemon: 50,
+			MediumDemon: 50,
+			HardDemon: 50,
+			InsaneDemon: 50,
+			ExtremeDemon: 50,
+		}),
+		selectLevelDifficulty: reverseObject({
+			Auto: -3,
+			NA: -1,
+			Easy: 1,
+			Normal: 2,
+			Hard: 3,
+			Harder: 4,
+			Insane: 5,
+		}),
+		returnDemonDifficulty: reverseObject({
+			EasyDemon: 3,
+			MediumDemon: 4,
+			HardDemon: 2,
+			InsaneDemon: 5,
+			ExtremeDemon: 6,
+		}),
+		selectDemonDifficulty: reverseObject({
+			EasyDemon: 1,
+			MediumDemon: 2,
+			HardDemon: 3,
+			InsaneDemon: 4,
+			ExtremeDemon: 5,
+		}),
+	},
 };
