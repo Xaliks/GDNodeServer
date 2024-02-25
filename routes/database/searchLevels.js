@@ -47,6 +47,14 @@ const lengthToNumber = {
 	XL: 4,
 	Platformer: 5,
 };
+const numberToLengthString = {
+	0: "Tiny",
+	1: "Short",
+	2: "Medium",
+	3: "Long",
+	4: "XL",
+	5: "Platformer",
+};
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -102,7 +110,7 @@ module.exports = (fastify) => {
 				if (str) queryArgs.where.name = { contains: str, mode: "insensitive" };
 				else queryArgs.where.difficulty = { not: "NA" };
 
-				if (len !== "-") queryArgs.where.length = { in: _.uniq(len.split(",")).map((str) => Number(str)) };
+				if (len !== "-") queryArgs.where.length = { in: _.uniq(len.split(",")).map((str) => numberToLengthString[str]) };
 				if (diff !== "-") {
 					const fetchedDifficulties = [];
 					for (const difficulty of _.uniq(diff.split(","))) {
