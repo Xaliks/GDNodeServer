@@ -25,7 +25,7 @@ module.exports = (fastify) => {
 			},
 		},
 		handler: async (req, reply) => {
-			const { type, count: take, accountID, udid } = req.body;
+			const { type, count: take } = req.body;
 
 			let users = [];
 			const where = { isBanned: false };
@@ -40,8 +40,6 @@ module.exports = (fastify) => {
 			}
 
 			if (type === "friends") {
-				if (!accountID || !req.body.gjp2) return reply.send("-1");
-
 				const { account } = await getUser(req.body, false);
 				if (!account) return reply.send("-1");
 
@@ -59,10 +57,8 @@ module.exports = (fastify) => {
 			}
 
 			if (type === "relative") {
-				if (!accountID && !udid) return reply.send("-1");
-
 				const { account, user } = await getUser(req.body);
-				if (account === 0) return reply.send("-1");
+				if (account === 0 || !user) return reply.send("-1");
 
 				const userRank = await database.users.count({ where: { ...where, stars: { gte: user.stars || 1 } } });
 
