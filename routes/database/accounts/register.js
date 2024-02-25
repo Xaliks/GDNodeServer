@@ -45,12 +45,21 @@ module.exports = (fastify) => {
 			if (!emailRegex.test(email)) return reply.send(ResponseEnum.InvalidEmail);
 			if (!passwordRegex.test(password)) return reply.send(ResponseEnum.InvalidPassword);
 
-			const existingAccount = await database.accounts.findFirst({ where: { OR: [{ email }, { username: userName }] } });
+			const existingAccount = await database.accounts.findFirst({
+				where: { OR: [{ email: email.toLowerCase() }, { username: userName }] },
+			});
 			if (existingAccount?.email === email) return reply.send(ResponseEnum.EmailInUse);
 			if (existingAccount?.username === userName) return reply.send(ResponseEnum.UsernameInUse);
 
 			return database.accounts
-				.create({ data: { email, username: userName, password: getGJP2(password), isActive: Boolean(preActiveAccounts) } })
+				.create({
+					data: {
+						email: email.toLowerCase(),
+						username: userName,
+						password: getGJP2(password),
+						isActive: Boolean(preActiveAccounts),
+					},
+				})
 				.then(() => {
 					Logger.log("Account create", `User ${Logger.color(Logger.colors.cyan)(userName)} created.`);
 
