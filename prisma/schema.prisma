@@ -118,6 +118,21 @@ model Messages {
   createdAt   DateTime @default(now())
 }
 
+model Likes {
+  itemType  LikeType
+  itemId    Int
+  accountId Int
+  isLike    Boolean  @default(true)
+
+  @@id([itemType, itemId, accountId])
+}
+
+enum LikeType {
+  Level
+  LevelComment
+  AccountComment
+}
+
 model Levels {
   id               Int             @id @default(autoincrement())
   gameVersion      Int

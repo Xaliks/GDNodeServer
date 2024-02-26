@@ -108,5 +108,10 @@ module.exports = {
 			Legendary: 2,
 			Mythic: 3,
 		}),
+		likeCommentType: reverseObject({
+			Level: 1,
+			LevelComment: 2,
+			AccountComment: 3,
+		}),
 	},
 };
