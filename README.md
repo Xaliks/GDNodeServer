@@ -12,7 +12,7 @@
 - [x] Users
 - [ ] Levels
     - [x] Search
-    - [ ] Download
+    - [x] Download
     - [x] Upload
     - [ ] Comments
     - [ ] Lists
