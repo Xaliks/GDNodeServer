@@ -103,5 +103,10 @@ module.exports = {
 			InsaneDemon: 4,
 			ExtremeDemon: 5,
 		}),
+		levelRatingType: reverseObject({
+			Epic: 1,
+			Legendary: 2,
+			Mythic: 3,
+		}),
 	},
 };

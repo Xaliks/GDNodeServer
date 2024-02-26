@@ -98,10 +98,14 @@ module.exports = (fastify) => {
 				else if (customSong !== 0) queryArgs.where.songId = customSong;
 
 				if (noStar === 1) queryArgs.where.stars = 0;
-				if (legendary === 1) queryArgs.where.isLegendary = true;
-				if (mythic === 1) queryArgs.where.isMythic = true;
-				if (epic === 1) queryArgs.where.isMythic = true;
-				if (featured === 1) queryArgs.where.isFeatured = true;
+				if (mythic || legendary || epic || featured) {
+					queryArgs.where.ratingType = { in: [] };
+
+					if (featured === 1) queryArgs.where.ratingType.in.push("Epic");
+					if (epic === 1) queryArgs.where.ratingType.in.push("Epic");
+					if (legendary === 1) queryArgs.where.ratingType.in.push("Mythic"); // https://i.xaliks.dev/7d64d8a8c5f3f75115c516d0eef0842e.png
+					if (mythic === 1) queryArgs.where.ratingType.in.push("Legendary"); // https://i.xaliks.dev/7d64d8a8c5f3f75115c516d0eef0842e.png
+				}
 				if (original === 1) queryArgs.where.originalLevelId = 0;
 				if (twoPlayer === 1) queryArgs.where.isTwoPlayer = true;
 				if (coins === 1) queryArgs.where.coins = { gt: 0 };
@@ -198,7 +202,7 @@ module.exports = (fastify) => {
 					break;
 				case 6: // Featured
 				case 17: // Featured in GD Word
-					queryArgs.isFeatured = true;
+					queryArgs.ratingType = "Featured";
 					break;
 				case 7: // Magic
 					queryArgs.where.length = {
@@ -250,7 +254,7 @@ module.exports = (fastify) => {
 					};
 					break;
 				case 16: // Hall of fame
-					queryArgs.where.isEpic = true;
+					queryArgs.ratingType = "Epic";
 					break;
 				case 21: // Daily safe
 				case 22: // Weekly safe
@@ -294,7 +298,7 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0) {
 				[15, Constants.levelLength[level.length]],
 				[17, Constants.selectDemonDifficulty.values().includes(level.difficulty) ? 1 : 0],
 				[18, level.stars],
-				[19, level.isFeatured ? 1 : 0],
+				[19, level.ratingType === "Featured" ? 1 : 0],
 				[25, level.difficulty === "Auto" ? 1 : 0],
 				[30, level.originalLevelId],
 				[31, level.isTwoPlayer ? 1 : 0],
@@ -303,7 +307,7 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0) {
 				[37, level.coins],
 				[38, level.coins ? 1 : 0],
 				[39, level.requestedStars],
-				[42, level.isEpic ? 1 : 0],
+				[42, (level.ratingType && Constants.levelRatingType[level.ratingType]) || 0],
 				[43, Constants.returnDemonDifficulty[level.difficulty] ?? 0],
 				[45, level.objectCount],
 				[46, level.editorTime],

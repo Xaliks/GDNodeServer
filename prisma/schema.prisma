@@ -140,6 +140,7 @@ model Levels {
   editorTimeCopies Int             @default(0)
   extraString      String?
 
+  ratingType LevelRating?
   difficulty LevelDifficulty @default(NA)
   likes      Int             @default(0)
   dislikes   Int             @default(0)
@@ -151,12 +152,15 @@ model Levels {
   isLDM       Boolean @default(false)
   isTwoPlayer Boolean @default(false)
   isAuto      Boolean @default(false)
-  isFeatured  Boolean @default(false)
-  isLegendary Boolean @default(false)
-  isMythic    Boolean @default(false)
-  isEpic      Boolean @default(false)
 
   @@unique([accountId, name])
+}
+
+enum LevelRating {
+  Featured
+  Epic
+  Legendary
+  Mythic
 }
 
 enum LevelDifficulty {
