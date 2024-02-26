@@ -90,7 +90,9 @@ module.exports = (fastify) => {
 				.join(":");
 			const levelResponse = `${user.extId},${level.stars},${Constants.returnDemonDifficulty[level.difficulty] ?? 0},${level.id},${level.coins ? 1 : 0},${level.ratingType === "Featured" ? 1 : 0},${level.password},0`; // last - daily/weekly/event id
 
-			return reply.send(`${response}#${getSolo(levelData.data)}#${getSolo2(levelResponse)}#${levelResponse}`);
+			reply.send(`${response}#${getSolo(levelData.data)}#${getSolo2(levelResponse)}#${levelResponse}`);
+
+			await database.levels.update({ where: { id: level.id }, data: { downloads: { increment: 1 } } });
 		},
 	});
 };
