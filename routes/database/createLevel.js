@@ -2,7 +2,14 @@ const Logger = require("../../scripts/Logger");
 const { database, getUser } = require("../../scripts/database");
 const { fromSafeBase64 } = require("../../scripts/security");
 const { Constants } = require("../../scripts/util");
-const { secret, gjp2Pattern, levelNamePattern, base64Pattern, safeBase64Pattern } = require("../../config/config");
+const {
+	secret,
+	gjp2Pattern,
+	levelNamePattern,
+	base64Pattern,
+	safeBase64Pattern,
+	defaultLevel,
+} = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -121,6 +128,8 @@ module.exports = (fastify) => {
 					isTwoPlayer: twoPlayer === 1,
 					isAuto: auto === 1,
 					extraString,
+					downloads: Math.max(0, defaultLevel.downloads) || 0,
+					likes: Math.max(0, defaultLevel.likes) || 0,
 				};
 
 				const existingLevel = await database.levels.findFirst({ where: { accountId: account.id, name: levelName } });

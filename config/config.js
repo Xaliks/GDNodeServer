@@ -112,6 +112,10 @@ module.exports = {
 	searchUsersPageSize: 10, // Number of users per page
 	searchLevelsPageSize: 10, // Number of levels per page
 
+	defaultLevel: {
+		downloads: 0,
+		likes: 0,
+	},
 	magicLevelRequirements: {
 		length: "Medium", // Minimum length of the level (Tiny | Short | Medium | Long | XL). Default: Medium
 		objects: 10000, // Minimum number of the objects. Default: 10000
