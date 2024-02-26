@@ -45,6 +45,7 @@ module.exports = (fastify) => {
 					demonFilter: { type: "number", enum: [1, 2, 3, 4, 5] },
 					uncompleted: { type: "number", enum: [0, 1], default: 0 },
 					onlyCompleted: { type: "number", enum: [0, 1], default: 0 },
+					completedLevels: { type: "string", pattern: `|\\(${separatedNumbersPattern}\\)` },
 					followed: { type: "string", pattern: `|${separatedNumbersPattern}` },
 				},
 				required: ["secret", "type"],
@@ -72,6 +73,7 @@ module.exports = (fastify) => {
 				followed,
 				uncompleted,
 				onlyCompleted,
+				completedLevels,
 			} = req.body;
 
 			if (uncompleted === 1 && onlyCompleted === 1) {
@@ -83,10 +85,11 @@ module.exports = (fastify) => {
 
 			const difficulty = Array.isArray(diff) ? diff[0] : null;
 			const isId = str && typeof str === "number";
-			const queryArgs = { where: { visibility: "Listed" } };
+			const queryArgs = { where: {} };
 
 			if (isId) queryArgs.where.id = str;
 			else {
+				queryArgs.where.visibility = "Listed";
 				queryArgs.orderBy = [{ ratedAt: "desc" }, { createdAt: "desc" }];
 				queryArgs.skip = page * searchLevelsPageSize;
 				queryArgs.take = searchLevelsPageSize;
@@ -105,7 +108,9 @@ module.exports = (fastify) => {
 				if (coins === 1) queryArgs.where.coins = { gt: 0 };
 
 				if (str) queryArgs.where.name = { contains: str, mode: "insensitive" };
-				else queryArgs.where.difficulty = { not: "NA" };
+				else if (completedLevels.length > 2) {
+					queryArgs.where.id = { in: completedLevels.slice(1, -1).split(",").map(Number).filter(Boolean) };
+				} else queryArgs.where.difficulty = { not: "NA" };
 
 				if (len && len !== "-") {
 					queryArgs.where.length = { in: _.uniq(len.split(",")).map((str) => Constants.levelLength[str]) };
@@ -132,7 +137,7 @@ module.exports = (fastify) => {
 					if (levels.some((level) => level.visibility === "FriendsOnly")) {
 						const { account } = await getUser(req.body, false);
 						if (!account) levels = levels.filter((level) => level.visibility !== "FriendsOnly");
-						else {
+						else if (levels.some((level) => level.accountId !== account.id)) {
 							const friends = await database.friends.findMany({
 								where: { OR: [{ accountId1: account.id }, { accountId2: account.id }] },
 							});
@@ -140,7 +145,7 @@ module.exports = (fastify) => {
 							levels = levels.filter(
 								(level) =>
 									level.visibility !== "FriendsOnly" ||
-									friends.some((friend) => [friend.accountId1, friend.accountId2].includes(level.accountId)),
+									friends.some((friend) => [account.id, friend.accountId1, friend.accountId2].includes(level.accountId)),
 							);
 						}
 					}
@@ -229,6 +234,7 @@ module.exports = (fastify) => {
 					return reply.send(await returnReplyString());
 			}
 
+			console.log(queryArgs.where);
 			if (!levels.length) levels = await database.levels.findMany(queryArgs);
 			if (levels.length < searchLevelsPageSize) totalCount = page * searchLevelsPageSize + levels.length;
 			else if (!totalCount) totalCount = await database.levels.count(queryArgs);
@@ -264,7 +270,7 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0) {
 				[17, Constants.selectDemonDifficulty.values().includes(level.difficulty) ? 1 : 0],
 				[18, level.stars],
 				[19, level.isFeatured ? 1 : 0],
-				[25, level.isAuto ? 1 : 0],
+				[25, level.difficulty === "Auto" ? 1 : 0],
 				[30, level.originalLevelId],
 				[31, level.isTwoPlayer ? 1 : 0],
 				[35, level.officialSongId],
