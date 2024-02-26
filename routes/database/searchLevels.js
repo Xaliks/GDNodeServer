@@ -197,8 +197,11 @@ module.exports = (fastify) => {
 				case 5: // User's levels
 					if (!isId || str < 1) return reply.send(await returnReplyString());
 
+					const user = await database.users.findFirst({ where: { id: str, isRegistered: true } });
+					if (!user) return reply.send(await returnReplyString());
+
 					delete queryArgs.where.id;
-					queryArgs.where.accountId = str;
+					queryArgs.where.accountId = Number(user.extId);
 					break;
 				case 6: // Featured
 				case 17: // Featured in GD Word
@@ -277,7 +280,7 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0) {
 	let users = [];
 	if (levels.length) {
 		users = await database.users.findMany({
-			where: { extId: { in: _.uniq(levels.map((level) => String(level.accountId))) } },
+			where: { extId: { in: _.uniq(levels).map((level) => String(level.accountId)) } },
 		});
 	}
 
@@ -316,7 +319,7 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0) {
 				.map(([key, value]) => `${key}:${value}`)
 				.join(":");
 		})
-		.join("|")}#${users.map((user) => `${user.id}:${user.username}:${user.extId}`).join("|")}#${
+		.join("|")}#${users.map((user) => `${user.extId}:${user.username}:${user.id}`).join("|")}#${
 		"" // Insert here custom songs https://github.com/Wyliemaster/gddocs/blob/master/docs/resources/server/song.md
 	}#${totalCount}:${page * searchLevelsPageSize}:${searchLevelsPageSize}#${getSolo2(
 		levels.map((level) => `${String(level.id)[0]}${String(level.id).at(-1)}${level.stars}${level.coins ? 1 : 0}`).join(""),
