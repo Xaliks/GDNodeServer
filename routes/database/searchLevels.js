@@ -108,7 +108,7 @@ module.exports = (fastify) => {
 				if (coins === 1) queryArgs.where.coins = { gt: 0 };
 
 				if (str) queryArgs.where.name = { contains: str, mode: "insensitive" };
-				else if (completedLevels.length > 2) {
+				else if (completedLevels && completedLevels.length > 2) {
 					queryArgs.where.id = { in: completedLevels.slice(1, -1).split(",").map(Number).filter(Boolean) };
 				} else queryArgs.where.difficulty = { not: "NA" };
 
