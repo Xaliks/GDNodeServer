@@ -85,11 +85,10 @@ module.exports = (fastify) => {
 
 			const difficulty = Array.isArray(diff) ? diff[0] : null;
 			const isId = str && typeof str === "number";
-			const queryArgs = { where: {} };
+			const queryArgs = { where: { visibility: "Listed" } };
 
 			if (isId) queryArgs.where.id = str;
 			else {
-				queryArgs.where.visibility = "Listed";
 				queryArgs.orderBy = [{ ratedAt: "desc" }, { createdAt: "desc" }];
 				queryArgs.skip = page * searchLevelsPageSize;
 				queryArgs.take = searchLevelsPageSize;
@@ -130,23 +129,48 @@ module.exports = (fastify) => {
 
 			switch (type) {
 				case 0: // Search
-					queryArgs.orderBy = { likes: "desc" };
-					if (!isId) queryArgs.where.visibility = { not: "Unlisted" };
-					levels = await database.levels.findMany(queryArgs);
+					if (isId) {
+						const level = await database.levels.findFirst({ where: { id: str } });
+						if (!level) return reply.send(await returnReplyString());
 
-					if (levels.some((level) => level.visibility === "FriendsOnly")) {
-						const { account } = await getUser(req.body, false);
-						if (!account) levels = levels.filter((level) => level.visibility !== "FriendsOnly");
-						else if (levels.some((level) => level.accountId !== account.id)) {
-							const friends = await database.friends.findMany({
-								where: { OR: [{ accountId1: account.id }, { accountId2: account.id }] },
-							});
+						if (level.visibility === "FriendsOnly") {
+							const { account } = await getUser(req.body, false);
+							if (account) {
+								if (account.id === level.accountId) levels = [level];
+								else {
+									const friend = await database.friends.findFirst({
+										where: {
+											OR: [
+												{ accountId1: account.id, accountId2: level.accountId },
+												{ accountId1: level.accountId, accountId2: account.id },
+											],
+										},
+									});
 
-							levels = levels.filter(
-								(level) =>
-									level.visibility !== "FriendsOnly" ||
-									friends.some((friend) => [account.id, friend.accountId1, friend.accountId2].includes(level.accountId)),
-							);
+									if (friend) levels = [level];
+								}
+							}
+						} else levels = [level];
+					} else {
+						queryArgs.orderBy = { likes: "desc" };
+						queryArgs.where.visibility = { not: "Unlisted" };
+
+						levels = await database.levels.findMany(queryArgs);
+
+						if (levels.some((level) => level.visibility === "FriendsOnly")) {
+							const { account } = await getUser(req.body, false);
+							if (!account) levels = levels.filter((level) => level.visibility === "Listed");
+							else if (levels.some((level) => level.accountId !== account.id)) {
+								const friends = await database.friends.findMany({
+									where: { OR: [{ accountId1: account.id }, { accountId2: account.id }] },
+								});
+
+								levels = levels.filter(
+									(level) =>
+										level.visibility === "Listed" ||
+										friends.some((friend) => [account.id, friend.accountId1, friend.accountId2].includes(level.accountId)),
+								);
+							}
 						}
 					}
 					break;
@@ -178,7 +202,8 @@ module.exports = (fastify) => {
 					break;
 				case 7: // Magic
 					queryArgs.where.length = {
-						in: Constants.levelLength.entries
+						in: Constants.levelLength
+							.entries()
 							.filter(
 								([, key]) => key >= (Constants.levelLength[magicLevelRequirements.length] ?? Constants.levelLength.Medium),
 							)
@@ -188,6 +213,7 @@ module.exports = (fastify) => {
 					if (magicLevelRequirements.LDM) queryArgs.where.isLDM = true;
 					if (magicLevelRequirements.original) queryArgs.where.originalLevelId = 0;
 					if (magicLevelRequirements.editorTime) queryArgs.where.editorTime = { gte: magicLevelRequirements.editorTime };
+
 					break;
 				case 10: // Map packs
 				case 19: // Same as map packs
@@ -234,7 +260,6 @@ module.exports = (fastify) => {
 					return reply.send(await returnReplyString());
 			}
 
-			console.log(queryArgs.where);
 			if (!levels.length) levels = await database.levels.findMany(queryArgs);
 			if (levels.length < searchLevelsPageSize) totalCount = page * searchLevelsPageSize + levels.length;
 			else if (!totalCount) totalCount = await database.levels.count(queryArgs);
