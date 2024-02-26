@@ -44,10 +44,10 @@ module.exports = (fastify) => {
 				users = await database.users
 					.findMany({
 						where: {
-							id: {
+							extId: {
 								in: friends.map((friendship) => {
-									if (friendship.accountId1 === account.id) return friendship.accountId2;
-									return friendship.accountId1;
+									if (friendship.accountId1 === account.id) return String(friendship.accountId2);
+									return String(friendship.accountId1);
 								}),
 							},
 						},
