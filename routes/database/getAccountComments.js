@@ -34,12 +34,12 @@ module.exports = (fastify) => {
 			const targetAccount = await database.accounts.findFirst({ where: { id: targetAccountId } });
 			if (!targetAccount) return reply.send("-1");
 
-			if (targetAccount.commentHistorySate !== 0) {
+			if (targetAccount.commentHistoryState !== 0) {
 				if (!accountId || !gjp2) return reply.send("-1");
 
 				if (targetAccountId === accountId) {
 					if (targetAccount.password !== gjp2) return reply.send("-1");
-				} else if (targetAccount.commentHistorySate === 1) {
+				} else if (targetAccount.commentHistoryState === 1) {
 					const { account } = await getUser({ accountID: accountId, gjp2 }, false);
 					if (!account) return reply.send("-1");
 

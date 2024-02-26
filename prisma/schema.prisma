@@ -16,9 +16,9 @@ model Accounts {
 
   isActive Boolean @default(false)
 
-  messageState       Int @default(0)
-  friendRequestState Int @default(0)
-  commentHistorySate Int @default(0)
+  messageState        Int @default(0)
+  friendRequestState  Int @default(0)
+  commentHistoryState Int @default(0)
 
   youtube String?
   twitter String?

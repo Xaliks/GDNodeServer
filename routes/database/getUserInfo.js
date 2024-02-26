@@ -114,12 +114,12 @@ module.exports = (fastify) => {
 				[47, user.explosion],
 				[28, user.glow ? 1 : 0],
 				[29, Boolean(account.id) ? 1 : 0],
-				[30, rank + 1], // rank leaderboard
-				[18, account.messageState], // 0 - all, 1 - friends, 2 - none
-				[19, account.friendRequestState], // 0 - accept, 1 - none
-				[50, account.commentHistorySate], // 0 - all, 1 - friends, 2 - me
-				[49, account.modBadge], // 0 - none; 1 - moderator; 2 - elder moderator; 3 - leaderboard moderator
-				[31, friendState], // friend state (0 - not friend; 1 - friend; 2 - INCOMING request; 3 - OUTGOING request)
+				[30, rank + 1],
+				[18, account.messageState],
+				[19, account.friendRequestState],
+				[50, account.commentHistoryState],
+				[49, account.modBadge],
+				[31, friendState],
 			];
 
 			if (isMe) {

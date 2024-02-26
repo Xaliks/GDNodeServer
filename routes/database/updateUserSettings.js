@@ -34,7 +34,7 @@ module.exports = (fastify) => {
 				const account = await database.accounts
 					.update({
 						where: { id: accountID, password: gjp2 },
-						data: { messageState: mS, friendRequestState: frS, commentHistorySate: cS, youtube: yt, twitter, twitch },
+						data: { messageState: mS, friendRequestState: frS, commentHistoryState: cS, youtube: yt, twitter, twitch },
 					})
 					.catch(() => null);
 				if (!account) return reply.send("-1");

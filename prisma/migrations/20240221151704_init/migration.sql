@@ -8,7 +8,7 @@ CREATE TABLE "Accounts" (
     "isActive" BOOLEAN NOT NULL DEFAULT false,
     "messageState" INTEGER NOT NULL DEFAULT 0,
     "friendRequestState" INTEGER NOT NULL DEFAULT 0,
-    "commentHistorySate" INTEGER NOT NULL DEFAULT 0,
+    "commentHistoryState" INTEGER NOT NULL DEFAULT 0,
     "youtube" TEXT,
     "twitter" TEXT,
     "twitch" TEXT,
