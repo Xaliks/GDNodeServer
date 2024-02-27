@@ -319,7 +319,7 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0) {
 				.map(([key, value]) => `${key}:${value}`)
 				.join(":");
 		})
-		.join("|")}#${users.map((user) => `${user.extId}:${user.username}:${user.id}`).join("|")}#${
+		.join("|")}#${users.map((user) => `${user.id}:${user.username}:${user.extId}`).join("|")}#${
 		"" // Insert here custom songs https://github.com/Wyliemaster/gddocs/blob/master/docs/resources/server/song.md
 	}#${totalCount}:${page * searchLevelsPageSize}:${searchLevelsPageSize}#${getSolo2(
 		levels.map((level) => `${String(level.id)[0]}${String(level.id).at(-1)}${level.stars}${level.coins ? 1 : 0}`).join(""),

@@ -57,7 +57,7 @@ module.exports = (fastify) => {
 				[3, toBase64(level.description ?? "")],
 				[4, levelData.data],
 				[5, level.version],
-				[6, user.extId],
+				[6, user.id],
 				[8, level.difficulty === "NA" ? 0 : 10],
 				[9, Constants.returnLevelDifficulty[level.difficulty]],
 				[10, level.downloads],
@@ -88,7 +88,7 @@ module.exports = (fastify) => {
 			]
 				.map(([key, value]) => `${key}:${value}`)
 				.join(":");
-			const levelResponse = `${user.extId},${level.stars},${Constants.returnDemonDifficulty[level.difficulty] ?? 0},${level.id},${level.coins ? 1 : 0},${level.ratingType === "Featured" ? 1 : 0},${level.password},0`; // last - daily/weekly/event id
+			const levelResponse = `${user.id},${level.stars},${Constants.returnDemonDifficulty[level.difficulty] ?? 0},${level.id},${level.coins ? 1 : 0},${level.ratingType === "Featured" ? 1 : 0},${level.password},0`; // last - daily/weekly/event id
 
 			reply.send(`${response}#${getSolo(levelData.data)}#${getSolo2(levelResponse)}#${levelResponse}`);
 
