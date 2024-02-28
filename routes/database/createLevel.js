@@ -1,7 +1,7 @@
 const Logger = require("../../scripts/Logger");
 const { database, getUser } = require("../../scripts/database");
-const { fromSafeBase64 } = require("../../scripts/security");
-const { Constants } = require("../../scripts/util");
+const { fromSafeBase64, cipher, fromBase64 } = require("../../scripts/security");
+const { Constants, byteLengthOf } = require("../../scripts/util");
 const {
 	secret,
 	gjp2Pattern,
@@ -9,6 +9,7 @@ const {
 	base64Pattern,
 	safeBase64Pattern,
 	defaultLevel,
+	maxLevelSize,
 } = require("../../config/config");
 
 /**
@@ -35,7 +36,7 @@ module.exports = (fastify) => {
 					audioTrack: { type: "number", minimum: 0 }, // official song
 					songID: { type: "number", minimum: 0 }, // newgrounds song id
 					auto: { type: "number", enum: [0, 1], default: 0 },
-					password: { type: "string", default: "0" }, // 0 - no copy (free copy in 2.2); 1 - free copy; other - pass
+					password: { type: "number", default: 0 }, // 0 - no copy (free copy in 2.2); 1 - free copy; 1****** - password;
 					original: { type: "number", default: 0 },
 					twoPlayer: { type: "number", enum: [0, 1] },
 					objects: { type: "number", minimum: 1 },
@@ -45,10 +46,13 @@ module.exports = (fastify) => {
 					wt: { type: "number", default: 0 }, // time spent in the editor (local copy) seconds
 					wt2: { type: "number", default: 0 }, // time spent in the editor (previous copies) seconds
 					ldm: { type: "number", enum: [0, 1] },
-					extraString: { type: "string", default: "29_29_29_40_29_29_29_29_29_29_29_29_29_29_29_29" },
+					extraString: { type: "string" },
 					seed: { type: "string", pattern: "^[0-9a-zA-Z]{10}$" },
 					seed2: { type: "string", pattern: base64Pattern },
 					levelString: { type: "string", pattern: safeBase64Pattern },
+					// ts idk
+					// sfxIDs
+					// songIDs
 				},
 				required: [
 					"secret",
@@ -99,6 +103,8 @@ module.exports = (fastify) => {
 				extraString,
 			} = req.body;
 
+			if (byteLengthOf(levelString) > maxLevelSize) return reply.send("-1");
+
 			try {
 				const levelDescription = fromSafeBase64(levelDesc).toString();
 				if (levelDescription.length > 200) return reply.send("-1");
@@ -117,7 +123,8 @@ module.exports = (fastify) => {
 					officialSongId: audioTrack,
 					songId: songID,
 					objectCount: objects,
-					password,
+					password:
+						String(password).length === 7 ? cipher(fromBase64(Number(password.slice(1))), 26364).toString() : password, // Needs to test in other versions
 					originalLevelId: original,
 					coins,
 					requestedStars,
@@ -130,6 +137,7 @@ module.exports = (fastify) => {
 					extraString,
 					downloads: Math.max(0, defaultLevel.downloads) || 0,
 					likes: Math.max(0, defaultLevel.likes) || 0,
+					updatedAt: new Date(),
 				};
 
 				const existingLevel = await database.levels.findFirst({ where: { accountId: account.id, name: levelName } });

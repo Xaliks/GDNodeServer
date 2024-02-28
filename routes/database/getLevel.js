@@ -1,4 +1,4 @@
-const { toBase64, getSolo, getSolo2 } = require("../../scripts/security");
+const { toBase64, getSolo, getSolo2, cipher } = require("../../scripts/security");
 const { Constants, dateToRelative } = require("../../scripts/util");
 const { getUser, database } = require("../../scripts/database");
 const { secret, base64Pattern } = require("../../config/config");
@@ -51,6 +51,8 @@ module.exports = (fastify) => {
 				database.levelsData.findFirst({ where: { id: level.id } }),
 			]);
 
+			const isDemon = Constants.selectDemonDifficulty.keys().includes(level.difficulty) ? 1 : 0;
+
 			const response = [
 				[1, level.id],
 				[2, level.name],
@@ -59,23 +61,23 @@ module.exports = (fastify) => {
 				[5, level.version],
 				[6, user.id],
 				[8, level.difficulty === "NA" ? 0 : 10],
-				[9, Constants.returnLevelDifficulty[level.difficulty]],
+				[9, isDemon ? 10 : Constants.returnLevelDifficulty[level.difficulty]],
 				[10, level.downloads],
 				[12, level.officialSongId],
 				[13, level.gameVersion],
 				[14, level.likes - level.dislikes],
 				[15, Constants.levelLength[level.length]],
-				[17, Constants.selectDemonDifficulty.values().includes(level.difficulty) ? 1 : 0],
+				[17, isDemon],
 				[18, level.stars],
-				[19, level.ratingType === "Featured" ? 1 : 0],
+				[19, level.ratingType === "Featured" ? 1 : 0], // Featured score. The higher it is, the higher the level appears on the featured levels list.
 				[25, level.difficulty === "Auto" ? 1 : 0],
-				[27, level.password], // XOR encrypted with a key of 26364. [TODO] Needs to test in 2.1
+				[27, level.password !== 0 ? toBase64(cipher(level.password, 26364)).toString() : "0"],
 				[28, dateToRelative(level.createdAt)],
 				[29, dateToRelative(level.updatedAt)],
 				[30, level.originalLevelId],
 				[31, level.isTwoPlayer ? 1 : 0],
-				[35, level.officialSongId],
-				[36, level.extraString],
+				[35, level.songId],
+				[36, level.extraString || ""],
 				[37, level.coins],
 				[38, level.coins ? 1 : 0],
 				[39, level.requestedStars],
@@ -88,7 +90,7 @@ module.exports = (fastify) => {
 			]
 				.map(([key, value]) => `${key}:${value}`)
 				.join(":");
-			const levelResponse = `${user.id},${level.stars},${Constants.returnDemonDifficulty[level.difficulty] ?? 0},${level.id},${level.coins ? 1 : 0},${level.ratingType === "Featured" ? 1 : 0},${level.password},0`; // last - daily/weekly/event id
+			const levelResponse = `${user.id},${level.stars},${isDemon},${level.id},${level.coins ? 1 : 0},${level.ratingType === "Featured" ? 1 : 0},${level.password},0`; // last - daily/weekly/event id
 
 			reply.send(`${response}#${getSolo(levelData.data)}#${getSolo2(levelResponse)}#${levelResponse}`);
 

@@ -14,9 +14,9 @@ const SoulShard = 14;
 
 module.exports = {
 	port: 59999,
-	databasePath: "gd_database", // if your full url (like http://localhost:59999) length is not matching to 33, then use it /
+	databasePath: ["gd_database", "gddatabase"], // 1 - for http; 2 - for https. If your host starts with https, then set them to the same with final length 34
 	host: "http://localhost:59999",
-	// In this case, it will be "http://localhost:59999/gd_database" - 33 symbols, no more, no less.
+	// In this case, it will be "http://localhost:59999/gd_database" and "http://localhost:59999/gddatabase" - [34, 33] symbols, no more, no less.
 
 	preActiveAccounts: true,
 	showNotRegisteredUsersInLeaderboard: true,
@@ -111,6 +111,8 @@ module.exports = {
 	userMessagesPageSize: 10, // Number of messages per page
 	searchUsersPageSize: 10, // Number of users per page
 	searchLevelsPageSize: 10, // Number of levels per page
+	maxAccountBackupSize: 50 * 1024 * 1024, // Maximum size of the account backup in bytes
+	maxLevelSize: 5 * 1024 * 1024,
 
 	defaultLevel: {
 		downloads: 0,

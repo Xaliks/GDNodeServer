@@ -50,9 +50,29 @@ function reverseObject(obj) {
 	};
 }
 
+// thanks https://stackoverflow.com/a/34920444/19841004
+function byteLengthOf(s) {
+	let n = 0;
+	for (let i = 0, l = s.length; i < l; i++) {
+		const hi = s.charCodeAt(i);
+		if (hi < 0x0080) n += 1;
+		else if (hi < 0x0800) n += 2;
+		else if (hi < 0xd800) n += 3;
+		else if (hi < 0xdc00) {
+			const lo = s.charCodeAt(++i);
+			if (i < l && lo >= 0xdc00 && lo <= 0xdfff) n += 4;
+			else throw new Error("UCS-2 String malformed");
+		} else if (hi < 0xe000) throw new Error("UCS-2 String malformed");
+		else n += 3;
+	}
+
+	return n;
+}
+
 module.exports = {
 	dateToRelative,
 	reverseObject,
+	byteLengthOf,
 	Constants: {
 		levelLength: reverseObject({
 			Tiny: 0,
@@ -74,11 +94,11 @@ module.exports = {
 			Hard: 30,
 			Harder: 40,
 			Insane: 50,
-			EasyDemon: 50,
-			MediumDemon: 50,
-			HardDemon: 50,
-			InsaneDemon: 50,
-			ExtremeDemon: 50,
+			// EasyDemon: 70,
+			// MediumDemon: 80,
+			// HardDemon: 60,
+			// InsaneDemon: 90,
+			// ExtremeDemon: 100,
 		}),
 		selectLevelDifficulty: reverseObject({
 			Auto: -3,
@@ -112,6 +132,7 @@ module.exports = {
 			Level: 1,
 			LevelComment: 2,
 			AccountComment: 3,
+			List: 4,
 		}),
 	},
 };

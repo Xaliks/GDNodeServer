@@ -286,27 +286,30 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0) {
 
 	return `${levels
 		.map((level) => {
+			const user = users.find((user) => user.extId === String(level.accountId));
+			const isDemon = Constants.selectDemonDifficulty.keys().includes(level.difficulty) ? 1 : 0;
+
 			return [
 				[1, level.id],
 				[2, level.name],
 				[3, toBase64(level.description ?? "")],
 				[5, level.version],
-				[6, level.accountId],
+				[6, user.id],
 				[8, level.difficulty === "NA" ? 0 : 10],
-				[9, Constants.returnLevelDifficulty[level.difficulty]],
+				[9, isDemon ? 10 : Constants.returnLevelDifficulty[level.difficulty]],
 				[10, level.downloads],
 				[12, level.officialSongId],
 				[13, level.gameVersion],
 				[14, level.likes - level.dislikes],
 				[15, Constants.levelLength[level.length]],
-				[17, Constants.selectDemonDifficulty.values().includes(level.difficulty) ? 1 : 0],
+				[17, isDemon],
 				[18, level.stars],
 				[19, level.ratingType === "Featured" ? 1 : 0],
 				[25, level.difficulty === "Auto" ? 1 : 0],
 				[30, level.originalLevelId],
 				[31, level.isTwoPlayer ? 1 : 0],
-				[35, level.officialSongId],
-				[36, level.extraString],
+				[35, level.songId],
+				[36, level.extraString || ""],
 				[37, level.coins],
 				[38, level.coins ? 1 : 0],
 				[39, level.requestedStars],

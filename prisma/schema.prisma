@@ -131,6 +131,7 @@ enum LikeType {
   Level
   LevelComment
   AccountComment
+  List
 }
 
 model Levels {
@@ -145,7 +146,7 @@ model Levels {
   officialSongId   Int             @default(0)
   songId           Int             @default(0)
   objectCount      Int             @default(0)
-  password         String          @default("0")
+  password         Int             @default(0)
   originalLevelId  Int             @default(0)
   coins            Int             @default(0)
   requestedStars   Int
@@ -161,7 +162,7 @@ model Levels {
   dislikes   Int             @default(0)
   downloads  Int             @default(0)
   createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
+  updatedAt  DateTime        @default(now())
   ratedAt    DateTime?
 
   isLDM       Boolean @default(false)

@@ -1,7 +1,7 @@
 const Logger = require("../../scripts/Logger");
 const { database, getUser } = require("../../scripts/database");
 const { Constants } = require("../../scripts/util");
-const { secret, gjp2Pattern } = require("../../config/config");
+const { secret } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -16,13 +16,11 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
 					type: { type: "number", enum: Constants.likeCommentType.values() },
 					itemID: { type: "number", minimum: 1 },
 					like: { type: "number", enum: [0, 1] },
 				},
-				required: ["secret", "accountID", "gjp2", "itemID", "type", "like"],
+				required: ["secret", "itemID", "type", "like"],
 			},
 		},
 		handler: async (req, reply) => {
@@ -78,6 +76,9 @@ module.exports = (fastify) => {
 					}
 
 					table = "accountComments";
+				}
+				if (type === Constants.likeCommentType.List) {
+					// TODO
 				}
 
 				const createdLike = await database.likes

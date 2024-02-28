@@ -33,14 +33,18 @@ function registerRoutes(path, urlPath) {
 			if (fs.statSync(`${path}/${file}`).isDirectory()) recurse(`${path}/${file}`, urlPath);
 
 			if (file.endsWith(".js")) {
-				fastify.register(
-					(api, options, done) => {
-						require(`./${path}/${file}`)(api);
+				const endpoint = require(`./${path}/${file}`);
 
-						done();
-					},
-					{ prefix: path.replace(originalPath, urlPath) },
-				);
+				(Array.isArray(urlPath) ? urlPath : [urlPath]).forEach((urlPath) => {
+					fastify.register(
+						(api, options, done) => {
+							endpoint(api);
+
+							done();
+						},
+						{ prefix: path.replace(originalPath, urlPath) },
+					);
+				});
 			}
 		});
 	}

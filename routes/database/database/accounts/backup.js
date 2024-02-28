@@ -1,15 +1,13 @@
-const zlib = require("node:zlib");
 const Logger = require("../../../../scripts/Logger");
-const { fromSafeBase64 } = require("../../../../scripts/security");
-const { accountSecret, gjp2Pattern, safeBase64Pattern } = require("../../../../config/config");
+const { accountSecret, gjp2Pattern, safeBase64Pattern, maxAccountBackupSize } = require("../../../../config/config");
 const { database, getUser } = require("../../../../scripts/database");
+const { byteLengthOf } = require("../../../../scripts/util");
 
 const ResponseEnum = {
 	Success: "1", // Success backup
 	Failed: "-1", // Backup failed. Please try again later // Save size is within limits.
 	LoginFailed: "-2", // Login failed. Please login to verify your account
-	// Other
-	// Backup failed. Error code: {n} // Save size is within limits.
+	WithinLimits: "-3", // Backup failed. Error code: -3 // Save size is within limits.
 };
 
 /**
@@ -41,19 +39,13 @@ module.exports = (fastify) => {
 				const { account, user } = await getUser(req.body);
 				if (!account) return reply.send(ResponseEnum.LoginFailed);
 
-				const [base64Data] = saveData.split(";");
-				const uncompressedData = zlib.gunzipSync(fromSafeBase64(base64Data)).toString();
+				if (byteLengthOf(saveData) > maxAccountBackupSize) return reply.send(ResponseEnum.WithinLimits);
 
-				const orbs = Number(uncompressedData.match(/<\/s><k>14<\/k><s>(\d+)<\/s>/)?.[1]) || 0;
-
-				await database.$transaction([
-					database.savedData.upsert({
-						where: { id: account.id },
-						update: { data: saveData, gameVersion, binaryVersion },
-						create: { id: account.id, data: saveData, gameVersion, binaryVersion },
-					}),
-					database.users.update({ where: { id: user.id }, data: { orbs } }),
-				]);
+				await database.savedData.upsert({
+					where: { id: account.id },
+					update: { data: saveData, gameVersion, binaryVersion },
+					create: { id: account.id, data: saveData, gameVersion, binaryVersion },
+				});
 
 				Logger.log(
 					"User backup",
