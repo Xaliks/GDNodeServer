@@ -19,7 +19,7 @@ module.exports = (fastify) => {
 					accountID: { type: "number", minimum: 1 },
 					gjp2: { type: "string", pattern: gjp2Pattern },
 					toAccountID: { type: "number", minimum: 1 },
-					comment: { type: "string", pattern: safeBase64Pattern }, // comment can be empty string
+					comment: { type: "string", pattern: safeBase64Pattern },
 				},
 				required: ["secret", "accountID", "gjp2", "comment"],
 			},
@@ -37,7 +37,7 @@ module.exports = (fastify) => {
 
 				Logger.log(
 					"Create account comment",
-					`ID: ${Logger.color(Logger.colors.cyan)(comment.id)},`,
+					`ID: ${Logger.color(Logger.colors.cyan)(comment.id)}\n`,
 					`Account: ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)}`,
 				);
 
