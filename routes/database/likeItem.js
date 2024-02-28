@@ -30,7 +30,6 @@ module.exports = (fastify) => {
 				const { account } = await getUser(req.body, false);
 				if (!account) return reply.send("1");
 
-				let data = {};
 				let table;
 				if (type === Constants.likeCommentType.Level) {
 					const level = await database.levels.findFirst({ where: { id: itemID } });
@@ -50,10 +49,28 @@ module.exports = (fastify) => {
 					}
 
 					table = "levels";
-					data = { [like ? "likes" : "dislikes"]: { increment: 1 } };
 				}
 				if (type === Constants.likeCommentType.LevelComment) {
-					// TODO
+					const comment = await database.levelComments.findFirst({ where: { id: itemID } });
+					if (!comment) return reply.send("1");
+
+					const level = await database.levels.findFirst({ where: { id: comment.levelId } });
+					if (!level) return reply.send("1");
+
+					if (level.visibility === "FriendsOnly" && level.accountId !== account.id) {
+						const friendship = await database.friends.findFirst({
+							where: {
+								OR: [
+									{ accountId1: account.id, accountId2: level.accountId },
+									{ accountId1: level.accountId, accountId2: account.id },
+								],
+							},
+						});
+
+						if (!friendship) return reply.send("1");
+					}
+
+					table = "levelComments";
 				}
 				if (type === Constants.likeCommentType.AccountComment) {
 					const comment = await database.accountComments.findFirst({ where: { id: itemID } });
@@ -76,7 +93,6 @@ module.exports = (fastify) => {
 					}
 
 					table = "accountComments";
-					data = { likes: { [like ? "increment" : "decrement"]: 1 } };
 				}
 				if (type === Constants.likeCommentType.List) {
 					// TODO
@@ -94,7 +110,10 @@ module.exports = (fastify) => {
 					.catch(() => null);
 				if (!createdLike) return reply.send("1");
 
-				await database[table].update({ where: { id: createdLike.itemId }, data });
+				await database[table].update({
+					where: { id: createdLike.itemId },
+					data: { likes: { [like ? "increment" : "decrement"]: 1 } },
+				});
 
 				Logger.log(
 					`${like ? "Like" : "Dislike"} item`,

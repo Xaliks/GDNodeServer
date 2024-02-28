@@ -69,10 +69,19 @@ function byteLengthOf(s) {
 	return n;
 }
 
+function hexToRGB(hex) {
+	return hex
+		.replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i, (m, r, g, b) => `#${r}${r}${g}${g}${b}${b}`)
+		.slice(1)
+		.match(/.{2}/g)
+		.map((x) => parseInt(x, 16));
+}
+
 module.exports = {
 	dateToRelative,
 	reverseObject,
 	byteLengthOf,
+	hexToRGB,
 	Constants: {
 		levelLength: reverseObject({
 			Tiny: 0,

@@ -100,6 +100,18 @@ module.exports = {
 		],
 	},
 
+	commentColors: {
+		// Roles
+		Moderator: "#a8ffa8",
+		ElderModerator: "#00ff00",
+		LeaderboardModerator: "#69bbff",
+
+		// Accounts
+		1: "#00fffff",
+		2: "#00fffff",
+		// 3: "#..."
+	},
+
 	timeMaxCounts: 2, // -> years, months, days, hours, minutes, seconds
 	userCommentsPageSize: 10, // Number of comments per page
 	userCommentMaxSize: 140, // Max length of user comment
@@ -113,6 +125,7 @@ module.exports = {
 	searchLevelsPageSize: 10, // Number of levels per page
 	maxAccountBackupSize: 50 * 1024 * 1024, // Maximum size of the account backup in bytes
 	maxLevelSize: 5 * 1024 * 1024,
+	maxLevelCommentLength: 100,
 
 	defaultLevel: {
 		downloads: 0,
