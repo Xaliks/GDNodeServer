@@ -30,7 +30,7 @@ module.exports = (fastify) => {
 				const { account } = await getUser(req.body, false);
 				if (!account) return reply.send("1");
 
-				let hasDislikes = false;
+				let data = {};
 				let table;
 				if (type === Constants.likeCommentType.Level) {
 					const level = await database.levels.findFirst({ where: { id: itemID } });
@@ -49,8 +49,8 @@ module.exports = (fastify) => {
 						if (!friendship) return reply.send("1");
 					}
 
-					hasDislikes = true;
 					table = "levels";
+					data = { [like ? "likes" : "dislikes"]: { increment: 1 } };
 				}
 				if (type === Constants.likeCommentType.LevelComment) {
 					// TODO
@@ -76,6 +76,7 @@ module.exports = (fastify) => {
 					}
 
 					table = "accountComments";
+					data = { likes: { [like ? "increment" : "decrement"]: 1 } };
 				}
 				if (type === Constants.likeCommentType.List) {
 					// TODO
@@ -83,20 +84,20 @@ module.exports = (fastify) => {
 
 				const createdLike = await database.likes
 					.create({
-						data: { itemType: Constants.likeCommentType[type], itemId: itemID, accountId: account.id, isLike: like === 1 },
+						data: {
+							itemType: Constants.likeCommentType[type],
+							itemId: itemID,
+							accountId: account.id,
+							isLike: Boolean(like),
+						},
 					})
 					.catch(() => null);
 				if (!createdLike) return reply.send("1");
 
-				await database[table].update({
-					where: { id: createdLike.itemId },
-					data: {
-						[hasDislikes ? "dislikes" : "likes"]: { [hasDislikes || createdLike.isLike ? "increment" : "decrement"]: 1 },
-					},
-				});
+				await database[table].update({ where: { id: createdLike.itemId }, data });
 
 				Logger.log(
-					"Like item",
+					`${like ? "Like" : "Dislike"} item`,
 					`ID: ${Logger.color(Logger.colors.cyan)(createdLike.itemId)}\n`,
 					`Type: ${Logger.color(Logger.colors.cyan)(createdLike.itemType)}\n`,
 					`Account: ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)}`,
@@ -104,7 +105,7 @@ module.exports = (fastify) => {
 
 				return reply.send("1");
 			} catch (error) {
-				Logger.error("Like item", req.body, error);
+				Logger.error(`${like ? "Like" : "Dislike"} item`, req.body, error);
 
 				return reply.send("-1");
 			}
