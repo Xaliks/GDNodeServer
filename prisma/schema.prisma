@@ -24,7 +24,14 @@ model Accounts {
   twitter String?
   twitch  String?
 
-  modBadge Int @default(0)
+  modBadge ModBadge @default(None)
+}
+
+enum ModBadge {
+  None
+  Moderator
+  ElderModerator
+  LeaderboardModerator
 }
 
 model Users {
@@ -207,6 +214,17 @@ enum LevelVisibility {
   Listed
   FriendsOnly
   Unlisted
+}
+
+model LevelComments {
+  id        Int      @id @default(autoincrement())
+  levelId   Int
+  accountId Int
+  content   String
+  likes     Int      @default(0)
+  dislikes  Int      @default(0)
+  percent   Int      @default(0)
+  createdAt DateTime @default(now())
 }
 
 model LevelsData {

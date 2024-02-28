@@ -1,5 +1,6 @@
 const { database } = require("../../scripts/database");
 const { showNotRegisteredUsersInLeaderboard, secret, gjp2Pattern } = require("../../config/config");
+const { Constants } = require("../../scripts/util");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -118,7 +119,7 @@ module.exports = (fastify) => {
 				[18, account.messageState],
 				[19, account.friendRequestState],
 				[50, account.commentHistoryState],
-				[49, account.modBadge],
+				[49, Constants.modBadge[account.modBadge]],
 				[31, friendState],
 			];
 

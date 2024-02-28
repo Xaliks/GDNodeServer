@@ -134,5 +134,11 @@ module.exports = {
 			AccountComment: 3,
 			List: 4,
 		}),
+		modBadge: reverseObject({
+			None: 0,
+			Moderator: 1,
+			ElderModerator: 2,
+			LeaderboardModerator: 3,
+		}),
 	},
 };
