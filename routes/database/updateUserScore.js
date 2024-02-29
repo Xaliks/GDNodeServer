@@ -1,5 +1,5 @@
 const Logger = require("../../scripts/Logger");
-const { secret, udidPattern, gjp2Pattern, base64Pattern, usernameRegex } = require("../../config/config");
+const { secret, udidPattern, base64Pattern, usernameRegex } = require("../../config/config");
 const { database, getUser } = require("../../scripts/database");
 
 /**
@@ -16,8 +16,7 @@ module.exports = (fastify) => {
 				properties: {
 					secret: { type: "string", const: secret },
 					udid: { type: "string", pattern: udidPattern },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 					userName: { type: "string", pattern: usernameRegex.source },
 					stars: { type: "number", minimum: 0 },
 					moons: { type: "number", minimum: 0 },
@@ -47,16 +46,13 @@ module.exports = (fastify) => {
 				},
 				required: [
 					"secret",
-					"udid",
 					"stars",
-					"moons",
 					"demons",
 					"diamonds",
 					"icon",
 					"iconType",
 					"color1",
 					"color2",
-					"color3",
 					"coins",
 					"userCoins",
 					"accIcon",
@@ -68,8 +64,6 @@ module.exports = (fastify) => {
 					"accGlow",
 					"accSpider",
 					"accExplosion",
-					"accSwing",
-					"accJetpack",
 					"seed",
 					"seed2",
 				],
@@ -83,7 +77,6 @@ module.exports = (fastify) => {
 				const userData = {
 					username: account?.username || req.body.userName,
 					stars: req.body.stars,
-					moons: req.body.moons,
 					demons: req.body.demons,
 					coins: req.body.coins,
 					userCoins: req.body.userCoins,
@@ -93,7 +86,6 @@ module.exports = (fastify) => {
 					displayIconType: req.body.iconType,
 					mainColor: req.body.color1,
 					secondColor: req.body.color2,
-					glowColor: req.body.color3,
 					glow: Boolean(req.body.accGlow === 1),
 					explosion: req.body.accExplosion,
 					cube: req.body.accIcon,
@@ -103,10 +95,14 @@ module.exports = (fastify) => {
 					wave: req.body.accDart,
 					robot: req.body.accRobot,
 					spider: req.body.accSpider,
-					swing: req.body.accSwing,
-					jetpack: req.body.accJetpack,
 					isRegistered: Boolean(account),
 				};
+
+				// 2.2
+				if (req.body.moons) userData.moons = req.body.moons;
+				if (req.body.color3) userData.color3 = req.body.color3;
+				if (req.body.accSwing) userData.swing = req.body.accSwing;
+				if (req.body.jetpack) userData.jetpack = req.body.accJetpack;
 
 				await database.users.update({ where: { id: user.id }, data: userData });
 

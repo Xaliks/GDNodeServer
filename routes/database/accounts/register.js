@@ -60,8 +60,11 @@ module.exports = (fastify) => {
 						isActive: Boolean(preActiveAccounts),
 					},
 				})
-				.then(() => {
-					Logger.log("Account create", `User ${Logger.color(Logger.colors.cyan)(userName)} created.`);
+				.then((account) => {
+					Logger.log(
+						"Account create",
+						`Account ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)} created.`,
+					);
 
 					return reply.send(ResponseEnum.Success);
 				})

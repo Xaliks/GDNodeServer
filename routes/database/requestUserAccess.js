@@ -1,6 +1,6 @@
 const { Constants } = require("../../scripts/util");
-const { getUser } = require("../../scripts/database");
-const { secret, gjp2Pattern } = require("../../config/config");
+const { getPassword, database } = require("../../scripts/database");
+const { secret } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -15,14 +15,16 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 				},
-				required: ["secret", "accountID", "gjp2"],
+				required: ["secret", "accountID"],
 			},
 		},
 		handler: async (req, reply) => {
-			const { account } = await getUser(req.body, false);
+			const password = getPassword(req.body);
+			if (!password) return reply.send("-1");
+
+			const account = await database.accounts.findFirst({ where: { id: req.body.accountID, password } });
 			if (!account) return reply.send("-1");
 
 			return reply.send(

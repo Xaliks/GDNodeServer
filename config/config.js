@@ -107,9 +107,13 @@ module.exports = {
 		LeaderboardModerator: "#69bbff",
 
 		// Accounts
-		1: "#00fffff",
-		2: "#00fffff",
+		1: "#00ffff",
+		2: "#00ffff",
 		// 3: "#..."
+	},
+	defaultLevel: {
+		downloads: 0,
+		likes: 0,
 	},
 
 	timeMaxCounts: 2, // -> years, months, days, hours, minutes, seconds
@@ -127,10 +131,6 @@ module.exports = {
 	maxLevelSize: 5 * 1024 * 1024,
 	maxLevelCommentLength: 100,
 
-	defaultLevel: {
-		downloads: 0,
-		likes: 0,
-	},
 	magicLevelRequirements: {
 		length: "Medium", // Minimum length of the level (Tiny | Short | Medium | Long | XL). Default: Medium
 		objects: 10000, // Minimum number of the objects. Default: 10000
@@ -144,11 +144,12 @@ module.exports = {
 	accountSecret: "Wmfv3899gc9",
 	gjp2Pattern: "^[0-9a-f]{40}$",
 	udidPattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-	safeBase64Pattern: "^[A-Za-z0-9-_]{4,}={0,2}$",
-	base64Pattern: "^[A-Za-z0-9+/]{4,}={0,2}$",
+	safeBase64Pattern: "^(?=(?:.{4})*$)[A-Za-z0-9-_]*={0,2}$",
+	base64Pattern: "^(?=(?:.{4})*$)[A-Za-z0-9+/]*={0,2}$",
 	levelNamePattern: "^[ a-zA-Z0-9]{1,20}$",
 	separatedNumbersPattern: "^(?:\\d+,)*\\d+$",
 	chestKeyItemValue: Key,
+	chest21Items: [FireShard, IceShard, PoisonShard, ShadowShard, LavaShard, Key],
 	// https://emailregex.com
 	emailRegex:
 		/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,

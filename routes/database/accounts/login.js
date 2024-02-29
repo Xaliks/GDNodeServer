@@ -1,5 +1,5 @@
 const Logger = require("../../../scripts/Logger");
-const { accountSecret, gjp2Pattern, udidPattern, usernameRegex } = require("../../../config/config");
+const { accountSecret, usernameRegex } = require("../../../config/config");
 const { getUser } = require("../../../scripts/database");
 
 const ResponseEnum = {
@@ -23,11 +23,9 @@ module.exports = (fastify) => {
 				properties: {
 					secret: { type: "string", const: accountSecret },
 					userName: { type: "string", pattern: usernameRegex.source },
-					gjp2: { type: "string", pattern: gjp2Pattern },
-					udid: { type: "string", pattern: udidPattern },
 					sID: { type: "number" }, // steam id
 				},
-				required: ["secret", "userName", "gjp2", "udid"],
+				required: ["secret", "userName"],
 			},
 		},
 		handler: async (req, reply) => {

@@ -1,7 +1,7 @@
-const { database, getUser } = require("../../scripts/database");
+const { database, checkPassword } = require("../../scripts/database");
 const { toSafeBase64, cipher } = require("../../scripts/security");
 const { dateToRelative } = require("../../scripts/util");
-const { userMessagesPageSize, secret, gjp2Pattern } = require("../../config/config");
+const { userMessagesPageSize, secret } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -16,25 +16,23 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 					page: { type: "number", minimum: 0, default: 0 },
 					total: { type: "number", minimum: 0, default: 0 },
 				},
-				required: ["secret", "accountID", "gjp2"],
+				required: ["secret", "accountID"],
 			},
 		},
 		handler: async (req, reply) => {
-			const { page, total } = req.body;
+			const { accountID, page, total } = req.body;
 
 			const getSent = req.body.getSent === "1";
 			let totalCount = total;
 
-			const { account } = await getUser(req.body, false);
-			if (!account) return reply.send("-1");
+			if (!(await checkPassword(req.body))) return reply.send("-1");
 
 			const messages = await database.messages.findMany({
-				where: { [getSent ? "accountId" : "toAccountId"]: account.id },
+				where: { [getSent ? "accountId" : "toAccountId"]: accountID },
 				take: userMessagesPageSize,
 				skip: page * userMessagesPageSize,
 				orderBy: { id: "desc" },
@@ -44,7 +42,7 @@ module.exports = (fastify) => {
 			if (messages.length < userMessagesPageSize) totalCount = page * userMessagesPageSize + messages.length;
 			else if (!totalCount) {
 				totalCount = await database.messages.count({
-					where: { [getSent ? "accountId" : "toAccountId"]: account.id },
+					where: { [getSent ? "accountId" : "toAccountId"]: accountID },
 				});
 			}
 
@@ -74,9 +72,9 @@ module.exports = (fastify) => {
 					.join("|")}#${totalCount * userMessagesPageSize}:${page}:${userMessagesPageSize}`,
 			);
 
-			if (!getSent) {
+			if (!getSent && messages.some((message) => !message.isNew)) {
 				await database.messages.updateMany({
-					where: { id: { in: messages.map((message) => message.id) } },
+					where: { id: { in: messages.filter((message) => message.isNew).map((message) => message.id) } },
 					data: { isNew: false },
 				});
 			}
@@ -92,24 +90,22 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 					message: { type: "number", minimum: 1 },
 				},
-				required: ["secret", "accountID", "gjp2", "message"],
+				required: ["secret", "accountID", "message"],
 			},
 		},
 		handler: async (req, reply) => {
-			const { message: messageID } = req.body;
+			const { accountID, message: messageID } = req.body;
 
-			const { account } = await getUser(req.body, false);
-			if (!account) return reply.send("-1");
+			if (!(await checkPassword(req.body))) return reply.send("-1");
 
 			const message = await database.messages.findFirst({ where: { id: messageID } });
-			if (!message || (message.accountId === account.id && message.toAccountId === account.id)) return reply.send("-1");
+			if (!message || (message.accountId === accountID && message.toAccountId === accountID)) return reply.send("-1");
 
 			const secondUser = await database.users.findFirst({
-				where: { extId: String(message.toAccountId !== account.id ? message.toAccountId : message.accountId) },
+				where: { extId: String(message.toAccountId !== accountID ? message.toAccountId : message.accountId) },
 			});
 
 			reply.send(
@@ -122,7 +118,7 @@ module.exports = (fastify) => {
 					[6, secondUser.username],
 					[7, dateToRelative(message.createdAt)],
 					[8, message.isNew ? 0 : 1],
-					[9, message.toAccountId === account.id ? 1 : 0],
+					[9, message.toAccountId === accountID ? 1 : 0],
 				]
 					.map(([key, value]) => `${key}:${value}`)
 					.join(":"),

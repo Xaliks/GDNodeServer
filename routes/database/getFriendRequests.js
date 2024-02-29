@@ -1,8 +1,8 @@
 const Logger = require("../../scripts/Logger");
-const { database, getUser } = require("../../scripts/database");
+const { database, checkPassword } = require("../../scripts/database");
 const { toSafeBase64 } = require("../../scripts/security");
 const { dateToRelative } = require("../../scripts/util");
-const { userFriendRequestPageSize, secret, gjp2Pattern } = require("../../config/config");
+const { userFriendRequestPageSize, secret } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -17,25 +17,23 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 					page: { type: "number", minimum: 0, default: 0 },
 					total: { type: "number", minimum: 0, default: 0 },
 				},
-				required: ["secret", "accountID", "gjp2"],
+				required: ["secret", "accountID"],
 			},
 		},
 		handler: async (req, reply) => {
-			const { page, total } = req.body;
+			const { accountID, page, total } = req.body;
 
 			const getSent = req.body.getSent === "1";
 			let totalCount = total;
 
-			const { account } = await getUser(req.body, false);
-			if (!account) return reply.send("-1");
+			if (!(await checkPassword(req.body))) return reply.send("-1");
 
 			const friendRequests = await database.friendRequests.findMany({
-				where: { [getSent ? "accountId" : "toAccountId"]: account.id },
+				where: { [getSent ? "accountId" : "toAccountId"]: accountID },
 				take: userFriendRequestPageSize,
 				skip: page * userFriendRequestPageSize,
 				orderBy: { id: "desc" },
@@ -46,7 +44,7 @@ module.exports = (fastify) => {
 				totalCount = page * userFriendRequestPageSize + friendRequests.length;
 			} else if (!totalCount) {
 				totalCount = await database.friendRequests.count({
-					where: { [getSent ? "accountId" : "toAccountId"]: account.id },
+					where: { [getSent ? "accountId" : "toAccountId"]: accountID },
 				});
 			}
 
@@ -97,30 +95,28 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 					requestID: { type: "number", minimum: 1 },
 				},
-				required: ["secret", "accountID", "gjp2", "requestID"],
+				required: ["secret", "accountID", "requestID"],
 			},
 		},
 		handler: async (req, reply) => {
-			const { requestID } = req.body;
+			const { accountID, requestID } = req.body;
 
 			try {
-				const { account } = await getUser(req.body, false);
-				if (!account) return reply.send("-1");
+				if (!(await checkPassword(req.body))) return reply.send("-1");
 
 				const friendRequest = await database.friendRequests
-					.update({ where: { id: requestID, toAccountId: account.id }, data: { isNew: false } })
+					.update({ where: { id: requestID, toAccountId: accountID }, data: { isNew: false } })
 					.catch(() => null);
 				if (!friendRequest) return reply.send("-1");
 
 				Logger.log(
 					"Read friend request",
 					`ID: ${Logger.color(Logger.colors.cyan)(friendRequest.id)}\n`,
-					`From: ${Logger.color(Logger.colors.gray)(friendRequest.accountId)}\n`,
-					`To: ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(friendRequest.toAccountId)}`,
+					`From: ${Logger.color(Logger.colors.cyan)(friendRequest.accountId)}\n`,
+					`To: ${Logger.color(Logger.colors.cyan)(friendRequest.toAccountId)}`,
 				);
 
 				return reply.send("1");

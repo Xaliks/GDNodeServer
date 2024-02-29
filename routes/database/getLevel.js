@@ -1,6 +1,6 @@
 const { toBase64, getSolo, getSolo2, cipher } = require("../../scripts/security");
 const { Constants, dateToRelative } = require("../../scripts/util");
-const { getUser, database } = require("../../scripts/database");
+const { checkPassword, database } = require("../../scripts/database");
 const { secret, base64Pattern } = require("../../config/config");
 
 /**
@@ -16,6 +16,7 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
+					accountID: { type: "number" },
 					levelID: { type: "number", minimum: -3 },
 					rs: { type: "string", pattern: "^[A-Za-z0-9]{10}$" },
 					chk: { type: "string", pattern: base64Pattern },
@@ -24,21 +25,20 @@ module.exports = (fastify) => {
 			},
 		},
 		handler: async (req, reply) => {
-			const { levelID } = req.body;
+			const { accountID, levelID } = req.body;
 
 			const level = await database.levels.findFirst({ where: { id: levelID } });
 			if (!level) return reply.send("-1");
 
 			if (level.visibility === "FriendsOnly") {
-				const { account } = await getUser(req.body, false);
-				if (!account) return reply.send("-1");
+				if (!(await checkPassword(req.body))) return reply.send("-1");
 
-				if (level.accountId !== account.id) {
+				if (level.accountId !== accountID) {
 					const friend = await database.friends.findFirst({
 						where: {
 							OR: [
-								{ accountId1: account.id, accountId2: level.accountId },
-								{ accountId1: level.accountId, accountId2: account.id },
+								{ accountId1: accountID, accountId2: level.accountId },
+								{ accountId1: level.accountId, accountId2: accountID },
 							],
 						},
 					});

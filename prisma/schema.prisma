@@ -144,7 +144,6 @@ enum LikeType {
 model Levels {
   id               Int             @id @default(autoincrement())
   gameVersion      Int
-  binaryVersion    Int             @default(0)
   accountId        Int
   name             String
   description      String?

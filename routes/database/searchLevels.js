@@ -1,5 +1,5 @@
 const _ = require("lodash");
-const { database, getUser } = require("../../scripts/database");
+const { database, checkPassword } = require("../../scripts/database");
 const { toBase64, getSolo2 } = require("../../scripts/security");
 const {
 	secret,
@@ -23,12 +23,12 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
+					accountID: { type: "number" },
 					str: {
 						anyOf: [{ type: "number" }, { type: "string", pattern: `|${levelNamePattern}` }],
 					},
 					type: { type: "number", enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18, 21, 22, 27] },
 					diff: { type: "array", items: { type: "string", pattern: "-|^(?:(?:-[1-3]|[1-5]),)*(?:-[1-3]|[1-5])$" } },
-
 					len: { type: "string", pattern: "-|^(?:[0-5],)*(?:[0-5])$" },
 					page: { type: "number", minimum: 0, default: 0 },
 					total: { type: "number", minimum: 0, default: 0 },
@@ -55,6 +55,7 @@ module.exports = (fastify) => {
 			const {
 				type,
 				str,
+				accountID,
 				page,
 				total,
 				diff,
@@ -83,7 +84,7 @@ module.exports = (fastify) => {
 			let levels = [];
 			let totalCount = total;
 
-			const difficulty = Array.isArray(diff) ? diff[0] : null;
+			const difficulties = Array.isArray(diff) ? diff[0] : null;
 			const isId = str && typeof str === "number";
 			const queryArgs = { where: { visibility: "Listed" } };
 
@@ -118,7 +119,7 @@ module.exports = (fastify) => {
 				if (len && len !== "-") {
 					queryArgs.where.length = { in: _.uniq(len.split(",")).map((str) => Constants.levelLength[str]) };
 				}
-				if (difficulty && difficulty !== "-") {
+				if (difficulties && difficulties !== "-") {
 					const fetchedDifficulties = [];
 					for (const difficulty of _.uniq(difficulty.split(","))) {
 						if (difficulty === "-2") {
@@ -138,15 +139,14 @@ module.exports = (fastify) => {
 						if (!level) return reply.send(await returnReplyString());
 
 						if (level.visibility === "FriendsOnly") {
-							const { account } = await getUser(req.body, false);
-							if (account) {
-								if (account.id === level.accountId) levels = [level];
+							if (await checkPassword(req.body)) {
+								if (accountID === level.accountId) levels = [level];
 								else {
 									const friend = await database.friends.findFirst({
 										where: {
 											OR: [
-												{ accountId1: account.id, accountId2: level.accountId },
-												{ accountId1: level.accountId, accountId2: account.id },
+												{ accountId1: accountID, accountId2: level.accountId },
+												{ accountId1: level.accountId, accountId2: accountID },
 											],
 										},
 									});
@@ -162,17 +162,16 @@ module.exports = (fastify) => {
 						levels = await database.levels.findMany(queryArgs);
 
 						if (levels.some((level) => level.visibility === "FriendsOnly")) {
-							const { account } = await getUser(req.body, false);
-							if (!account) levels = levels.filter((level) => level.visibility === "Listed");
-							else if (levels.some((level) => level.accountId !== account.id)) {
+							if (!(await checkPassword(req.body))) levels = levels.filter((level) => level.visibility === "Listed");
+							else if (levels.some((level) => level.accountId !== accountID)) {
 								const friends = await database.friends.findMany({
-									where: { OR: [{ accountId1: account.id }, { accountId2: account.id }] },
+									where: { OR: [{ accountId1: accountID }, { accountId2: accountID }] },
 								});
 
 								levels = levels.filter(
 									(level) =>
 										level.visibility === "Listed" ||
-										friends.some((friend) => [account.id, friend.accountId1, friend.accountId2].includes(level.accountId)),
+										friends.some((friend) => [accountID, friend.accountId1, friend.accountId2].includes(level.accountId)),
 								);
 							}
 						}
@@ -242,17 +241,16 @@ module.exports = (fastify) => {
 					queryArgs.where.id = { in: _.uniq(followed.split(",")).map((id) => Number(id)) };
 					break;
 				case 13: // Friends
-					const { account } = await getUser(req.body, false);
-					if (!account) return reply.send("-1");
+					if (!(await checkPassword(req.body))) return reply.send("-1");
 
 					const friends = await database.friends.findMany({
-						where: { OR: [{ accountId1: account.id }, { accountId2: account.id }] },
+						where: { OR: [{ accountId1: accountID }, { accountId2: accountID }] },
 					});
 					if (!friends.length) return reply.send(await returnReplyString());
 
 					queryArgs.where = {
 						accountId: {
-							in: friends.map((friend) => (friend.accountId1 === account.id ? friend.accountId2 : friend.accountId1)),
+							in: friends.map((friend) => (friend.accountId1 === accountID ? friend.accountId2 : friend.accountId1)),
 						},
 					};
 					break;

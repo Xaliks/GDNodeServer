@@ -1,10 +1,9 @@
 const Logger = require("../../scripts/Logger");
-const { database, getUser } = require("../../scripts/database");
+const { database, checkPassword } = require("../../scripts/database");
 const { fromSafeBase64, cipher, fromBase64 } = require("../../scripts/security");
 const { Constants, byteLengthOf } = require("../../scripts/util");
 const {
 	secret,
-	gjp2Pattern,
 	levelNamePattern,
 	base64Pattern,
 	safeBase64Pattern,
@@ -26,9 +25,7 @@ module.exports = (fastify) => {
 				properties: {
 					secret: { type: "string", const: secret },
 					gameVersion: { type: "number" },
-					binaryVersion: { type: "number", default: 0 },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 					levelName: { type: "string", pattern: levelNamePattern },
 					levelDesc: { type: "string", pattern: `|${safeBase64Pattern}`, default: "" },
 					levelVersion: { type: "number", minimum: 1 },
@@ -58,7 +55,6 @@ module.exports = (fastify) => {
 					"secret",
 					"gameVersion",
 					"accountID",
-					"gjp2",
 					"levelName",
 					"levelVersion",
 					"levelLength",
@@ -81,7 +77,7 @@ module.exports = (fastify) => {
 		handler: async (req, reply) => {
 			const {
 				gameVersion,
-				binaryVersion,
+				accountID,
 				levelName,
 				levelDesc,
 				levelVersion,
@@ -109,13 +105,11 @@ module.exports = (fastify) => {
 				const levelDescription = fromSafeBase64(levelDesc).toString();
 				if (levelDescription.length > 200) return reply.send("-1");
 
-				const { account } = await getUser(req.body, false);
-				if (!account) return reply.send("-1");
+				if (!(await checkPassword(req.body))) return reply.send("-1");
 
 				const data = {
 					gameVersion,
-					binaryVersion,
-					accountId: account.id,
+					accountId: accountID,
 					name: levelName,
 					description: levelDescription || null,
 					version: levelVersion,
@@ -140,7 +134,7 @@ module.exports = (fastify) => {
 					updatedAt: new Date(),
 				};
 
-				const existingLevel = await database.levels.findFirst({ where: { accountId: account.id, name: levelName } });
+				const existingLevel = await database.levels.findFirst({ where: { accountId: accountID, name: levelName } });
 				let level;
 				if (existingLevel) {
 					if (levelVersion === 1) return reply.send(existingLevel.id);
@@ -167,7 +161,7 @@ module.exports = (fastify) => {
 					"Create level",
 					`ID: ${Logger.color(Logger.colors.cyan)(level.id)}\n`,
 					`Name: ${Logger.color(Logger.colors.cyan)(level.name)}\n`,
-					`Account: ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)}`,
+					`Account: ${Logger.color(Logger.colors.cyan)(accountID)}`,
 				);
 
 				return reply.send(level.id);

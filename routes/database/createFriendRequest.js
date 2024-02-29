@@ -1,7 +1,7 @@
 const Logger = require("../../scripts/Logger");
-const { database, getUser } = require("../../scripts/database");
+const { database, checkPassword } = require("../../scripts/database");
 const { fromSafeBase64 } = require("../../scripts/security");
-const { userFriendRequestCommentMaxSize, secret, gjp2Pattern, safeBase64Pattern } = require("../../config/config");
+const { userFriendRequestCommentMaxSize, secret, safeBase64Pattern } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -16,12 +16,11 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 					toAccountID: { type: "number", minimum: 1 },
 					comment: { type: "string", pattern: `|${safeBase64Pattern}` }, // comment can be empty string
 				},
-				required: ["secret", "accountID", "gjp2", "toAccountID"],
+				required: ["secret", "accountID", "toAccountID"],
 			},
 		},
 		handler: async (req, reply) => {
@@ -30,8 +29,7 @@ module.exports = (fastify) => {
 			if (accountID === toAccountID) return reply.send("-1");
 
 			try {
-				const { account } = await getUser(req.body, false);
-				if (!account) return reply.send("-1");
+				if (!(await checkPassword(req.body))) return reply.send("-1");
 
 				const toAccount = await database.accounts.findFirst({ where: { id: toAccountID } });
 				if (!toAccount) return reply.send("-1");
@@ -41,8 +39,8 @@ module.exports = (fastify) => {
 				const blocked = await database.blocks.findFirst({
 					where: {
 						OR: [
-							{ accountId: account.id, targetAccountId: toAccount.id },
-							{ accountId: toAccount.id, targetAccountId: account.id },
+							{ accountId: accountID, targetAccountId: toAccount.id },
+							{ accountId: toAccount.id, targetAccountId: accountID },
 						],
 					},
 				});
@@ -52,15 +50,15 @@ module.exports = (fastify) => {
 				if (base64Comment) comment = fromSafeBase64(base64Comment).toString().slice(0, userFriendRequestCommentMaxSize);
 
 				const friendRequest = await database.friendRequests.upsert({
-					where: { accountId_toAccountId: { accountId: account.id, toAccountId: toAccount.id } },
+					where: { accountId_toAccountId: { accountId: accountID, toAccountId: toAccount.id } },
 					update: { comment },
-					create: { accountId: account.id, toAccountId: toAccount.id, comment },
+					create: { accountId: accountID, toAccountId: toAccount.id, comment },
 				});
 
 				Logger.log(
 					"Create friend request",
 					`ID: ${Logger.color(Logger.colors.cyan)(friendRequest.id)}\n`,
-					`From: ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)}\n`,
+					`From: ${Logger.color(Logger.colors.cyan)(accountID)}\n`,
 					`To: ${Logger.color(Logger.colors.cyan)(toAccount.username)}/${Logger.color(Logger.colors.gray)(toAccount.id)}`,
 				);
 

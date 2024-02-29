@@ -1,6 +1,6 @@
 const _ = require("lodash");
-const { database, getUser } = require("../../scripts/database");
-const { showNotRegisteredUsersInLeaderboard, secret, gjp2Pattern, udidPattern } = require("../../config/config");
+const { database, checkPassword, getUser } = require("../../scripts/database");
+const { showNotRegisteredUsersInLeaderboard, secret, udidPattern } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -15,8 +15,7 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 					udid: { type: "string", pattern: udidPattern },
 					type: { type: "string", enum: ["top", "friends", "relative", "creators"], default: "top" },
 					count: { type: "number", minimum: 1, maximum: 200, default: 100 },
@@ -25,7 +24,7 @@ module.exports = (fastify) => {
 			},
 		},
 		handler: async (req, reply) => {
-			const { type, count: take } = req.body;
+			const { accountID, type, count: take } = req.body;
 
 			let users = [];
 			const where = { isBanned: false };
@@ -40,17 +39,16 @@ module.exports = (fastify) => {
 			}
 
 			if (type === "friends") {
-				const { account } = await getUser(req.body, false);
-				if (!account) return reply.send("-1");
+				if (!(await checkPassword(req.body))) return reply.send("-1");
 
 				const friendIds = await database.friends
-					.findMany({ where: { OR: [{ accountId1: account.id }, { accountId2: account.id }] } })
+					.findMany({ where: { OR: [{ accountId1: accountID }, { accountId2: accountID }] } })
 					.then((friends) =>
-						friends.map((friend) => (friend.accountId1 === account.id ? friend.accountId2 : friend.accountId1)),
+						friends.map((friend) => (friend.accountId1 === accountID ? friend.accountId2 : friend.accountId1)),
 					);
 
 				users = await database.users.findMany({
-					where: { extId: { in: friendIds.concat(account.id).map((id) => String(id)) } },
+					where: { extId: { in: friendIds.concat(accountID).map((id) => String(id)) } },
 					orderBy: [{ stars: "desc" }, { moons: "desc" }],
 					take,
 				});

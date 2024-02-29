@@ -1,5 +1,5 @@
 const Logger = require("../../scripts/Logger");
-const { database, getUser } = require("../../scripts/database");
+const { database, checkPassword } = require("../../scripts/database");
 const { Constants } = require("../../scripts/util");
 const { secret } = require("../../config/config");
 
@@ -16,6 +16,7 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
+					accountID: { type: "number" },
 					type: { type: "number", enum: Constants.likeCommentType.values() },
 					itemID: { type: "number", minimum: 1 },
 					like: { type: "number", enum: [0, 1] },
@@ -24,23 +25,22 @@ module.exports = (fastify) => {
 			},
 		},
 		handler: async (req, reply) => {
-			const { type, itemID, like } = req.body;
+			const { accountID, type, itemID, like } = req.body;
 
 			try {
-				const { account } = await getUser(req.body, false);
-				if (!account) return reply.send("1");
+				if (!(await checkPassword(req.body))) return reply.send("-1");
 
 				let table;
 				if (type === Constants.likeCommentType.Level) {
 					const level = await database.levels.findFirst({ where: { id: itemID } });
 					if (!level) return reply.send("1");
 
-					if (level.visibility === "FriendsOnly" && level.accountId !== account.id) {
+					if (level.visibility === "FriendsOnly" && level.accountId !== accountID) {
 						const friendship = await database.friends.findFirst({
 							where: {
 								OR: [
-									{ accountId1: account.id, accountId2: level.accountId },
-									{ accountId1: level.accountId, accountId2: account.id },
+									{ accountId1: accountID, accountId2: level.accountId },
+									{ accountId1: level.accountId, accountId2: accountID },
 								],
 							},
 						});
@@ -57,12 +57,12 @@ module.exports = (fastify) => {
 					const level = await database.levels.findFirst({ where: { id: comment.levelId } });
 					if (!level) return reply.send("1");
 
-					if (level.visibility === "FriendsOnly" && level.accountId !== account.id) {
+					if (level.visibility === "FriendsOnly" && level.accountId !== accountID) {
 						const friendship = await database.friends.findFirst({
 							where: {
 								OR: [
-									{ accountId1: account.id, accountId2: level.accountId },
-									{ accountId1: level.accountId, accountId2: account.id },
+									{ accountId1: accountID, accountId2: level.accountId },
+									{ accountId1: level.accountId, accountId2: accountID },
 								],
 							},
 						});
@@ -83,8 +83,8 @@ module.exports = (fastify) => {
 						const friendship = await database.friends.findFirst({
 							where: {
 								OR: [
-									{ accountId1: account.id, accountId2: targetAccount.id },
-									{ accountId1: targetAccount.id, accountId2: account.id },
+									{ accountId1: accountID, accountId2: targetAccount.id },
+									{ accountId1: targetAccount.id, accountId2: accountID },
 								],
 							},
 						});
@@ -103,7 +103,7 @@ module.exports = (fastify) => {
 						data: {
 							itemType: Constants.likeCommentType[type],
 							itemId: itemID,
-							accountId: account.id,
+							accountId: accountID,
 							isLike: Boolean(like),
 						},
 					})
@@ -119,7 +119,7 @@ module.exports = (fastify) => {
 					`${like ? "Like" : "Dislike"} item`,
 					`ID: ${Logger.color(Logger.colors.cyan)(createdLike.itemId)}\n`,
 					`Type: ${Logger.color(Logger.colors.cyan)(createdLike.itemType)}\n`,
-					`Account: ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)}`,
+					`Account: ${Logger.color(Logger.colors.cyan)(accountID)}`,
 				);
 
 				return reply.send("1");

@@ -1,6 +1,6 @@
 const Logger = require("../../scripts/Logger");
-const { secret, gjp2Pattern, separatedNumbersPattern } = require("../../config/config");
-const { database, getUser } = require("../../scripts/database");
+const { secret, separatedNumbersPattern } = require("../../config/config");
+const { database, checkPassword } = require("../../scripts/database");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -15,29 +15,27 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 					isSender: { type: "number", enum: [0, 1], default: 0 },
 					messageID: { type: "number", minimum: 1 },
 					messages: { type: "string", pattern: separatedNumbersPattern },
 				},
-				required: ["secret", "accountID", "gjp2"],
+				required: ["secret", "accountID"],
 			},
 		},
 		handler: async (req, reply) => {
-			const { isSender, messages, messageID } = req.body;
+			const { accountID, isSender, messages, messageID } = req.body;
 
 			try {
 				const ids = messages?.split(",") ?? (messageID ? [messageID] : []);
 				if (!ids.length) return reply.send("-1");
 
-				const { account } = await getUser(req.body, false);
-				if (!account) return reply.send("-1");
+				if (!(await checkPassword(req.body))) return reply.send("-1");
 
 				await database.messages.deleteMany({
 					where: {
 						id: { in: ids },
-						[isSender ? "accountId" : "toAccountId"]: account.id,
+						[isSender ? "accountId" : "toAccountId"]: accountID,
 					},
 				});
 

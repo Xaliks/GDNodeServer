@@ -1,5 +1,5 @@
 const _ = require("lodash");
-const { database, getUser } = require("../../scripts/database");
+const { database, checkPassword } = require("../../scripts/database");
 const { toSafeBase64 } = require("../../scripts/security");
 const { dateToRelative, hexToRGB, Constants } = require("../../scripts/util");
 const { secret, commentColors } = require("../../config/config");
@@ -17,6 +17,7 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
+					accountID: { type: "number" },
 					levelID: { type: "number", minimum: 1 },
 					page: { type: "number", minimum: 0, default: 0 },
 					total: { type: "number", minimum: 0, default: 0 },
@@ -27,7 +28,7 @@ module.exports = (fastify) => {
 			},
 		},
 		handler: async (req, reply) => {
-			const { levelID, page, total, count, mode } = req.body;
+			const { accountID, levelID, page, total, count, mode } = req.body;
 
 			let totalCount = total;
 
@@ -35,15 +36,14 @@ module.exports = (fastify) => {
 			if (!level) return reply.send("-1");
 
 			if (level.visibility === "FriendsOnly") {
-				const { account } = await getUser(req.body, false);
-				if (!account) return reply.send("-1");
+				if (!(await checkPassword(req.body))) return reply.send("-1");
 
-				if (level.accountId !== account.id) {
+				if (level.accountId !== accountID) {
 					const friend = await database.friends.findFirst({
 						where: {
 							OR: [
-								{ accountId1: account.id, accountId2: level.accountId },
-								{ accountId1: level.accountId, accountId2: account.id },
+								{ accountId1: accountID, accountId2: level.accountId },
+								{ accountId1: level.accountId, accountId2: accountID },
 							],
 						},
 					});
