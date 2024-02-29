@@ -14,7 +14,7 @@
     - [x] Search
     - [x] Download
     - [x] Upload
-    - [ ] Comments
+    - [x] Comments
     - [ ] Lists
     - [ ] Daily/Weekly levels
     - [ ] Gauntlets
