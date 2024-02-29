@@ -14,7 +14,9 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
-					str: { type: "string", pattern: usernameRegex.source },
+					str: {
+						anyOf: [{ type: "number" }, { type: "string", pattern: usernameRegex.source }],
+					},
 					page: { type: "number", minimum: 0, default: 0 },
 					total: { type: "number", minimum: 0, default: 0 },
 				},
@@ -24,14 +26,23 @@ module.exports = (fastify) => {
 		handler: async (req, reply) => {
 			const { str, page, total } = req.body;
 
+			const isId = typeof str === "number";
 			let totalCount = total;
+			let users = [];
 
-			const users = await database.users.findMany({
-				where: { isRegistered: true, isBanned: false, username: { contains: str, mode: "insensitive" } },
-				orderBy: { stars: "desc" },
-				skip: page * searchUsersPageSize,
-				take: searchUsersPageSize,
-			});
+			if (isId) {
+				const user = await database.users.findFirst({ where: { extId: String(str), isRegistered: true } });
+
+				if (user) users = [user];
+			} else {
+				users = await database.users.findMany({
+					where: { isRegistered: true, isBanned: false, username: { contains: str, mode: "insensitive" } },
+					orderBy: { stars: "desc" },
+					skip: page * searchUsersPageSize,
+					take: searchUsersPageSize,
+				});
+			}
+
 			if (!users.length) return reply.send("-2");
 
 			if (users.length < searchUsersPageSize) totalCount = page * searchUsersPageSize + users.length;

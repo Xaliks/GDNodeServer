@@ -1,6 +1,6 @@
 const Logger = require("../../scripts/Logger");
-const { secret, gjp2Pattern } = require("../../config/config");
-const { database, getUser } = require("../../scripts/database");
+const { secret } = require("../../config/config");
+const { database, checkPassword } = require("../../scripts/database");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -15,11 +15,10 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 					targetAccountID: { type: "number", minimum: 1 },
 				},
-				required: ["secret", "accountID", "gjp2", "targetAccountID"],
+				required: ["secret", "accountID", "targetAccountID"],
 			},
 		},
 		handler: async (req, reply) => {
@@ -27,12 +26,11 @@ module.exports = (fastify) => {
 			if (accountID === targetAccountID) return reply.send("-1");
 
 			try {
-				const { account } = await getUser(req.body, false);
-				if (!account) return reply.send("-1");
+				if (!(await checkPassword(req.body))) return reply.send("-1");
 
 				const block = await database.blocks
 					.delete({
-						where: { accountId_targetAccountId: { accountId: account.id, targetAccountId: targetAccountID } },
+						where: { accountId_targetAccountId: { accountId: accountID, targetAccountId: targetAccountID } },
 					})
 					.catch(() => null);
 				if (!block) return reply.send("1");
@@ -40,8 +38,8 @@ module.exports = (fastify) => {
 				Logger.log(
 					"Unblock user",
 					`ID: ${Logger.color(Logger.colors.cyan)(block.id)}\n`,
-					`Account: ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)}\n`,
-					`Target: ${Logger.color(Logger.colors.gray)(targetAccountID)}`,
+					`Account: ${Logger.color(Logger.colors.cyan)(accountID)}\n`,
+					`Target: ${Logger.color(Logger.colors.cyan)(targetAccountID)}`,
 				);
 
 				return reply.send("1");

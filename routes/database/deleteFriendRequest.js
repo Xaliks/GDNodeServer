@@ -1,6 +1,6 @@
 const Logger = require("../../scripts/Logger");
-const { secret, gjp2Pattern } = require("../../config/config");
-const { database, getUser } = require("../../scripts/database");
+const { secret } = require("../../config/config");
+const { database, checkPassword } = require("../../scripts/database");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -15,12 +15,11 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 					targetAccountID: { type: "number", minimum: 1 },
 					isSender: { type: "number", enum: [0, 1], default: 0 },
 				},
-				required: ["secret", "accountID", "gjp2", "targetAccountID"],
+				required: ["secret", "accountID", "targetAccountID"],
 			},
 		},
 		handler: async (req, reply) => {
@@ -29,20 +28,19 @@ module.exports = (fastify) => {
 			if (accountID === targetAccountID) return reply.send("-1");
 
 			try {
-				const { account } = await getUser(req.body, false);
-				if (!account) return reply.send("-1");
+				if (!(await checkPassword(req.body))) return reply.send("-1");
 
 				await database.friendRequests.deleteMany({
 					where: {
-						accountId: isSender ? account.id : targetAccountID,
-						toAccountId: isSender ? targetAccountID : account.id,
+						accountId: isSender ? accountID : targetAccountID,
+						toAccountId: isSender ? targetAccountID : accountID,
 					},
 				});
 
 				Logger.log(
 					"Delete friend request",
-					`From: ${Logger.color(Logger.colors.gray)(isSender ? account.id : targetAccountID)}\n`,
-					`To: ${Logger.color(Logger.colors.gray)(isSender ? targetAccountID : account.id)}`,
+					`From: ${Logger.color(Logger.colors.cyan)(isSender ? accountID : targetAccountID)}\n`,
+					`To: ${Logger.color(Logger.colors.cyan)(isSender ? targetAccountID : accountID)}`,
 				);
 
 				return reply.send("1");

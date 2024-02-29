@@ -1,5 +1,6 @@
-const { database } = require("../../scripts/database");
-const { showNotRegisteredUsersInLeaderboard, secret, gjp2Pattern } = require("../../config/config");
+const { database, getPassword } = require("../../scripts/database");
+const { showNotRegisteredUsersInLeaderboard, secret } = require("../../config/config");
+const { Constants } = require("../../scripts/util");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -14,28 +15,27 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 					targetAccountID: { type: "number", minimum: 1 },
 				},
 				required: ["secret", "targetAccountID"],
 			},
 		},
 		handler: async (req, reply) => {
-			const { accountID, gjp2, targetAccountID } = req.body;
+			const { accountID, targetAccountID } = req.body;
 
-			const account = await database.accounts.findFirst({ where: { id: targetAccountID, isActive: true } });
-			if (!account) return reply.send("-1");
+			const targetAccount = await database.accounts.findFirst({ where: { id: targetAccountID, isActive: true } });
+			if (!targetAccount) return reply.send("-1");
 
 			let isMe = false;
-			if (accountID === targetAccountID && account.password === gjp2) isMe = true;
+			if (accountID === targetAccountID && targetAccount.password === getPassword(req.body)) isMe = true;
 
 			if (!isMe && accountID) {
 				const blocked = await database.blocks.findFirst({
 					where: {
 						OR: [
-							{ accountId: account.id, targetAccountId: accountID },
-							{ accountId: accountID, targetAccountId: account.id },
+							{ accountId: targetAccount.id, targetAccountId: accountID },
+							{ accountId: accountID, targetAccountId: targetAccount.id },
 						],
 					},
 				});
@@ -43,7 +43,7 @@ module.exports = (fastify) => {
 				if (blocked) return reply.send("-1");
 			}
 
-			const user = await database.users.findFirst({ where: { extId: String(account.id) } });
+			const user = await database.users.findFirst({ where: { extId: String(targetAccount.id) } });
 
 			const where = { isBanned: false, stars: { gt: user.stars } };
 			if (!showNotRegisteredUsersInLeaderboard) where.isRegistered = true;
@@ -58,36 +58,37 @@ module.exports = (fastify) => {
 
 			if (isMe) {
 				[newMessagesCount, newFriendRequestsCount, newFriendsCount] = await database.$transaction([
-					database.messages.count({ where: { toAccountId: account.id, isNew: true } }),
-					database.friendRequests.count({ where: { toAccountId: account.id, isNew: true } }),
+					database.messages.count({ where: { toAccountId: targetAccount.id, isNew: true } }),
+					database.friendRequests.count({ where: { toAccountId: targetAccount.id, isNew: true } }),
 					database.friends.count({
 						where: {
 							OR: [
-								{ accountId1: account.id, isNewFor1: true },
-								{ accountId2: account.id, isNewFor2: true },
+								{ accountId1: targetAccount.id, isNewFor1: true },
+								{ accountId2: targetAccount.id, isNewFor2: true },
 							],
 						},
 					}),
 				]);
 			} else {
 				friendship = await database.friends.findFirst({
-					where: { OR: [{ accountId1: account.id }, { accountId2: account.id }] },
+					where: { OR: [{ accountId1: targetAccount.id }, { accountId2: targetAccount.id }] },
 				});
+
 				if (friendship) friendState = 1;
 				else {
 					friendRequest = await database.friendRequests.findFirst({
-						where: { OR: [{ accountId: account.id }, { toAccountId: account.id }] },
+						where: { OR: [{ accountId: targetAccount.id }, { toAccountId: targetAccount.id }] },
 					});
 
-					if (friendRequest?.toAccountId === account.id) friendState = 2;
-					else if (friendRequest?.accountId === account.id) friendState = 3;
+					if (friendRequest?.toAccountId === targetAccount.id) friendState = 2;
+					else if (friendRequest?.accountId === targetAccount.id) friendState = 3;
 				}
 			}
 
 			const result = [
-				[1, account.username],
+				[1, targetAccount.username],
 				[2, user.id],
-				[16, account.id],
+				[16, targetAccount.id],
 				[3, user.stars],
 				[4, user.demons],
 				[55, "0,0,0,0,0,0,0,0,0,0,0,0"], // easyDemons,mediumDemons,hardDemons,insaneDemons,extremeDemons,easyPlatformerDemons,mediumPlatformerDemons,hardPlatformerDemons,insanePlatformerDemons,extremePlatformerDemons,weeklyDemons,gauntletDemons
@@ -98,9 +99,9 @@ module.exports = (fastify) => {
 				[10, user.mainColor],
 				[11, user.secondColor],
 				[51, user.glowColor],
-				[20, account.youtube ?? ""],
-				[44, account.twitter ?? ""],
-				[45, account.twitch ?? ""],
+				[20, targetAccount.youtube ?? ""],
+				[44, targetAccount.twitter ?? ""],
+				[45, targetAccount.twitch ?? ""],
 				[46, user.diamonds],
 				[21, user.cube],
 				[22, user.ship],
@@ -113,13 +114,13 @@ module.exports = (fastify) => {
 				[54, user.jetpack],
 				[47, user.explosion],
 				[28, user.glow ? 1 : 0],
-				[29, Boolean(account.id) ? 1 : 0],
-				[30, rank + 1], // rank leaderboard
-				[18, account.messageState], // 0 - all, 1 - friends, 2 - none
-				[19, account.friendRequestState], // 0 - accept, 1 - none
-				[50, account.commentHistorySate], // 0 - all, 1 - friends, 2 - me
-				[49, account.modBadge], // 0 - none; 1 - moderator; 2 - elder moderator; 3 - leaderboard moderator
-				[31, friendState], // friend state (0 - not friend; 1 - friend; 2 - INCOMING request; 3 - OUTGOING request)
+				[29, Boolean(targetAccount.id) ? 1 : 0],
+				[30, rank + 1],
+				[18, targetAccount.messageState],
+				[19, targetAccount.friendRequestState],
+				[50, targetAccount.commentHistoryState],
+				[49, Constants.modBadge[targetAccount.modBadge]],
+				[31, friendState],
 			];
 
 			if (isMe) {

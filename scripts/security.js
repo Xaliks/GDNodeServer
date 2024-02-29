@@ -4,6 +4,21 @@ function getGJP2(string) {
 	return crypto.createHash("sha1").update(`${string}mI29fmAnxgTs`).digest("hex");
 }
 
+function getSolo(string) {
+	if (string.length < 41) return getSolo2(string);
+
+	const dividedLength = parseInt(string.length / 40);
+	let hash = "";
+	let i = 40;
+	while (i) hash = string[--i * dividedLength] + hash;
+
+	return getSolo2(hash);
+}
+
+function getSolo2(string) {
+	return crypto.createHash("sha1").update(`${string}xI25fpAapCQg`).digest("hex");
+}
+
 function getSolo3(string) {
 	return crypto.createHash("sha1").update(`${string}oC36fpYaPtdg`).digest("hex");
 }
@@ -58,6 +73,8 @@ function decodeSavedGameData(path) {
 
 module.exports = {
 	getGJP2,
+	getSolo,
+	getSolo2,
 	getSolo3,
 	getSolo4,
 	fromBase64,

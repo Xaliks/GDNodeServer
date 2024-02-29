@@ -1,6 +1,6 @@
 const Logger = require("../../../../scripts/Logger");
-const { accountSecret, gjp2Pattern } = require("../../../../config/config");
-const { database, getUser } = require("../../../../scripts/database");
+const { accountSecret } = require("../../../../config/config");
+const { database, checkPassword } = require("../../../../scripts/database");
 
 const ResponseEnum = {
 	Success: (savedData, gameVersion, binaryVersion) => `${savedData};${gameVersion};${binaryVersion};a;a`, // Sync successful
@@ -23,24 +23,21 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: accountSecret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 				},
-				required: ["secret", "accountID", "gjp2"],
+				required: ["secret", "accountID"],
 			},
 		},
 		handler: async (req, reply) => {
-			try {
-				const { account } = await getUser(req.body);
-				if (!account) return reply.send(ResponseEnum.LoginFailed);
+			const { accountID } = req.body;
 
-				const savedData = await database.savedData.findFirst({ where: { id: account.id } });
+			try {
+				if (!(await checkPassword(req.body))) return reply.send(ResponseEnum.LoginFailed);
+
+				const savedData = await database.savedData.findFirst({ where: { id: accountID } });
 				if (!savedData) return reply.send(ResponseEnum.Code(ResponseEnum.NoSavedData));
 
-				Logger.log(
-					"User backup",
-					`User: ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)}`,
-				);
+				Logger.log("User backup", `User: ${Logger.color(Logger.colors.cyan)(accountID)}`);
 
 				return reply.send(ResponseEnum.Success(savedData.data, savedData.gameVersion, savedData.binaryVersion));
 			} catch (error) {

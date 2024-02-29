@@ -1,11 +1,10 @@
 const Logger = require("../../scripts/Logger");
-const { database, getUser } = require("../../scripts/database");
+const { database, checkPassword } = require("../../scripts/database");
 const { fromSafeBase64, cipher, fromBase64 } = require("../../scripts/security");
 const {
 	userMessageSubjectMaxSize,
 	userMessageContentMaxSize,
 	secret,
-	gjp2Pattern,
 	safeBase64Pattern,
 	base64Pattern,
 } = require("../../config/config");
@@ -23,13 +22,12 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 					toAccountID: { type: "number", minimum: 1 },
 					subject: { type: "string", pattern: safeBase64Pattern },
 					body: { type: "string", pattern: base64Pattern },
 				},
-				required: ["secret", "accountID", "gjp2", "toAccountID", "subject", "body"],
+				required: ["secret", "accountID", "toAccountID", "subject", "body"],
 			},
 		},
 		handler: async (req, reply) => {
@@ -38,8 +36,7 @@ module.exports = (fastify) => {
 			if (accountID === toAccountID) return reply.send("-1");
 
 			try {
-				const { account } = await getUser(req.body, false);
-				if (!account) return reply.send("-1");
+				if (!(await checkPassword(req.body))) return reply.send("-1");
 
 				const toAccount = await database.accounts.findFirst({ where: { id: toAccountID } });
 				if (!toAccount) return reply.send("-1");
@@ -50,8 +47,8 @@ module.exports = (fastify) => {
 					const friendship = await database.friends.findFirst({
 						where: {
 							OR: [
-								{ accountId1: account.id, accountId2: toAccount.id },
-								{ accountId1: toAccount.id, accountId2: account.id },
+								{ accountId1: accountID, accountId2: toAccount.id },
+								{ accountId1: toAccount.id, accountId2: accountID },
 							],
 						},
 					});
@@ -61,8 +58,8 @@ module.exports = (fastify) => {
 					const blocked = await database.blocks.findFirst({
 						where: {
 							OR: [
-								{ accountId: account.id, targetAccountId: toAccount.id },
-								{ accountId: toAccount.id, targetAccountId: account.id },
+								{ accountId: accountID, targetAccountId: toAccount.id },
+								{ accountId: toAccount.id, targetAccountId: accountID },
 							],
 						},
 					});
@@ -76,13 +73,13 @@ module.exports = (fastify) => {
 				const content = cipher(fromBase64(body), 14251).toString().slice(0, userMessageContentMaxSize);
 
 				const message = await database.messages.create({
-					data: { accountId: account.id, toAccountId: toAccount.id, subject, content },
+					data: { accountId: accountID, toAccountId: toAccount.id, subject, content },
 				});
 
 				Logger.log(
 					"Create message",
 					`ID: ${Logger.color(Logger.colors.cyan)(message.id)}\n`,
-					`From: ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)}\n`,
+					`From: ${Logger.color(Logger.colors.cyan)(accountID)}\n`,
 					`To: ${Logger.color(Logger.colors.cyan)(toAccount.username)}/${Logger.color(Logger.colors.gray)(toAccount.id)}`,
 				);
 

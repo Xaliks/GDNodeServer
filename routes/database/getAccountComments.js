@@ -1,7 +1,7 @@
-const { database, getUser } = require("../../scripts/database");
+const { database, checkPassword, getPassword } = require("../../scripts/database");
 const { toSafeBase64 } = require("../../scripts/security");
 const { dateToRelative } = require("../../scripts/util");
-const { userCommentsPageSize, secret, gjp2Pattern } = require("../../config/config");
+const { userCommentsPageSize, secret } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -17,7 +17,6 @@ module.exports = (fastify) => {
 				properties: {
 					secret: { type: "string", const: secret },
 					accountID: { type: "array", items: { type: "number", minimum: 1 }, minItems: 1, maxItems: 2 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
 					page: { type: "number", minimum: 0, default: 0 },
 					total: { type: "number", minimum: 0, default: 0 },
 				},
@@ -25,7 +24,7 @@ module.exports = (fastify) => {
 			},
 		},
 		handler: async (req, reply) => {
-			const { accountID, gjp2, page, total } = req.body;
+			const { accountID, page, total } = req.body;
 
 			const targetAccountId = accountID.length === 1 ? accountID[0] : accountID[1];
 			const accountId = accountID.length === 1 ? null : accountID[0];
@@ -34,20 +33,20 @@ module.exports = (fastify) => {
 			const targetAccount = await database.accounts.findFirst({ where: { id: targetAccountId } });
 			if (!targetAccount) return reply.send("-1");
 
-			if (targetAccount.commentHistorySate !== 0) {
-				if (!accountId || !gjp2) return reply.send("-1");
+			if (targetAccount.commentHistoryState !== 0) {
+				const password = getPassword(req.body);
+				if (!accountId || !password) return reply.send("-1");
 
 				if (targetAccountId === accountId) {
-					if (targetAccount.password !== gjp2) return reply.send("-1");
-				} else if (targetAccount.commentHistorySate === 1) {
-					const { account } = await getUser({ accountID: accountId, gjp2 }, false);
-					if (!account) return reply.send("-1");
+					if (targetAccount.password !== password) return reply.send("-1");
+				} else if (targetAccount.commentHistoryState === 1) {
+					if (!(await checkPassword({ ...req.body, accountID: accountId }))) return reply.send("-1");
 
 					const friendship = await database.friends.findFirst({
 						where: {
 							OR: [
-								{ accountId1: account.id, accountId2: targetAccount.id },
-								{ accountId1: targetAccount.id, accountId2: account.id },
+								{ accountId1: accountId, accountId2: targetAccount.id },
+								{ accountId1: targetAccount.id, accountId2: accountId },
 							],
 						},
 					});

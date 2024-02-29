@@ -7,9 +7,6 @@ function log(request, ...message) {
 	if (process.env.EnableLogging) {
 		return Logger.log(
 			request.method,
-			request.headers["cookie"] === "gd=1;"
-				? Logger.color(Logger.colors.bgGreen)("  GD  ")
-				: Logger.color(Logger.colors.bgCyan)(" REST "),
 			`${Logger.color(Logger.colors.cyan)(request.ip)} -> ${Logger.color(Logger.colors.gray)(request.hostname)}${request.url}`,
 			...message,
 		);
@@ -33,14 +30,18 @@ function registerRoutes(path, urlPath) {
 			if (fs.statSync(`${path}/${file}`).isDirectory()) recurse(`${path}/${file}`, urlPath);
 
 			if (file.endsWith(".js")) {
-				fastify.register(
-					(api, options, done) => {
-						require(`./${path}/${file}`)(api);
+				const endpoint = require(`./${path}/${file}`);
 
-						done();
-					},
-					{ prefix: path.replace(originalPath, urlPath) },
-				);
+				(Array.isArray(urlPath) ? urlPath : [urlPath]).forEach((urlPath) => {
+					fastify.register(
+						(api, options, done) => {
+							endpoint(api);
+
+							done();
+						},
+						{ prefix: path.replace(originalPath, urlPath) },
+					);
+				});
 			}
 		});
 	}
@@ -59,7 +60,7 @@ fastify.setErrorHandler((error, request, reply) => {
 
 	Logger.error("Server", error);
 
-	return reply.status(500).send("-500");
+	return reply.status(500).send("-1");
 });
 
 fastify.listen({ port: config.port }, (error, address) => {

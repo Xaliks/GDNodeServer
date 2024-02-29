@@ -11,10 +11,10 @@
 	- [ ] Management Page
 - [x] Users
 - [ ] Levels
-    - [ ] Search
-    - [ ] Download
-    - [ ] Upload
-    - [ ] Comments
+    - [x] Search
+    - [x] Download
+    - [x] Upload
+    - [x] Comments
     - [ ] Lists
     - [ ] Daily/Weekly levels
     - [ ] Gauntlets
@@ -31,7 +31,7 @@
     - [ ] Gauntlets
 - [ ] Test
     - [x] 2.2
-    - [ ] 2.1
+    - [x] 2.1
     - [ ] 2.0
     - [ ] 1.9
     - [ ] 1.8

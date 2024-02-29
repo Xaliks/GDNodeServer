@@ -1,6 +1,6 @@
 const Logger = require("../../scripts/Logger");
-const { secret, gjp2Pattern } = require("../../config/config");
-const { database, getUser } = require("../../scripts/database");
+const { secret } = require("../../config/config");
+const { database, checkPassword } = require("../../scripts/database");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -15,12 +15,11 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 					targetAccountID: { type: "number", minimum: 1 },
 					requestID: { type: "number", minimum: 1 },
 				},
-				required: ["secret", "accountID", "gjp2", "targetAccountID", "requestID"],
+				required: ["secret", "accountID", "targetAccountID", "requestID"],
 			},
 		},
 		handler: async (req, reply) => {
@@ -29,25 +28,20 @@ module.exports = (fastify) => {
 			if (accountID === targetAccountID) return reply.send("-1");
 
 			try {
-				const { account } = await getUser(req.body, false);
-				if (!account) return reply.send("-1");
+				if (!(await checkPassword(req.body))) return reply.send("-1");
 
 				const friendRequest = await database.friendRequests
-					.delete({ where: { id: requestID, accountId: targetAccountID, toAccountId: account.id } })
+					.delete({ where: { id: requestID, accountId: targetAccountID, toAccountId: accountID } })
 					.catch(() => null);
 				if (!friendRequest) return reply.send("1");
 
-				await database.friends.upsert({
-					where: { accountId1_accountId2: { accountId1: account.id, accountId2: friendRequest.accountId } },
-					update: {},
-					create: { accountId1: account.id, accountId2: friendRequest.accountId },
-				});
+				await database.friends.create({ accountId1: accountID, accountId2: friendRequest.accountId }).catch(() => null);
 
 				Logger.log(
 					"Accept friend request",
 					`ID: ${Logger.color(Logger.colors.cyan)(friendRequest.id)}\n`,
-					`From: ${Logger.color(Logger.colors.gray)(friendRequest.accountId)}\n`,
-					`To: ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)}`,
+					`From: ${Logger.color(Logger.colors.cyan)(friendRequest.accountId)}\n`,
+					`To: ${Logger.color(Logger.colors.cyan)(accountID)}`,
 				);
 
 				return reply.send("1");

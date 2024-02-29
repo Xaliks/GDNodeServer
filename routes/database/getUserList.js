@@ -1,6 +1,6 @@
 const _ = require("lodash");
-const { secret, gjp2Pattern } = require("../../config/config");
-const { database, getUser } = require("../../scripts/database");
+const { secret } = require("../../config/config");
+const { database, checkPassword } = require("../../scripts/database");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -15,39 +15,37 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 					type: { type: "number", enum: [0, 1], default: 0 },
 				},
-				required: ["secret", "accountID", "gjp2"],
+				required: ["secret", "accountID"],
 			},
 		},
 		handler: async (req, reply) => {
-			const { type } = req.body;
+			const { accountID, type } = req.body;
 
-			const { account } = await getUser(req.body, false);
-			if (!account) return reply.send("-1");
+			if (!(await checkPassword(req.body))) return reply.send("-1");
 
 			let users = [];
 
 			if (type === 0) {
 				const friends = await database.friends.findMany({
-					where: { OR: [{ accountId1: account.id }, { accountId2: account.id }] },
+					where: { OR: [{ accountId1: accountID }, { accountId2: accountID }] },
 				});
 				if (!friends.length) return reply.send("-2");
 
 				const newFriends = friends.filter((friendship) => {
-					if (friendship.accountId1 === account.id) return friendship.isNewFor1;
+					if (friendship.accountId1 === accountID) return friendship.isNewFor1;
 					return friendship.isNewFor2;
 				});
 
 				users = await database.users
 					.findMany({
 						where: {
-							id: {
+							extId: {
 								in: friends.map((friendship) => {
-									if (friendship.accountId1 === account.id) return friendship.accountId2;
-									return friendship.accountId1;
+									if (friendship.accountId1 === accountID) return String(friendship.accountId2);
+									return String(friendship.accountId1);
 								}),
 							},
 						},
@@ -61,7 +59,7 @@ module.exports = (fastify) => {
 						})),
 					);
 
-				const [newFriends1, newFriends2] = _.partition(newFriends, (friendship) => friendship.accountId1 === account.id);
+				const [newFriends1, newFriends2] = _.partition(newFriends, (friendship) => friendship.accountId1 === accountID);
 				const transaction = [];
 				if (newFriends1.length) {
 					transaction.push(
@@ -82,7 +80,7 @@ module.exports = (fastify) => {
 				if (transaction.length) database.$transaction(transaction);
 			}
 			if (type === 1) {
-				const blocks = await database.blocks.findMany({ where: { accountId: account.id } });
+				const blocks = await database.blocks.findMany({ where: { accountId: accountID } });
 				if (!blocks.length) return reply.send("-2");
 
 				users = await database.users.findMany({

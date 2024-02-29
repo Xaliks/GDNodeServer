@@ -2,7 +2,7 @@ const _ = require("lodash");
 const Logger = require("../../scripts/Logger");
 const { getSolo4, cipher, fromBase64, toSafeBase64 } = require("../../scripts/security");
 const { getUser, database } = require("../../scripts/database");
-const { rewards, chestKeyItemValue, secret, gjp2Pattern, udidPattern } = require("../../config/config");
+const { rewards, chestKeyItemValue, secret, udidPattern, base64Pattern, chest21Items } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -17,10 +17,10 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: secret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					gameVersion: { type: "number", default: 22 },
+					accountID: { type: "number" },
 					udid: { type: "string", pattern: udidPattern },
-					chk: { type: "string", pattern: "^[A-Za-z0-9+/]{4,}={0,2}$" },
+					chk: { type: "string", pattern: base64Pattern },
 					rewardType: { type: "number", default: 0 },
 					r1: { type: "number", default: 0 },
 					r2: { type: "number", default: 0 },
@@ -29,7 +29,7 @@ module.exports = (fastify) => {
 			},
 		},
 		handler: async (req, reply) => {
-			const { udid, accountID, chk, r1, r2, rewardType } = req.body;
+			const { gameVersion, udid, accountID, chk, r1, r2, rewardType } = req.body;
 
 			try {
 				// eslint-disable-next-line prefer-const
@@ -69,10 +69,10 @@ module.exports = (fastify) => {
 							udid,
 							accountID ?? "",
 							getChestRemaining(1, user),
-							getChestStuff(1, user),
+							getChestStuff(1, user, gameVersion),
 							totalSmallChests,
 							getChestRemaining(2, user),
-							getChestStuff(2, user),
+							getChestStuff(2, user, gameVersion),
 							totalBigChests,
 							rewardType,
 						].join(":"),
@@ -90,22 +90,23 @@ module.exports = (fastify) => {
 	});
 };
 
-function getChestStuff(type, user) {
+function getChestStuff(type, user, gameVersion) {
 	const chest = type === 1 ? rewards.smallChest : rewards.bigChest;
 
 	const orbs = _.random(chest.minOrbs, chest.maxOrbs);
 	const diamonds = _.random(chest.minDiamonds, chest.maxDiamonds);
+	const chestItems = chest.items.filter((item) => gameVersion >= 22 || chest21Items.includes(item));
 
 	const items = [0, 0];
 	if (Math.random() < chest.item1Chance(user)) {
-		const item1 = Math.random() < chest.key1Chance(user) ? chestKeyItemValue : _.sample(chest.items);
+		const item1 = Math.random() < chest.key1Chance(user) ? chestKeyItemValue : _.sample(chestItems);
 		items.splice(0, 1, item1);
 
 		if (Math.random() < chest.item2Chance(user)) {
 			items.splice(
 				1,
 				1,
-				item1 !== chestKeyItemValue && Math.random() < chest.key2Chance(user) ? chestKeyItemValue : _.sample(chest.items),
+				item1 !== chestKeyItemValue && Math.random() < chest.key2Chance(user) ? chestKeyItemValue : _.sample(chestItems),
 			);
 		}
 	}

@@ -1,6 +1,6 @@
 const Logger = require("../../scripts/Logger");
-const { accountSecret, gjp2Pattern } = require("../../config/config");
-const { database } = require("../../scripts/database");
+const { accountSecret } = require("../../config/config");
+const { database, getPassword } = require("../../scripts/database");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -15,8 +15,7 @@ module.exports = (fastify) => {
 				type: "object",
 				properties: {
 					secret: { type: "string", const: accountSecret },
-					accountID: { type: "number", minimum: 1 },
-					gjp2: { type: "string", pattern: gjp2Pattern },
+					accountID: { type: "number" },
 					mS: { type: "number", enum: [0, 1, 2] },
 					frS: { type: "number", enum: [0, 1] },
 					cS: { type: "number", enum: [0, 1, 2] },
@@ -24,17 +23,20 @@ module.exports = (fastify) => {
 					twitter: { type: "string" },
 					twitch: { type: "string" },
 				},
-				required: ["secret", "accountID", "gjp2", "mS", "frS", "cS", "yt", "twitter", "twitch"],
+				required: ["secret", "accountID", "mS", "frS", "cS", "yt", "twitter", "twitch"],
 			},
 		},
 		handler: async (req, reply) => {
-			const { accountID, gjp2, mS, frS, cS, yt, twitter, twitch } = req.body;
+			const { accountID, mS, frS, cS, yt, twitter, twitch } = req.body;
 
 			try {
+				const password = getPassword(req.body);
+				if (!password) return reply.send("-1");
+
 				const account = await database.accounts
 					.update({
-						where: { id: accountID, password: gjp2 },
-						data: { messageState: mS, friendRequestState: frS, commentHistorySate: cS, youtube: yt, twitter, twitch },
+						where: { id: accountID, password },
+						data: { messageState: mS, friendRequestState: frS, commentHistoryState: cS, youtube: yt, twitter, twitch },
 					})
 					.catch(() => null);
 				if (!account) return reply.send("-1");

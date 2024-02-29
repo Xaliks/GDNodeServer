@@ -14,9 +14,9 @@ const SoulShard = 14;
 
 module.exports = {
 	port: 59999,
-	databasePath: "gd_database", // if your full url (like http://localhost:59999) length is not matching to 33, then use it /
+	databasePath: ["gd_database", "gddatabase"], // 1 - for http; 2 - for https. If your host starts with https, then set them to the same with final length 34
 	host: "http://localhost:59999",
-	// In this case, it will be "http://localhost:59999/gd_database" - 33 symbols, no more, no less.
+	// In this case, it will be "http://localhost:59999/gd_database" and "http://localhost:59999/gddatabase" - [34, 33] symbols, no more, no less.
 
 	preActiveAccounts: true,
 	showNotRegisteredUsersInLeaderboard: true,
@@ -100,6 +100,22 @@ module.exports = {
 		],
 	},
 
+	commentColors: {
+		// Roles
+		Moderator: "#a8ffa8",
+		ElderModerator: "#00ff00",
+		LeaderboardModerator: "#69bbff",
+
+		// Accounts
+		1: "#00ffff",
+		2: "#00ffff",
+		// 3: "#..."
+	},
+	defaultLevel: {
+		downloads: 0,
+		likes: 0,
+	},
+
 	timeMaxCounts: 2, // -> years, months, days, hours, minutes, seconds
 	userCommentsPageSize: 10, // Number of comments per page
 	userCommentMaxSize: 140, // Max length of user comment
@@ -110,15 +126,30 @@ module.exports = {
 	userMessageContentMaxSize: 200, // Max length of message content
 	userMessagesPageSize: 10, // Number of messages per page
 	searchUsersPageSize: 10, // Number of users per page
+	searchLevelsPageSize: 10, // Number of levels per page
+	maxAccountBackupSize: 50 * 1024 * 1024, // Maximum size of the account backup in bytes
+	maxLevelSize: 5 * 1024 * 1024,
+	maxLevelCommentLength: 100,
+
+	magicLevelRequirements: {
+		length: "Medium", // Minimum length of the level (Tiny | Short | Medium | Long | XL). Default: Medium
+		objects: 10000, // Minimum number of the objects. Default: 10000
+		LDM: true, // Level must have LDM (true | false). Default: true
+		original: true, // Level must be original (true | false). Default: true
+		editorTime: 2700, // Seconds spent in the editor. Default: 2700 (45 min)
+	},
 
 	// Don't touch the lines below this one
 	secret: "Wmfd2893gb7",
 	accountSecret: "Wmfv3899gc9",
 	gjp2Pattern: "^[0-9a-f]{40}$",
 	udidPattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-	safeBase64Pattern: "^[A-Za-z0-9-_]{4,}={0,2}$",
-	base64Pattern: "^[A-Za-z0-9+/]{4,}={0,2}$",
+	safeBase64Pattern: "^[A-Za-z0-9-_]{2,}={0,2}$",
+	base64Pattern: "^[A-Za-z0-9+/]{2,}={0,2}$",
+	levelNamePattern: "^[ a-zA-Z0-9]{1,20}$",
+	separatedNumbersPattern: "^(?:\\d+,)*\\d+$",
 	chestKeyItemValue: Key,
+	chest21Items: [FireShard, IceShard, PoisonShard, ShadowShard, LavaShard, Key],
 	// https://emailregex.com
 	emailRegex:
 		/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
