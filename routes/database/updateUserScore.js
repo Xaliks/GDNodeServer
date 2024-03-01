@@ -100,7 +100,7 @@ module.exports = (fastify) => {
 
 				// 2.2
 				if (req.body.moons) userData.moons = req.body.moons;
-				if (req.body.color3) userData.color3 = req.body.glowColor;
+				if (req.body.color3) userData.glowColor = req.body.color3;
 				if (req.body.accSwing) userData.swing = req.body.accSwing;
 				if (req.body.jetpack) userData.jetpack = req.body.accJetpack;
 
