@@ -86,7 +86,7 @@ module.exports = (fastify) => {
 					displayIconType: req.body.iconType,
 					mainColor: req.body.color1,
 					secondColor: req.body.color2,
-					glow: Boolean(req.body.accGlow === 1),
+					glow: req.body.accGlow === 1,
 					explosion: req.body.accExplosion,
 					cube: req.body.accIcon,
 					ship: req.body.accShip,
@@ -100,7 +100,7 @@ module.exports = (fastify) => {
 
 				// 2.2
 				if (req.body.moons) userData.moons = req.body.moons;
-				if (req.body.color3) userData.color3 = req.body.color3;
+				if (req.body.color3) userData.color3 = req.body.glowColor;
 				if (req.body.accSwing) userData.swing = req.body.accSwing;
 				if (req.body.jetpack) userData.jetpack = req.body.accJetpack;
 

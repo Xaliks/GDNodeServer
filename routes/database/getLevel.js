@@ -20,12 +20,14 @@ module.exports = (fastify) => {
 					levelID: { type: "number", minimum: -3 },
 					rs: { type: "string", pattern: "^[A-Za-z0-9]{10}$" },
 					chk: { type: "string", pattern: base64Pattern },
+					inc: { type: "number", enum: [0, 1] },
+					extras: { type: "number", enum: [0, 1] },
 				},
 				required: ["secret", "levelID"],
 			},
 		},
 		handler: async (req, reply) => {
-			const { accountID, levelID } = req.body;
+			const { extras, accountID, levelID, inc } = req.body;
 
 			const level = await database.levels.findFirst({ where: { id: levelID } });
 			if (!level) return reply.send("-1");
@@ -50,6 +52,7 @@ module.exports = (fastify) => {
 				database.users.findFirst({ where: { extId: String(level.accountId) } }),
 				database.levelsData.findFirst({ where: { id: level.id } }),
 			]);
+			if (!user || !levelData) return reply.send("-1");
 
 			const isDemon = Constants.selectDemonDifficulty.keys().includes(level.difficulty) ? 1 : 0;
 
@@ -61,15 +64,16 @@ module.exports = (fastify) => {
 				[5, level.version],
 				[6, user.id],
 				[8, level.difficulty === "NA" ? 0 : 10],
-				[9, isDemon ? 10 : Constants.returnLevelDifficulty[level.difficulty]],
+				[9, Constants.returnLevelDifficulty[level.difficulty]],
 				[10, level.downloads],
 				[12, level.officialSongId],
 				[13, level.gameVersion],
 				[14, level.likes],
 				[15, Constants.levelLength[level.length]],
+				[16, 0],
 				[17, isDemon],
 				[18, level.stars],
-				[19, level.ratingType === "Featured" ? 1 : 0], // Featured score. The higher it is, the higher the level appears on the featured levels list.
+				[19, level.ratingType === "Featured" ? 1 : 0],
 				[25, level.difficulty === "Auto" ? 1 : 0],
 				[27, level.password !== 0 ? toBase64(cipher(level.password, 26364)).toString() : "0"],
 				[28, dateToRelative(level.createdAt)],
@@ -79,22 +83,28 @@ module.exports = (fastify) => {
 				[35, level.songId],
 				[36, level.extraString || ""],
 				[37, level.coins],
-				[38, level.coins ? 1 : 0],
+				[38, level.coins && level.stars ? 1 : 0],
 				[39, level.requestedStars],
 				[40, level.isLDM ? 1 : 0],
+				[41, 0],
 				[42, Constants.levelRatingType[level.ratingType]],
-				[43, Constants.returnDemonDifficulty[level.difficulty] ?? 0],
+				[43, isDemon ? Constants.returnDemonDifficulty[level.difficulty] : 0],
+				[44, 0],
 				[45, level.objectCount],
 				[46, level.editorTime],
 				[47, level.editorTimeCopies],
-			]
-				.map(([key, value]) => `${key}:${value}`)
-				.join(":");
-			const levelResponse = `${user.id},${level.stars},${isDemon},${level.id},${level.coins ? 1 : 0},${level.ratingType === "Featured" ? 1 : 0},${level.password},0`; // last - daily/weekly/event id
+				[57, level.ts || ""],
+			];
 
-			reply.send(`${response}#${getSolo(levelData.data)}#${getSolo2(levelResponse)}#${levelResponse}`);
+			if (extras) response.push([26, level.levelInfo || ""]);
 
-			await database.levels.update({ where: { id: level.id }, data: { downloads: { increment: 1 } } });
+			const levelResponse = `${user.id},${level.stars},${isDemon},${level.id},${level.coins && level.stars ? 1 : 0},${level.ratingType === "Featured" ? 1 : 0},${level.password},0`; // last - daily/weekly/event id
+
+			reply.send(
+				`${response.map(([key, value]) => `${key}:${value}`).join(":")}#${getSolo(levelData.data)}#${getSolo2(levelResponse)}#${levelResponse}`,
+			);
+
+			if (inc) await database.levels.update({ where: { id: level.id }, data: { downloads: { increment: 1 } } });
 		},
 	});
 };

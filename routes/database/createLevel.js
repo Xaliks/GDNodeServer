@@ -1,15 +1,8 @@
 const Logger = require("../../scripts/Logger");
 const { database, checkPassword } = require("../../scripts/database");
-const { fromSafeBase64, cipher, fromBase64 } = require("../../scripts/security");
+const { fromSafeBase64 } = require("../../scripts/security");
 const { Constants, byteLengthOf } = require("../../scripts/util");
-const {
-	secret,
-	levelNamePattern,
-	base64Pattern,
-	safeBase64Pattern,
-	defaultLevel,
-	maxLevelSize,
-} = require("../../config/config");
+const { secret, levelNamePattern, safeBase64Pattern, defaultLevel, maxLevelSize } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -45,9 +38,10 @@ module.exports = (fastify) => {
 					ldm: { type: "number", enum: [0, 1] },
 					extraString: { type: "string" },
 					seed: { type: "string", pattern: "^[0-9a-zA-Z]{10}$" },
-					seed2: { type: "string", pattern: base64Pattern },
+					seed2: { type: "string", pattern: safeBase64Pattern },
 					levelString: { type: "string", pattern: safeBase64Pattern },
-					// ts idk
+					levelInfo: { type: "string", pattern: `|${safeBase64Pattern}` },
+					ts: { type: "number" }, // idk
 					// sfxIDs
 					// songIDs
 				},
@@ -97,6 +91,8 @@ module.exports = (fastify) => {
 				twoPlayer,
 				auto,
 				extraString,
+				levelInfo,
+				ts,
 			} = req.body;
 
 			if (byteLengthOf(levelString) > maxLevelSize) return reply.send("-1");
@@ -117,8 +113,7 @@ module.exports = (fastify) => {
 					officialSongId: audioTrack,
 					songId: songID,
 					objectCount: objects,
-					password:
-						String(password).length === 7 ? cipher(fromBase64(Number(password.slice(1))), 26364).toString() : password, // Needs to test in other versions
+					password: String(password).length === 7 ? Number(String(password).slice(1)) : password, // Needs to test in other versions
 					originalLevelId: original,
 					coins,
 					requestedStars,
@@ -129,6 +124,8 @@ module.exports = (fastify) => {
 					isTwoPlayer: twoPlayer === 1,
 					isAuto: auto === 1,
 					extraString,
+					levelInfo,
+					ts,
 					downloads: Math.max(0, defaultLevel.downloads) || 0,
 					likes: Math.max(0, defaultLevel.likes) || 0,
 					updatedAt: new Date(),
@@ -147,6 +144,13 @@ module.exports = (fastify) => {
 							create: { id: existingLevel.id, data: levelString },
 						}),
 					]);
+
+					Logger.log(
+						"Update level",
+						`ID: ${Logger.color(Logger.colors.cyan)(level.id)}\n`,
+						`Name: ${Logger.color(Logger.colors.cyan)(level.name)}\n`,
+						`Account: ${Logger.color(Logger.colors.cyan)(accountID)}`,
+					);
 				} else {
 					level = await database.levels.create({ data });
 
@@ -155,14 +159,14 @@ module.exports = (fastify) => {
 						update: { data: levelString },
 						create: { id: level.id, data: levelString },
 					});
-				}
 
-				Logger.log(
-					"Create level",
-					`ID: ${Logger.color(Logger.colors.cyan)(level.id)}\n`,
-					`Name: ${Logger.color(Logger.colors.cyan)(level.name)}\n`,
-					`Account: ${Logger.color(Logger.colors.cyan)(accountID)}`,
-				);
+					Logger.log(
+						"Create level",
+						`ID: ${Logger.color(Logger.colors.cyan)(level.id)}\n`,
+						`Name: ${Logger.color(Logger.colors.cyan)(level.name)}\n`,
+						`Account: ${Logger.color(Logger.colors.cyan)(accountID)}`,
+					);
+				}
 
 				return reply.send(level.id);
 			} catch (error) {

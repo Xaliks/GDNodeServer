@@ -51,18 +51,15 @@ module.exports = (fastify) => {
 					table = "levels";
 				}
 				if (type === Constants.likeCommentType.LevelComment) {
-					const comment = await database.levelComments.findFirst({ where: { id: itemID } });
+					const comment = await database.levelComments.findFirst({ where: { id: itemID }, include: { level: true } });
 					if (!comment) return reply.send("1");
 
-					const level = await database.levels.findFirst({ where: { id: comment.levelId } });
-					if (!level) return reply.send("1");
-
-					if (level.visibility === "FriendsOnly" && level.accountId !== accountID) {
+					if (comment.level.visibility === "FriendsOnly" && comment.level.accountId !== accountID) {
 						const friendship = await database.friends.findFirst({
 							where: {
 								OR: [
-									{ accountId1: accountID, accountId2: level.accountId },
-									{ accountId1: level.accountId, accountId2: accountID },
+									{ accountId1: accountID, accountId2: comment.level.accountId },
+									{ accountId1: comment.level.accountId, accountId2: accountID },
 								],
 							},
 						});
@@ -73,18 +70,16 @@ module.exports = (fastify) => {
 					table = "levelComments";
 				}
 				if (type === Constants.likeCommentType.AccountComment) {
-					const comment = await database.accountComments.findFirst({ where: { id: itemID } });
+					const comment = await database.accountComments.findFirst({ where: { id: itemID }, include: { account: true } });
 					if (!comment) return reply.send("1");
 
-					const targetAccount = await database.accounts.findFirst({ where: { id: comment.accountId } });
-					if (targetAccount.commentHistoryState === 2) return reply.send("1");
-
-					if (targetAccount.commentHistoryState === 1) {
+					if (comment.account.commentHistoryState === 2) return reply.send("1");
+					if (comment.account.commentHistoryState === 1) {
 						const friendship = await database.friends.findFirst({
 							where: {
 								OR: [
-									{ accountId1: accountID, accountId2: targetAccount.id },
-									{ accountId1: targetAccount.id, accountId2: accountID },
+									{ accountId1: accountID, accountId2: comment.accountId },
+									{ accountId1: comment.accountId, accountId2: accountID },
 								],
 							},
 						});

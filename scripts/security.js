@@ -28,14 +28,14 @@ function getSolo4(string) {
 }
 
 function fromBase64(string) {
-	return Buffer.from(string, "base64"); // Don't use atob
+	return Buffer.from(String(string), "base64"); // Don't use atob
 }
 function toBase64(string) {
-	return Buffer.from(string).toString("base64"); // Don't use btoa
+	return Buffer.from(String(string)).toString("base64"); // Don't use btoa
 }
 
 function fromSafeBase64(string) {
-	return fromBase64(string.replaceAll("-", "+").replaceAll("_", "/"));
+	return fromBase64(String(string).replaceAll("-", "+").replaceAll("_", "/"));
 }
 function toSafeBase64(string) {
 	return toBase64(string).replaceAll("+", "-").replaceAll("/", "_");

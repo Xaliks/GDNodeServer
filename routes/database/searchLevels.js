@@ -121,7 +121,7 @@ module.exports = (fastify) => {
 				}
 				if (difficulties && difficulties !== "-") {
 					const fetchedDifficulties = [];
-					for (const difficulty of _.uniq(difficulty.split(","))) {
+					for (const difficulty of _.uniq(difficulties.split(","))) {
 						if (difficulty === "-2") {
 							if (demonFilter) fetchedDifficulties.push(Constants.selectDemonDifficulty[demonFilter]);
 							else fetchedDifficulties.push(...Constants.selectDemonDifficulty.values());
@@ -294,13 +294,14 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0) {
 				[5, level.version],
 				[6, user.id],
 				[8, level.difficulty === "NA" ? 0 : 10],
-				[9, isDemon ? 10 : Constants.returnLevelDifficulty[level.difficulty]],
+				[9, Constants.returnLevelDifficulty[level.difficulty]],
 				[10, level.downloads],
 				[12, level.officialSongId],
 				[13, level.gameVersion],
 				[14, level.likes],
 				[15, Constants.levelLength[level.length]],
 				[17, isDemon],
+				[16, 0],
 				[18, level.stars],
 				[19, level.ratingType === "Featured" ? 1 : 0],
 				[25, level.difficulty === "Auto" ? 1 : 0],
@@ -309,10 +310,11 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0) {
 				[35, level.songId],
 				[36, level.extraString || ""],
 				[37, level.coins],
-				[38, level.coins ? 1 : 0],
+				[38, level.coins && level.stars ? 1 : 0],
 				[39, level.requestedStars],
 				[42, Constants.levelRatingType[level.ratingType]],
-				[43, Constants.returnDemonDifficulty[level.difficulty] ?? 0],
+				[43, isDemon ? Constants.returnDemonDifficulty[level.difficulty] : 0],
+				[44, 0],
 				[45, level.objectCount],
 				[46, level.editorTime],
 				[47, level.editorTimeCopies],
@@ -323,6 +325,10 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0) {
 		.join("|")}#${users.map((user) => `${user.id}:${user.username}:${user.extId}`).join("|")}#${
 		"" // Insert here custom songs https://github.com/Wyliemaster/gddocs/blob/master/docs/resources/server/song.md
 	}#${totalCount}:${page * searchLevelsPageSize}:${searchLevelsPageSize}#${getSolo2(
-		levels.map((level) => `${String(level.id)[0]}${String(level.id).at(-1)}${level.stars}${level.coins ? 1 : 0}`).join(""),
+		levels
+			.map(
+				(level) => `${String(level.id)[0]}${String(level.id).at(-1)}${level.stars}${level.coins && level.stars ? 1 : 0}`,
+			)
+			.join(""),
 	)}`;
 }

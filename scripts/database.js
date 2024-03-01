@@ -46,14 +46,15 @@ class CacheManager {
 
 function getPassword(body) {
 	if (body?.gjp2 && gjp2Regex.test(body.gjp2)) return body.gjp2;
-	if (body?.password) return getGJP2(body.password);
 	if (body?.gjp && base64Regex.test(body.gjp)) return getGJP2(cipher(fromBase64(body.gjp), 37526));
+	if (body?.password) return getGJP2(body.password);
 
 	return null;
 }
 
 async function checkPassword(body) {
 	if (!body) return false;
+
 	const accountId = Array.isArray(body.accountID) ? body.accountID[0] : body.accountID;
 	if (!accountId) return false;
 

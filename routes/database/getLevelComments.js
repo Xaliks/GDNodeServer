@@ -117,4 +117,89 @@ module.exports = (fastify) => {
 			);
 		},
 	});
+
+	fastify.route({
+		method: ["POST"],
+		url: "/getGJCommentHistory.php",
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					userID: { type: "number" },
+					page: { type: "number", minimum: 0, default: 0 },
+					total: { type: "number", minimum: 0, default: 0 },
+					mode: { type: "number", enum: [0, 1], default: 0 },
+					count: { type: "number", minimum: 1, maximum: 50, default: 20 },
+				},
+				required: ["secret"],
+			},
+		},
+		handler: async (req, reply) => {
+			const { userID, page, total, count, mode } = req.body;
+
+			let totalCount = total;
+
+			const user = await database.users.findFirst({ where: { id: userID } });
+			if (!user || isNaN(user.extId)) return reply.send("-1");
+
+			let orderBy = [{ id: "desc" }];
+			if (mode === 1) orderBy = [{ likes: "desc" }, { id: "asc" }];
+
+			const comments = await database.levelComments.findMany({
+				where: { accountId: Number(user.extId), level: { visibility: "Listed" } },
+				take: count,
+				skip: page * count,
+				orderBy,
+			});
+			if (!comments.length) return reply.send("#0:0:0");
+
+			if (comments.length < count) totalCount = page * count + comments.length;
+			else if (!totalCount) {
+				totalCount = await database.levelComments.count({
+					where: { accountId: Number(user.extId), level: { visibility: "Listed" } },
+				});
+			}
+
+			const account = await database.accounts.findFirst({ where: { id: Number(user.extId) } });
+
+			return reply.send(
+				`${comments
+					.map((comment) => {
+						return `${[
+							[2, toSafeBase64(comment.content)],
+							[3, user.id],
+							[4, comment.likes],
+							[5, 0], // dislikes
+							[6, comment.id],
+							[7, comment.likes <= -5 ? 1 : 0],
+							[8, comment.accountId],
+							[9, dateToRelative(comment.createdAt)],
+							[10, comment.percent],
+							[11, (account && Constants.modBadge[account.modBadge]) || 0],
+							[
+								12,
+								hexToRGB(
+									commentColors[comment.accountId] || (account && commentColors[account.modBadge]) || "#ffffff",
+								).join(","),
+							],
+						]
+							.map(([key, value]) => `${key}~${value}`)
+							.join("~")}:${[
+							[1, account?.username || user.username],
+							[9, user.displayIcon],
+							[10, user.mainColor],
+							[11, user.secondColor],
+							[14, user.displayIconType],
+							[15, user.glow ? 1 : 0],
+							[16, comment.accountId],
+						]
+							.map(([key, value]) => `${key}~${value}`)
+							.join("~")}`;
+					})
+					.join("|")}#${totalCount}:${page * count}:${count}`,
+			);
+		},
+	});
 };

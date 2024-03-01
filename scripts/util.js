@@ -6,11 +6,14 @@ function dateToRelative(_date, unitCount = timeMaxCounts) {
 
 	if (date.getTime() > date2.getTime()) [date, date2] = [date2, date];
 
-	const totalMonths = Math.max(0, (date2.getFullYear() - date.getFullYear()) * 12 - date.getMonth() + date2.getMonth());
+	const totalMonths = Math.max(
+		0,
+		(date2.getFullYear() - date.getFullYear()) * 12 - date.getMonth() + date2.getMonth() - 1,
+	);
 	const months = totalMonths % 12;
 	const years = Math.floor(totalMonths / 12);
 
-	const ms = date2.getTime() - date.setFullYear(date2.getFullYear(), months + 1);
+	const ms = date2.getTime() - date.setFullYear(date.getFullYear() + years, date.getMonth() + months);
 
 	const days = Math.floor(ms / 1_000 / 60 / 60 / 24);
 	const hours = Math.floor((ms / 1_000 / 60 / 60) % 24);
@@ -19,7 +22,7 @@ function dateToRelative(_date, unitCount = timeMaxCounts) {
 
 	const text = [];
 
-	const time = (name, time) => `${time} ${name}${time > 1 ? "s" : ""}`;
+	const time = (name, time) => `${time} ${name}${time > 1 || time < -1 ? "s" : ""}`;
 
 	if (years) text.push(time("year", years));
 	if (months) text.push(time("month", months));
@@ -97,17 +100,18 @@ module.exports = {
 			Unlisted: 2,
 		}),
 		returnLevelDifficulty: reverseObject({
+			Auto: 10,
 			NA: 0,
 			Easy: 10,
 			Normal: 20,
 			Hard: 30,
 			Harder: 40,
 			Insane: 50,
-			// EasyDemon: 70,
-			// MediumDemon: 80,
-			// HardDemon: 60,
-			// InsaneDemon: 90,
-			// ExtremeDemon: 100,
+			EasyDemon: 10,
+			MediumDemon: 10,
+			HardDemon: 10,
+			InsaneDemon: 10,
+			ExtremeDemon: 10,
 		}),
 		selectLevelDifficulty: reverseObject({
 			Auto: -3,
@@ -134,6 +138,7 @@ module.exports = {
 		}),
 		levelRatingType: reverseObject({
 			None: 0,
+			Featured: 0,
 			Epic: 1,
 			Legendary: 2,
 			Mythic: 3,

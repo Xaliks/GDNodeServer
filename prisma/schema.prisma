@@ -24,6 +24,8 @@ model Accounts {
   twitter String?
   twitch  String?
 
+  comments AccountComments[]
+
   modBadge ModBadge @default(None)
 }
 
@@ -80,6 +82,7 @@ model Users {
 model AccountComments {
   id        Int      @id @default(autoincrement())
   accountId Int
+  account   Accounts @relation(fields: [accountId], references: [id])
   content   String
   createdAt DateTime @default(now())
   likes     Int      @default(0)
@@ -161,6 +164,8 @@ model Levels {
   editorTime       Int             @default(0)
   editorTimeCopies Int             @default(0)
   extraString      String?
+  levelInfo        String?
+  ts               Int?
 
   ratingType LevelRating     @default(None)
   difficulty LevelDifficulty @default(NA)
@@ -173,6 +178,8 @@ model Levels {
   isLDM       Boolean @default(false)
   isTwoPlayer Boolean @default(false)
   isAuto      Boolean @default(false)
+
+  comments LevelComments[]
 
   @@unique([accountId, name])
 }
@@ -218,6 +225,7 @@ enum LevelVisibility {
 model LevelComments {
   id        Int      @id @default(autoincrement())
   levelId   Int
+  level     Levels   @relation(fields: [levelId], references: [id])
   accountId Int
   content   String
   likes     Int      @default(0)
