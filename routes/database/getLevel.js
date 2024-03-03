@@ -101,7 +101,7 @@ module.exports = (fastify) => {
 			const levelResponse = `${user.id},${level.stars},${isDemon},${level.id},${level.coins && level.stars ? 1 : 0},${level.ratingType === "Featured" ? 1 : 0},${level.password},0`; // last - daily/weekly/event id
 
 			reply.send(
-				`${response.map(([key, value]) => `${key}:${value}`).join(":")}#${getSolo(levelData.data)}#${getSolo2(levelResponse)}#${levelResponse}`,
+				`${response.map(([key, value]) => `${key}:${value}`).join(":")}#${getSolo(levelData.data)}#${getSolo2(levelResponse)}`,
 			);
 
 			if (inc) await database.levels.update({ where: { id: level.id }, data: { downloads: { increment: 1 } } });
