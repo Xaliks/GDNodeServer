@@ -134,8 +134,6 @@ module.exports = (fastify) => {
 				const existingLevel = await database.levels.findFirst({ where: { accountId: accountID, name: levelName } });
 				let level;
 				if (existingLevel) {
-					if (levelVersion === 1) return reply.send(existingLevel.id);
-
 					[level] = await database.$transaction([
 						database.levels.update({ where: { id: existingLevel.id }, data }),
 						database.levelsData.upsert({

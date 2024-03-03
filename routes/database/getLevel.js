@@ -1,7 +1,7 @@
 const { toBase64, getSolo, getSolo2, cipher } = require("../../scripts/security");
 const { Constants, dateToRelative } = require("../../scripts/util");
 const { checkPassword, database } = require("../../scripts/database");
-const { secret, base64Pattern } = require("../../config/config");
+const { secret } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -18,8 +18,6 @@ module.exports = (fastify) => {
 					secret: { type: "string", const: secret },
 					accountID: { type: "number" },
 					levelID: { type: "number", minimum: -3 },
-					rs: { type: "string", pattern: "^[A-Za-z0-9]{10}$" },
-					chk: { type: "string", pattern: base64Pattern },
 					inc: { type: "number", enum: [0, 1] },
 					extras: { type: "number", enum: [0, 1] },
 				},
