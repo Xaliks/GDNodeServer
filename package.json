@@ -3,7 +3,7 @@
     "dbUpdate": "npx prisma migrate deploy",
     "dbPush": "npx prisma db push",
     "start": "node .",
-    "dev": "cross-env EnableLogging=true nodemon ."
+    "dev": "nodemon ."
   },
   "dependencies": {
     "@fastify/formbody": "^7.4.0",
@@ -12,7 +12,6 @@
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "cross-env": "^7.0.3",
     "eslint": "^8.56.0",
     "eslint-plugin-n": "^16.6.2",
     "eslint-plugin-prettier": "^5.1.3",
