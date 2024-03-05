@@ -204,7 +204,7 @@ module.exports = (fastify) => {
 					break;
 				case 6: // Featured
 				case 17: // Featured in GD Word
-					queryArgs.ratingType = "Featured";
+					queryArgs.where.ratingType = "Featured";
 					break;
 				case 7: // Magic
 					queryArgs.where.length = {
@@ -255,7 +255,7 @@ module.exports = (fastify) => {
 					};
 					break;
 				case 16: // Hall of fame
-					queryArgs.ratingType = "Epic";
+					queryArgs.where.ratingType = "Epic";
 					break;
 				case 21: // Daily safe
 				case 22: // Weekly safe
