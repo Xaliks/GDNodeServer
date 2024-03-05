@@ -35,7 +35,9 @@ module.exports = (fastify) => {
 					.catch(() => null);
 				if (!friendRequest) return reply.send("1");
 
-				await database.friends.create({ accountId1: accountID, accountId2: friendRequest.accountId }).catch(() => null);
+				await database.friends
+					.create({ data: { accountId1: accountID, accountId2: friendRequest.accountId } })
+					.catch(() => null);
 
 				Logger.log(
 					"Accept friend request",
