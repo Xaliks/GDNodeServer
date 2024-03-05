@@ -282,6 +282,10 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0) {
 		});
 	}
 
+	let songs = [];
+	const customSongIds = _.uniq(levels.map((level) => level.songId).filter(Boolean));
+	if (customSongIds.length) songs = await database.songs.findMany({ where: { id: { in: customSongIds } } });
+
 	return `${levels
 		.map((level) => {
 			const user = users.find((user) => user.extId === String(level.accountId));
@@ -322,9 +326,23 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0) {
 				.map(([key, value]) => `${key}:${value}`)
 				.join(":");
 		})
-		.join("|")}#${users.map((user) => `${user.id}:${user.username}:${user.extId}`).join("|")}#${
-		"" // Insert here custom songs https://github.com/Wyliemaster/gddocs/blob/master/docs/resources/server/song.md
-	}#${totalCount}:${page * searchLevelsPageSize}:${searchLevelsPageSize}#${getSolo2(
+		.join("|")}#${users.map((user) => `${user.id}:${user.username}:${user.extId}`).join("|")}#${songs
+		.map((song) =>
+			[
+				[1, song.id],
+				[2, song.name],
+				[3, song.artistId],
+				[4, song.artistName],
+				[5, (song.size / 1024 / 1024).toFixed(2)],
+				[6, ""],
+				[7, ""],
+				[8, 1],
+				[10, song.url],
+			]
+				.map(([key, value]) => `${key}~|~${value}`)
+				.join("~|~"),
+		)
+		.join("~:~")}#${totalCount}:${page * searchLevelsPageSize}:${searchLevelsPageSize}#${getSolo2(
 		levels
 			.map(
 				(level) => `${String(level.id)[0]}${String(level.id).at(-1)}${level.stars}${level.coins && level.stars ? 1 : 0}`,

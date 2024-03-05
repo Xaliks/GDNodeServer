@@ -245,3 +245,13 @@ model SavedData {
   gameVersion   Int
   binaryVersion Int
 }
+
+model Songs {
+  id         Int      @id
+  name       String
+  artistId   Int
+  artistName String
+  size       Int
+  url        String
+  updatedAt  DateTime @updatedAt
+}

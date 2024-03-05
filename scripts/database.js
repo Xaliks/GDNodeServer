@@ -123,4 +123,34 @@ function saveUserPasswordToCache(accountId, password) {
 	});
 }
 
-module.exports = { getPassword, checkPassword, database, getUser, saveUserPasswordToCache };
+async function getCustomSong(songId) {
+	const song = await database.songs.findFirst({ where: { id: songId } });
+	if (song) return song;
+
+	const newgrounds = await fetch(`https://www.newgrounds.com/audio/listen/${songId}`);
+	if (!newgrounds.ok) return null;
+
+	const body = await newgrounds.text();
+	const dataInEmbed = body.match(/new embedController\((?<data>.+)\);/)?.groups.data;
+	if (!dataInEmbed) return null;
+
+	const url = dataInEmbed.match(/"filename":"([^"]+)"/)?.[1]?.replaceAll("\\/", "/");
+	const name = dataInEmbed.match(/"name":"([^"]+)"/)?.[1];
+	const filesize = dataInEmbed.match(/"filesize":(\d+)/)?.[1];
+	const artistId = dataInEmbed.match(/"project_id":(\d+)/)?.[1];
+	const artistName = dataInEmbed.match(/"artist":"([^"]+)"/)?.[1];
+	if (![url, name, filesize, artistId, artistId].some(Boolean)) return null;
+
+	return database.songs.create({
+		data: {
+			id: songId,
+			name: decodeURIComponent(name),
+			artistId: parseInt(artistId),
+			artistName: decodeURIComponent(artistName),
+			size: parseInt(filesize),
+			url,
+		},
+	});
+}
+
+module.exports = { getPassword, checkPassword, database, getUser, saveUserPasswordToCache, getCustomSong };

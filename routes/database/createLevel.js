@@ -1,5 +1,5 @@
 const Logger = require("../../scripts/Logger");
-const { database, checkPassword } = require("../../scripts/database");
+const { database, checkPassword, getCustomSong } = require("../../scripts/database");
 const { fromSafeBase64 } = require("../../scripts/security");
 const { Constants, byteLengthOf } = require("../../scripts/util");
 const { secret, levelNamePattern, safeBase64Pattern, defaultLevel, maxLevelSize } = require("../../config/config");
@@ -166,7 +166,8 @@ module.exports = (fastify) => {
 					);
 				}
 
-				return reply.send(level.id);
+				reply.send(level.id);
+				if (data.songId) await getCustomSong(data.songId);
 			} catch (error) {
 				Logger.error("Create level", req.body, error);
 
