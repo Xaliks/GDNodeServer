@@ -72,7 +72,7 @@ module.exports = (fastify) => {
 					.join("|")}#${totalCount * userMessagesPageSize}:${page}:${userMessagesPageSize}`,
 			);
 
-			if (!getSent && messages.some((message) => !message.isNew)) {
+			if (!getSent && messages.some((message) => message.isNew)) {
 				await database.messages.updateMany({
 					where: { id: { in: messages.filter((message) => message.isNew).map((message) => message.id) } },
 					data: { isNew: false },
