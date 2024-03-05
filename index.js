@@ -5,7 +5,7 @@ const Logger = require("./scripts/Logger");
 const config = require("./config/config");
 
 function log(request, ...message) {
-	if (process.env.EnableLogging !== "false") {
+	if (process.env.EnableLogging) {
 		return Logger.log(
 			request.method,
 			`${Logger.color(Logger.colors.cyan)(request.ip)} -> ${Logger.color(Logger.colors.gray)(request.hostname)}${request.url}`,
