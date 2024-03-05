@@ -1,4 +1,5 @@
 const fs = require("node:fs");
+const _ = require("lodash");
 const fastify = require("fastify")({ trustProxy: true });
 const Logger = require("./scripts/Logger");
 const config = require("./config/config");
@@ -32,7 +33,7 @@ function registerRoutes(path, urlPath) {
 			if (file.endsWith(".js")) {
 				const endpoint = require(`./${path}/${file}`);
 
-				(Array.isArray(urlPath) ? urlPath : [urlPath]).forEach((urlPath) => {
+				(Array.isArray(urlPath) ? _.uniq(urlPath) : [urlPath]).forEach((urlPath) => {
 					fastify.register(
 						(api, options, done) => {
 							endpoint(api);
