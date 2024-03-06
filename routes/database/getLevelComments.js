@@ -95,9 +95,7 @@ module.exports = (fastify) => {
 							[11, (account && Constants.modBadge[account.modBadge]) || 0],
 							[
 								12,
-								hexToRGB(
-									commentColors[comment.accountId] || (account && commentColors[account.modBadge]) || "#ffffff",
-								).join(","),
+								hexToRGB((account && (account.commentColor || commentColors[account.modBadge])) || "#ffffff").join(","),
 							],
 						]
 							.map(([key, value]) => `${key}~${value}`)
@@ -180,9 +178,7 @@ module.exports = (fastify) => {
 							[11, (account && Constants.modBadge[account.modBadge]) || 0],
 							[
 								12,
-								hexToRGB(
-									commentColors[comment.accountId] || (account && commentColors[account.modBadge]) || "#ffffff",
-								).join(","),
+								hexToRGB((account && (account.commentColor || commentColors[account.modBadge])) || "#ffffff").join(","),
 							],
 						]
 							.map(([key, value]) => `${key}~${value}`)

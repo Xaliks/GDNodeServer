@@ -101,15 +101,9 @@ module.exports = {
 	},
 
 	commentColors: {
-		// Roles
 		Moderator: "#a8ffa8",
 		ElderModerator: "#00ff00",
 		LeaderboardModerator: "#69bbff",
-
-		// Accounts
-		1: "#00ffff",
-		2: "#00ffff",
-		// 3: "#..."
 	},
 	defaultLevel: {
 		downloads: 0,

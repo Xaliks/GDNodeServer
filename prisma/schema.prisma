@@ -8,13 +8,13 @@ datasource db {
 }
 
 model Accounts {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  password  String
-  email     String   @unique
-  createdAt DateTime @default(now())
-
-  isActive Boolean @default(false)
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  password     String
+  email        String   @unique
+  createdAt    DateTime @default(now())
+  isActive     Boolean  @default(false)
+  commentColor String? /// in HEX format
 
   messageState        Int @default(0)
   friendRequestState  Int @default(0)
