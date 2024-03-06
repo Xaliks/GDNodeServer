@@ -127,7 +127,7 @@ module.exports = (fastify) => {
 				[54, user.jetpack],
 				[47, user.explosion],
 				[28, user.glow ? 1 : 0],
-				[29, Boolean(targetAccount.id) ? 1 : 0],
+				[29, targetAccount.id ? 1 : 0],
 				[30, rank + 1],
 				[18, targetAccount.messageState],
 				[19, targetAccount.friendRequestState],

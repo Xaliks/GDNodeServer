@@ -64,7 +64,7 @@ module.exports = (fastify) => {
 						},
 					});
 
-					canSend = Boolean(!blocked);
+					canSend = !blocked;
 				}
 
 				if (!canSend) return reply.send("-1");

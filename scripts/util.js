@@ -80,11 +80,43 @@ function hexToRGB(hex) {
 		.map((x) => parseInt(x, 16));
 }
 
+async function fetchBoomlings(target, parameters = {}) {
+	let method = "POST";
+	const headers = {
+		"Content-Type": "application/x-www-form-urlencoded",
+		"User-Agent": "",
+	};
+	const body = { secret: "Wmfd2893gb7", ...parameters };
+
+	if (body.method) {
+		method = body.method;
+
+		delete body.method;
+	}
+	if (body.ip) {
+		headers["x-forwarded-for"] = body.ip;
+		headers["x-real-ip"] = body.ip;
+
+		delete body.ip;
+	}
+	const response = await fetch(`http://www.boomlings.com/database/${target}.php`, {
+		method,
+		headers,
+		body: Object.entries(body)
+			.map(([key, value]) => `${key}=${value}`)
+			.join("&"),
+	});
+	if (!response.ok) throw new Error(`Failed to fetch: ${response.statusText}`);
+
+	return response.text();
+}
+
 module.exports = {
 	dateToRelative,
 	reverseObject,
 	byteLengthOf,
 	hexToRGB,
+	fetchBoomlings,
 	Constants: {
 		levelLength: reverseObject({
 			Tiny: 0,
