@@ -1,6 +1,7 @@
 const { database, getPassword } = require("../../scripts/database");
 const { showNotRegisteredUsersInLeaderboard, secret } = require("../../config/config");
-const { Constants } = require("../../scripts/util");
+const { Constants, dateToRelative } = require("../../scripts/util");
+const { toSafeBase64 } = require("../../scripts/security");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -69,19 +70,31 @@ module.exports = (fastify) => {
 						},
 					}),
 				]);
-			} else {
+			} else if (accountID) {
 				friendship = await database.friends.findFirst({
-					where: { OR: [{ accountId1: targetAccount.id }, { accountId2: targetAccount.id }] },
+					where: {
+						OR: [
+							{ accountId1: targetAccount.id, accountId2: accountID },
+							{ accountId1: accountID, accountId2: targetAccount.id },
+						],
+					},
 				});
 
 				if (friendship) friendState = 1;
 				else {
 					friendRequest = await database.friendRequests.findFirst({
-						where: { OR: [{ accountId: targetAccount.id }, { toAccountId: targetAccount.id }] },
+						where: {
+							OR: [
+								{ accountId: targetAccount.id, toAccountId: accountID },
+								{ accountId: accountID, toAccountId: targetAccount.id },
+							],
+						},
 					});
 
-					if (friendRequest?.toAccountId === targetAccount.id) friendState = 2;
-					else if (friendRequest?.accountId === targetAccount.id) friendState = 3;
+					if (friendRequest) {
+						if (friendRequest.toAccountId === targetAccount.id) friendState = 4;
+						else friendState = 3;
+					}
 				}
 			}
 
@@ -123,9 +136,15 @@ module.exports = (fastify) => {
 				[31, friendState],
 			];
 
-			if (isMe) {
-				result.push([38, newMessagesCount], [39, newFriendRequestsCount], [40, newFriendsCount]);
+			if (friendState === 3) {
+				result.push(
+					[32, friendRequest.id],
+					[35, toSafeBase64(friendRequest.comment ?? "")],
+					[37, dateToRelative(friendRequest.createdAt, 1)],
+				);
 			}
+
+			if (isMe) result.push([38, newMessagesCount], [39, newFriendRequestsCount], [40, newFriendsCount]);
 
 			return reply.send(result.map(([key, value]) => `${key}:${value}`).join(":"));
 		},
