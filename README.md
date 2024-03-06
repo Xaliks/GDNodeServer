@@ -23,7 +23,7 @@
 - [x] Quests
 - [ ] User panel
     - [ ] Custom songs
-    - [ ] Import level from boomlings
+    - [x] Reupload level from boomlings
 - [ ] Admin panel
     - [ ] Create quests
     - [ ] Daily/Weekly levels

@@ -50,6 +50,7 @@ function registerRoutes(path, urlPath) {
 	return recurse(path, urlPath);
 }
 
+registerRoutes("routes/dashboard", config.dashboardPath);
 registerRoutes("routes/database", config.databasePath);
 
 fastify.setNotFoundHandler((request, reply) => {

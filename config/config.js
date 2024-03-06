@@ -14,12 +14,14 @@ const SoulShard = 14;
 
 module.exports = {
 	port: 59999,
+	dashboardPath: "dashboard",
 	databasePath: ["gd_database", "gddatabase"], // 1 - for http; 2 - for https. If your host starts with https, then set them to the same with final length 34
 	host: "http://localhost:59999",
 	// In this case, it will be "http://localhost:59999/gd_database" and "http://localhost:59999/gddatabase" - [34, 33] symbols, no more, no less.
 
 	preActiveAccounts: true,
 	showNotRegisteredUsersInLeaderboard: true,
+	levelReuploaderAccountId: 2, // Create an account and then set its id here.
 
 	rewards: {
 		smallChest: {

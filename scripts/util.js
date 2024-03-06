@@ -37,6 +37,43 @@ function dateToRelative(_date, unitCount = timeMaxCounts) {
 	return `${text.slice(0, Math.min(text.length, unitCount) - 1).join(", ")} and ${text.at(Math.min(text.length, unitCount) - 1)}`;
 }
 
+function relativeToDate(string) {
+	if (!string) return;
+	const match = [...string.matchAll(/(-?(?:\d+)?\.?\d+) *(seconds?|minutes?|hours?|days?|years?|)/gi)].map((m) =>
+		m.slice(1, 3),
+	);
+	if (!match[0]) return new Date();
+
+	return new Date(
+		Date.now() -
+			Math.round(
+				match.reduce((result, mat) => {
+					const n = parseFloat(mat[0]);
+
+					switch (mat[1].toLowerCase()) {
+						case "years":
+						case "year":
+							return result + n * 60_000 * 60 * 24 * 365;
+						case "days":
+						case "day":
+							return result + n * 60_000 * 60 * 24;
+						case "hours":
+						case "hour":
+							return result + n * 60_000 * 60;
+						case "minutes":
+						case "minute":
+							return result + n * 60_000;
+						case "seconds":
+						case "second":
+							return result + n * 1000;
+						default:
+							return result;
+					}
+				}, 0),
+			),
+	);
+}
+
 function reverseObject(obj) {
 	const _obj = obj;
 	const result = Object.entries(_obj).reduce((obj, [key, value]) => {
@@ -113,6 +150,7 @@ async function fetchBoomlings(target, parameters = {}) {
 
 module.exports = {
 	dateToRelative,
+	relativeToDate,
 	reverseObject,
 	byteLengthOf,
 	hexToRGB,

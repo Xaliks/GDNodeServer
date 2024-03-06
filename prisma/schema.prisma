@@ -166,6 +166,7 @@ model Levels {
   extraString      String?
   levelInfo        String?
   ts               Int?
+  boomlingsId      Int?
 
   ratingType LevelRating     @default(None)
   difficulty LevelDifficulty @default(NA)
@@ -181,7 +182,7 @@ model Levels {
 
   comments LevelComments[]
 
-  @@unique([accountId, name])
+  @@index([accountId, name])
 }
 
 enum LevelRating {
