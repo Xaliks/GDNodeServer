@@ -3,53 +3,53 @@ const categoryLength = 5;
 class Logger {
 	// https://github.com/Marak/colors.js/blob/master/lib/styles.js
 	colors = {
-		reset: [0, 0],
+		reset: this.color([0, 0]),
 
-		bold: [1, 22],
-		dim: [2, 22],
-		italic: [3, 23],
-		underline: [4, 24],
-		inverse: [7, 27],
-		hidden: [8, 28],
-		strikethrough: [9, 29],
+		bold: this.color([1, 22]),
+		dim: this.color([2, 22]),
+		italic: this.color([3, 23]),
+		underline: this.color([4, 24]),
+		inverse: this.color([7, 27]),
+		hidden: this.color([8, 28]),
+		strikethrough: this.color([9, 29]),
 
-		black: [30, 39],
-		red: [31, 39],
-		green: [32, 39],
-		yellow: [33, 39],
-		blue: [34, 39],
-		magenta: [35, 39],
-		cyan: [36, 39],
-		white: [37, 39],
-		gray: [90, 39],
-		grey: [90, 39],
+		black: this.color([30, 39]),
+		red: this.color([31, 39]),
+		green: this.color([32, 39]),
+		yellow: this.color([33, 39]),
+		blue: this.color([34, 39]),
+		magenta: this.color([35, 39]),
+		cyan: this.color([36, 39]),
+		white: this.color([37, 39]),
+		gray: this.color([90, 39]),
+		grey: this.color([90, 39]),
 
-		brightRed: [91, 39],
-		brightGreen: [92, 39],
-		brightYellow: [93, 39],
-		brightBlue: [94, 39],
-		brightMagenta: [95, 39],
-		brightCyan: [96, 39],
-		brightWhite: [97, 39],
+		brightRed: this.color([91, 39]),
+		brightGreen: this.color([92, 39]),
+		brightYellow: this.color([93, 39]),
+		brightBlue: this.color([94, 39]),
+		brightMagenta: this.color([95, 39]),
+		brightCyan: this.color([96, 39]),
+		brightWhite: this.color([97, 39]),
 
-		bgBlack: [40, 49],
-		bgRed: [41, 49],
-		bgGreen: [42, 49],
-		bgYellow: [43, 49],
-		bgBlue: [44, 49],
-		bgMagenta: [45, 49],
-		bgCyan: [46, 49],
-		bgWhite: [47, 49],
-		bgGray: [100, 49],
-		bgGrey: [100, 49],
+		bgBlack: this.color([40, 49]),
+		bgRed: this.color([41, 49]),
+		bgGreen: this.color([42, 49]),
+		bgYellow: this.color([43, 49]),
+		bgBlue: this.color([44, 49]),
+		bgMagenta: this.color([45, 49]),
+		bgCyan: this.color([46, 49]),
+		bgWhite: this.color([47, 49]),
+		bgGray: this.color([100, 49]),
+		bgGrey: this.color([100, 49]),
 
-		bgBrightRed: [101, 49],
-		bgBrightGreen: [102, 49],
-		bgBrightYellow: [103, 49],
-		bgBrightBlue: [104, 49],
-		bgBrightMagenta: [105, 49],
-		bgBrightCyan: [106, 49],
-		bgBrightWhite: [107, 49],
+		bgBrightRed: this.color([101, 49]),
+		bgBrightGreen: this.color([102, 49]),
+		bgBrightYellow: this.color([103, 49]),
+		bgBrightBlue: this.color([104, 49]),
+		bgBrightMagenta: this.color([105, 49]),
+		bgBrightCyan: this.color([106, 49]),
+		bgBrightWhite: this.color([107, 49]),
 	};
 
 	get date() {
@@ -60,18 +60,22 @@ class Logger {
 	}
 
 	color(code) {
-		return (text) =>
-			`\u001B[${Array.isArray(code[0]) ? code[0].join(";") : code[0]}m${text}\u001B[${Array.isArray(code[1]) ? code[1].join(";") : code[1]}m`;
+		function color(text) {
+			return `\u001B[${Array.isArray(code[0]) ? code[0].join(";") : code[0]}m${text}\u001B[${Array.isArray(code[1]) ? code[1].join(";") : code[1]}m`;
+		}
+		color.code = code;
+
+		return color;
 	}
 
 	_log(color, category, ...message) {
 		return console.log(
 			`${this.color([
-				[this.colors.bgWhite[0], this.colors.brightWhite[0]],
-				[this.colors.bgWhite[1], this.colors.brightWhite[1]],
+				[this.colors.bgWhite.code[0], this.colors.brightWhite.code[0]],
+				[this.colors.bgWhite.code[1], this.colors.brightWhite.code[1]],
 			])(this.date)} ${(Array.isArray(category) ? category : [category])
 				.map((category) =>
-					this.color(color)(
+					color(
 						category.length >= categoryLength
 							? ` ${category} `
 							: `${" ".repeat(Math.round((categoryLength - category.length) / 2))}${category}${" ".repeat(Math.round((categoryLength - category.length) / 2))}`,

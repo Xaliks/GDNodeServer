@@ -40,8 +40,8 @@ module.exports = (fastify) => {
 
 				Logger.log(
 					"Remove friend",
-					`Account1: ${Logger.color(Logger.colors.cyan)(accountID)}\n`,
-					`Account2: ${Logger.color(Logger.colors.cyan)(targetAccountID)}`,
+					`Account1: ${Logger.colors.cyan(accountID)}\n`,
+					`Account2: ${Logger.colors.cyan(targetAccountID)}`,
 				);
 
 				return reply.send("1");

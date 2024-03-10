@@ -39,8 +39,8 @@ module.exports = (fastify) => {
 
 				Logger.log(
 					"Delete friend request",
-					`From: ${Logger.color(Logger.colors.cyan)(isSender ? accountID : targetAccountID)}\n`,
-					`To: ${Logger.color(Logger.colors.cyan)(isSender ? targetAccountID : accountID)}`,
+					`From: ${Logger.colors.cyan(isSender ? accountID : targetAccountID)}\n`,
+					`To: ${Logger.colors.cyan(isSender ? targetAccountID : accountID)}`,
 				);
 
 				return reply.send("1");

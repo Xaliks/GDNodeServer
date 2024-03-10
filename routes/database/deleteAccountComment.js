@@ -31,8 +31,8 @@ module.exports = (fastify) => {
 
 				Logger.log(
 					"Delete account comment",
-					`ID: ${Logger.color(Logger.colors.cyan)(commentID)}\n`,
-					`Account: ${Logger.color(Logger.colors.cyan)(accountID)}`,
+					`ID: ${Logger.colors.cyan(commentID)}\n`,
+					`Account: ${Logger.colors.cyan(accountID)}`,
 				);
 
 				return reply.send("1");

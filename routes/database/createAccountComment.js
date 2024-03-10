@@ -35,8 +35,8 @@ module.exports = (fastify) => {
 
 				Logger.log(
 					"Create account comment",
-					`ID: ${Logger.color(Logger.colors.cyan)(comment.id)}\n`,
-					`Account: ${Logger.color(Logger.colors.cyan)(accountID)}`,
+					`ID: ${Logger.colors.cyan(comment.id)}\n`,
+					`Account: ${Logger.colors.cyan(accountID)}`,
 				);
 
 				return reply.send("1");

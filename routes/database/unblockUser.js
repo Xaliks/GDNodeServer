@@ -37,9 +37,9 @@ module.exports = (fastify) => {
 
 				Logger.log(
 					"Unblock user",
-					`ID: ${Logger.color(Logger.colors.cyan)(block.id)}\n`,
-					`Account: ${Logger.color(Logger.colors.cyan)(accountID)}\n`,
-					`Target: ${Logger.color(Logger.colors.cyan)(targetAccountID)}`,
+					`ID: ${Logger.colors.cyan(block.id)}\n`,
+					`Account: ${Logger.colors.cyan(accountID)}\n`,
+					`Target: ${Logger.colors.cyan(targetAccountID)}`,
 				);
 
 				return reply.send("1");

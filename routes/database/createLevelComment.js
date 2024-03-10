@@ -41,9 +41,9 @@ module.exports = (fastify) => {
 
 				Logger.log(
 					"Create level comment",
-					`ID: ${Logger.color(Logger.colors.cyan)(comment.id)}\n`,
-					`Level ID: ${Logger.color(Logger.colors.cyan)(level.id)}\n`,
-					`Account: ${Logger.color(Logger.colors.gray)(accountID)}`,
+					`ID: ${Logger.colors.cyan(comment.id)}\n`,
+					`Level ID: ${Logger.colors.cyan(level.id)}\n`,
+					`Account: ${Logger.colors.gray(accountID)}`,
 				);
 
 				return reply.send("1");

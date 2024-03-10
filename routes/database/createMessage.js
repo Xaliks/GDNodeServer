@@ -78,9 +78,9 @@ module.exports = (fastify) => {
 
 				Logger.log(
 					"Create message",
-					`ID: ${Logger.color(Logger.colors.cyan)(message.id)}\n`,
-					`From: ${Logger.color(Logger.colors.cyan)(accountID)}\n`,
-					`To: ${Logger.color(Logger.colors.cyan)(toAccount.username)}/${Logger.color(Logger.colors.gray)(toAccount.id)}`,
+					`ID: ${Logger.colors.cyan(message.id)}\n`,
+					`From: ${Logger.colors.cyan(accountID)}\n`,
+					`To: ${Logger.colors.cyan(toAccount.username)}/${Logger.colors.gray(toAccount.id)}`,
 				);
 
 				return reply.send("1");

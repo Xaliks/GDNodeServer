@@ -36,7 +36,7 @@ module.exports = (fastify) => {
 
 				Logger.log(
 					"Account login",
-					`User: ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)}/${Logger.color(Logger.colors.gray)(user.id)}`,
+					`User: ${Logger.colors.cyan(account.username)}/${Logger.colors.gray(account.id)}/${Logger.colors.gray(user.id)}`,
 				);
 
 				reply.send(ResponseEnum.Success(account.id, user.id));

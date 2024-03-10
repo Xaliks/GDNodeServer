@@ -32,8 +32,8 @@ module.exports = (fastify) => {
 
 				Logger.log(
 					"Create level rate",
-					`Level ID: ${Logger.color(Logger.colors.cyan)(level.id)}\n`,
-					`Account: ${Logger.color(Logger.colors.gray)(accountID || udid || 0)}`,
+					`Level ID: ${Logger.colors.cyan(level.id)}\n`,
+					`Account: ${Logger.colors.gray(accountID || udid || 0)}`,
 				);
 
 				return reply.send("1");

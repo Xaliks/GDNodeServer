@@ -43,7 +43,7 @@ module.exports = (fastify) => {
 
 				Logger.log(
 					"User update",
-					`User ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)} updated.`,
+					`User ${Logger.colors.cyan(account.username)}/${Logger.colors.gray(account.id)} updated.`,
 				);
 
 				return reply.send("1");

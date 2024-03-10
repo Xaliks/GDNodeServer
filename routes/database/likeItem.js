@@ -112,9 +112,9 @@ module.exports = (fastify) => {
 
 				Logger.log(
 					`${like ? "Like" : "Dislike"} item`,
-					`ID: ${Logger.color(Logger.colors.cyan)(createdLike.itemId)}\n`,
-					`Type: ${Logger.color(Logger.colors.cyan)(createdLike.itemType)}\n`,
-					`Account: ${Logger.color(Logger.colors.cyan)(accountID)}`,
+					`ID: ${Logger.colors.cyan(createdLike.itemId)}\n`,
+					`Type: ${Logger.colors.cyan(createdLike.itemType)}\n`,
+					`Account: ${Logger.colors.cyan(accountID)}`,
 				);
 
 				return reply.send("1");

@@ -8,7 +8,7 @@ function log(request, ...message) {
 	if (process.env.EnableLogging) {
 		return Logger.log(
 			request.method,
-			`${Logger.color(Logger.colors.cyan)(request.ip)} -> ${Logger.color(Logger.colors.gray)(request.hostname)}${request.url}`,
+			`${Logger.colors.cyan(request.ip)} -> ${Logger.colors.gray(request.hostname)}${request.url}`,
 			...message,
 		);
 	}
@@ -70,5 +70,5 @@ fastify.listen({ port: config.port }, (error, address) => {
 		Logger.error("Server", error);
 		process.exit(1);
 	}
-	Logger.log("Server", `Listening at: ${Logger.color(Logger.colors.cyan)(address)}`);
+	Logger.log("Server", `Listening at: ${Logger.colors.cyan(address)}`);
 });

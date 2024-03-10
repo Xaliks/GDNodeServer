@@ -145,9 +145,9 @@ module.exports = (fastify) => {
 
 					Logger.log(
 						"Update level",
-						`ID: ${Logger.color(Logger.colors.cyan)(level.id)}\n`,
-						`Name: ${Logger.color(Logger.colors.cyan)(level.name)}\n`,
-						`Account: ${Logger.color(Logger.colors.cyan)(accountID)}`,
+						`ID: ${Logger.colors.cyan(level.id)}\n`,
+						`Name: ${Logger.colors.cyan(level.name)}\n`,
+						`Account: ${Logger.colors.cyan(accountID)}`,
 					);
 				} else {
 					level = await database.levels.create({ data });
@@ -160,9 +160,9 @@ module.exports = (fastify) => {
 
 					Logger.log(
 						"Create level",
-						`ID: ${Logger.color(Logger.colors.cyan)(level.id)}\n`,
-						`Name: ${Logger.color(Logger.colors.cyan)(level.name)}\n`,
-						`Account: ${Logger.color(Logger.colors.cyan)(accountID)}`,
+						`ID: ${Logger.colors.cyan(level.id)}\n`,
+						`Name: ${Logger.colors.cyan(level.name)}\n`,
+						`Account: ${Logger.colors.cyan(accountID)}`,
 					);
 				}
 

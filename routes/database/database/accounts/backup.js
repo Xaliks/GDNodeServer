@@ -45,7 +45,7 @@ module.exports = (fastify) => {
 					create: { id: accountID, data: saveData, gameVersion, binaryVersion },
 				});
 
-				Logger.log("User backup", `Account: ${Logger.color(Logger.colors.cyan)(accountID)}`);
+				Logger.log("User backup", `Account: ${Logger.colors.cyan(accountID)}`);
 
 				return reply.send(ResponseEnum.Success);
 			} catch (error) {

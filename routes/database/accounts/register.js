@@ -63,7 +63,7 @@ module.exports = (fastify) => {
 				.then((account) => {
 					Logger.log(
 						"Account create",
-						`Account ${Logger.color(Logger.colors.cyan)(account.username)}/${Logger.color(Logger.colors.gray)(account.id)} created.`,
+						`Account ${Logger.colors.cyan(account.username)}/${Logger.colors.gray(account.id)} created.`,
 					);
 
 					return reply.send(ResponseEnum.Success);

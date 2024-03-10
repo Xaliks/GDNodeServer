@@ -40,9 +40,9 @@ module.exports = (fastify) => {
 
 				Logger.log(
 					"Block user",
-					`ID: ${Logger.color(Logger.colors.cyan)(block.id)}\n`,
-					`Account: ${Logger.color(Logger.colors.cyan)(accountID)}\n`,
-					`Target: ${Logger.color(Logger.colors.cyan)(targetAccount.username)}/${Logger.color(Logger.colors.gray)(targetAccount.id)}`,
+					`ID: ${Logger.colors.cyan(block.id)}\n`,
+					`Account: ${Logger.colors.cyan(accountID)}\n`,
+					`Target: ${Logger.colors.cyan(targetAccount.username)}/${Logger.colors.gray(targetAccount.id)}`,
 				);
 
 				reply.send("1");

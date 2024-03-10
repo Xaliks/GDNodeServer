@@ -41,9 +41,9 @@ module.exports = (fastify) => {
 
 				Logger.log(
 					"Accept friend request",
-					`ID: ${Logger.color(Logger.colors.cyan)(friendRequest.id)}\n`,
-					`From: ${Logger.color(Logger.colors.cyan)(friendRequest.accountId)}\n`,
-					`To: ${Logger.color(Logger.colors.cyan)(accountID)}`,
+					`ID: ${Logger.colors.cyan(friendRequest.id)}\n`,
+					`From: ${Logger.colors.cyan(friendRequest.accountId)}\n`,
+					`To: ${Logger.colors.cyan(accountID)}`,
 				);
 
 				return reply.send("1");

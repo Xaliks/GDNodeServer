@@ -37,7 +37,7 @@ module.exports = (fastify) => {
 				const savedData = await database.savedData.findFirst({ where: { id: accountID } });
 				if (!savedData) return reply.send(ResponseEnum.Code(ResponseEnum.NoSavedData));
 
-				Logger.log("User backup", `User: ${Logger.color(Logger.colors.cyan)(accountID)}`);
+				Logger.log("User backup", `User: ${Logger.colors.cyan(accountID)}`);
 
 				return reply.send(ResponseEnum.Success(savedData.data, savedData.gameVersion, savedData.binaryVersion));
 			} catch (error) {

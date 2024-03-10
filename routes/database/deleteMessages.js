@@ -39,7 +39,7 @@ module.exports = (fastify) => {
 					},
 				});
 
-				Logger.log("Delete messages", `IDs: ${ids.map((id) => Logger.color(Logger.colors.cyan)(id)).join(", ")}`);
+				Logger.log("Delete messages", `IDs: ${ids.map((id) => Logger.colors.cyan(id)).join(", ")}`);
 
 				return reply.send("1");
 			} catch (error) {
