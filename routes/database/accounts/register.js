@@ -60,13 +60,15 @@ module.exports = (fastify) => {
 						isActive: Boolean(preActiveAccounts),
 					},
 				})
-				.then((account) => {
+				.then(async (account) => {
 					Logger.log(
 						"Account create",
 						`Account ${Logger.colors.cyan(account.username)}/${Logger.colors.gray(account.id)} created.`,
 					);
 
-					return reply.send(ResponseEnum.Success);
+					reply.send(ResponseEnum.Success);
+
+					await database.users.create({ data: { username: userName, extId: String(account.id), isRegistered: true } });
 				})
 				.catch((error) => {
 					Logger.error("Account create", error);
