@@ -131,7 +131,9 @@ module.exports = (fastify) => {
 					updatedAt: new Date(),
 				};
 
-				const existingLevel = await database.levels.findFirst({ where: { accountId: accountID, name: levelName } });
+				const existingLevel = await database.levels.findFirst({
+					where: { accountId: accountID, name: levelName, isDeleted: false },
+				});
 				let level;
 				if (existingLevel) {
 					[level] = await database.$transaction([

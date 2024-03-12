@@ -1,3 +1,4 @@
+const _ = require("lodash");
 const { PrismaClient } = require("@prisma/client");
 const crypto = require("node:crypto");
 const { getGJP2, fromBase64, cipher } = require("./security");
@@ -20,14 +21,14 @@ class CacheManager {
 		return this.get(key)?.value ?? null;
 	}
 
-	static set(key, value, ttl = 5 * 60_000) {
+	static set(key, value, ttl) {
 		let entry = this.cache.get(key);
-		if (entry) clearTimeout(entry.timeout);
+		if (entry?.timeout) clearTimeout(entry.timeout);
 
 		entry = {
 			value,
-			ttl,
-			timeout: setTimeout(() => this.delete(key), ttl),
+			ttl: ttl || null,
+			timeout: ttl ? setTimeout(() => this.delete(key), ttl) : null,
 		};
 		this.cache.set(key, entry);
 
@@ -117,10 +118,14 @@ async function getUser(body) {
 
 function saveUserPasswordToCache(accountId, password) {
 	const salt = crypto.randomBytes(16).toString("hex");
-	CacheManager.set(`passwords:${accountId}`, {
-		password: crypto.createHash("md5").update(`${password}${salt}`).digest("hex"),
-		salt,
-	});
+	CacheManager.set(
+		`passwords:${accountId}`,
+		{
+			password: crypto.createHash("md5").update(`${password}${salt}`).digest("hex"),
+			salt,
+		},
+		5 * 60_000,
+	);
 }
 
 async function getCustomSong(songId) {
@@ -153,4 +158,76 @@ async function getCustomSong(songId) {
 	});
 }
 
-module.exports = { getPassword, checkPassword, database, getUser, saveUserPasswordToCache, getCustomSong };
+async function initCacheMaxValues() {
+	const data = await database.$queryRaw`
+		select
+			length,
+			coalesce(sum(coins), 0) as coins,
+			coalesce(sum(stars), 0) as stars,
+			count(*) filter (where difficulty = 'EasyDemon') as "easyDemons",
+			count(*) filter (where difficulty = 'MediumDemon') as "mediumDemons",
+			count(*) filter (where difficulty = 'HardDemon') as "hardDemons",
+			count(*) filter (where difficulty = 'InsaneDemon') as "insaneDemons",
+			count(*) filter (where difficulty = 'ExtremeDemon') as "extremeDemons"
+		from "public"."Levels"
+		where stars > 0
+		group by length;`;
+
+	const result = {
+		coins: 164,
+		userCoins: data.reduce((c, { coins }) => c + Number(coins), 0),
+		stars: 212,
+		moons: 25,
+		demons: data.reduce(
+			(d, { easyDemons, mediumDemons, hardDemons, insaneDemons, extremeDemons }) =>
+				d + Number(easyDemons + mediumDemons + hardDemons + insaneDemons + extremeDemons),
+			3,
+		),
+		platformer: {
+			userDemons: 0,
+			easyDemons: 0,
+			mediumDemons: 0,
+			hardDemons: 0,
+			insaneDemons: 0,
+			extremeDemons: 0,
+		},
+		userDemons: 0,
+		easyDemons: 0,
+		mediumDemons: 0,
+		hardDemons: 0,
+		insaneDemons: 0,
+		extremeDemons: 0,
+	};
+	const [[platformerLevels], otherLevels] = _.partition(data, ({ length }) => length === "Platformer");
+	if (platformerLevels) {
+		result.moons += Number(platformerLevels.stars);
+		result.platformer.easyDemons += Number(platformerLevels.easyDemons);
+		result.platformer.mediumDemons += Number(platformerLevels.mediumDemons);
+		result.platformer.hardDemons += Number(platformerLevels.hardDemons);
+		result.platformer.insaneDemons += Number(platformerLevels.insaneDemons);
+		result.platformer.extremeDemons += Number(platformerLevels.extremeDemons);
+		result.platformer.userDemons +=
+			result.platformer.easyDemons +
+			result.platformer.mediumDemons +
+			result.platformer.hardDemons +
+			result.platformer.insaneDemons +
+			result.platformer.extremeDemons;
+	}
+	if (otherLevels.length) {
+		result.stars += otherLevels.reduce((s, { stars }) => s + Number(stars), 0);
+		result.easyDemons += otherLevels.reduce((demons, { easyDemons }) => demons + Number(easyDemons), 0);
+		result.mediumDemons += otherLevels.reduce((demons, { mediumDemons }) => demons + Number(mediumDemons), 0);
+		result.hardDemons += otherLevels.reduce((demons, { hardDemons }) => demons + Number(hardDemons), 0);
+		result.insaneDemons += otherLevels.reduce((demons, { insaneDemons }) => demons + Number(insaneDemons), 0);
+		result.extremeDemons += otherLevels.reduce((demons, { extremeDemons }) => demons + Number(extremeDemons), 0);
+		result.userDemons +=
+			result.easyDemons + result.mediumDemons + result.hardDemons + result.insaneDemons + result.extremeDemons;
+	}
+
+	CacheManager.set("maxValues", result);
+}
+
+initCacheMaxValues();
+setInterval(initCacheMaxValues, 30 * 60_000);
+
+module.exports = { CacheManager, getPassword, checkPassword, database, getUser, saveUserPasswordToCache, getCustomSong };

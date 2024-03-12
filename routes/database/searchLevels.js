@@ -86,7 +86,7 @@ module.exports = (fastify) => {
 
 			const difficulties = Array.isArray(diff) ? diff[0] : null;
 			const isId = str && typeof str === "number";
-			const queryArgs = { where: { visibility: "Listed" } };
+			const queryArgs = { where: { visibility: "Listed", isDeleted: false } };
 
 			if (isId) queryArgs.where.id = str;
 			else {
@@ -136,7 +136,7 @@ module.exports = (fastify) => {
 				case 0: // Search
 					if (isId) {
 						const level = await database.levels.findFirst({ where: { id: str } });
-						if (!level) return reply.send(await returnReplyString());
+						if (!level || level.isDeleted) return reply.send(await returnReplyString());
 
 						if (level.visibility === "FriendsOnly") {
 							if (await checkPassword(req.body)) {

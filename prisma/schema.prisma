@@ -8,85 +8,72 @@ datasource db {
 }
 
 model Accounts {
-  id           Int      @id @default(autoincrement())
-  username     String   @unique
-  password     String
-  email        String   @unique
-  createdAt    DateTime @default(now())
-  isActive     Boolean  @default(false)
-  commentColor String? /// in HEX format
-
-  messageState        Int @default(0)
-  friendRequestState  Int @default(0)
-  commentHistoryState Int @default(0)
-
-  youtube String?
-  twitter String?
-  twitch  String?
-
-  comments AccountComments[]
-
-  modBadge ModBadge @default(None)
-}
-
-enum ModBadge {
-  None
-  Moderator
-  ElderModerator
-  LeaderboardModerator
+  id                  Int               @id @default(autoincrement())
+  username            String            @unique
+  password            String
+  email               String            @unique
+  createdAt           DateTime          @default(now())
+  isActive            Boolean           @default(false)
+  messageState        Int               @default(0)
+  friendRequestState  Int               @default(0)
+  commentHistoryState Int               @default(0)
+  youtube             String?
+  twitter             String?
+  twitch              String?
+  modBadge            ModBadge          @default(None)
+  /// in HEX format
+  commentColor        String?
+  comments            AccountComments[]
 }
 
 model Users {
-  id       Int    @id @default(autoincrement())
-  extId    String @unique
-  username String @default("Player")
-
-  isRegistered    Boolean @default(false)
-  isBanned        Boolean @default(false)
-  isCreatorBanned Boolean @default(false)
-
-  orbs          Int @default(0)
-  stars         Int @default(0)
-  moons         Int @default(0)
-  coins         Int @default(0)
-  diamonds      Int @default(0)
-  userCoins     Int @default(0)
-  demons        Int @default(0)
-  creatorPoints Int @default(0)
-  special       Int @default(0)
-
-  displayIcon     Int     @default(0)
-  displayIconType Int     @default(0)
-  cube            Int     @default(1)
-  ship            Int     @default(1)
-  ball            Int     @default(1)
-  ufo             Int     @default(1)
-  wave            Int     @default(1)
-  robot           Int     @default(1)
-  spider          Int     @default(1)
-  swing           Int     @default(1)
-  jetpack         Int     @default(1)
-  explosion       Int     @default(1)
-  glow            Boolean @default(false)
-
-  mainColor   Int @default(0)
-  secondColor Int @default(3)
-  glowColor   Int @default(-1)
-
+  id               Int       @id @default(autoincrement())
+  extId            String    @unique
+  username         String    @default("Player")
+  isRegistered     Boolean   @default(false)
+  isBanned         Boolean   @default(false)
+  isCreatorBanned  Boolean   @default(false)
+  orbs             Int       @default(0)
+  stars            Int       @default(0)
+  moons            Int       @default(0)
+  coins            Int       @default(0)
+  diamonds         Int       @default(0)
+  userCoins        Int       @default(0)
+  demons           Int       @default(0)
+  creatorPoints    Int       @default(0)
+  special          Int       @default(0)
+  displayIcon      Int       @default(0)
+  displayIconType  Int       @default(0)
+  cube             Int       @default(1)
+  ship             Int       @default(1)
+  ball             Int       @default(1)
+  ufo              Int       @default(1)
+  wave             Int       @default(1)
+  robot            Int       @default(1)
+  spider           Int       @default(1)
+  swing            Int       @default(1)
+  jetpack          Int       @default(1)
+  explosion        Int       @default(1)
+  glow             Boolean   @default(false)
+  mainColor        Int       @default(0)
+  secondColor      Int       @default(3)
+  glowColor        Int       @default(-1)
   totalSmallChests Int       @default(0)
   lastSmallChest   DateTime?
   totalBigChests   Int       @default(0)
   lastBigChest     DateTime?
+  /// easy,medium,hard,insane,extreme,platEasy,platMedium,platHard,platInsane,platExtreme,weekly,gauntlet
+  demonsInfo       String?
 }
 
 model AccountComments {
   id        Int      @id @default(autoincrement())
   accountId Int
-  account   Accounts @relation(fields: [accountId], references: [id])
   content   String
   createdAt DateTime @default(now())
   likes     Int      @default(0)
   isSpam    Boolean  @default(false)
+  account   Accounts @relation(fields: [accountId], references: [id])
 }
 
 model FriendRequests {
@@ -137,13 +124,6 @@ model Likes {
   @@id([itemType, itemId, accountId])
 }
 
-enum LikeType {
-  Level
-  LevelComment
-  AccountComment
-  List
-}
-
 model Levels {
   id               Int             @id @default(autoincrement())
   gameVersion      Int
@@ -166,23 +146,68 @@ model Levels {
   extraString      String?
   levelInfo        String?
   ts               Int?
+  ratingType       LevelRating     @default(None)
+  difficulty       LevelDifficulty @default(NA)
+  likes            Int             @default(0)
+  downloads        Int             @default(0)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @default(now())
+  ratedAt          DateTime?
+  isLDM            Boolean         @default(false)
+  isTwoPlayer      Boolean         @default(false)
+  isAuto           Boolean         @default(false)
   boomlingsId      Int?
-
-  ratingType LevelRating     @default(None)
-  difficulty LevelDifficulty @default(NA)
-  likes      Int             @default(0)
-  downloads  Int             @default(0)
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @default(now())
-  ratedAt    DateTime?
-
-  isLDM       Boolean @default(false)
-  isTwoPlayer Boolean @default(false)
-  isAuto      Boolean @default(false)
-
-  comments LevelComments[]
+  isDeleted        Boolean         @default(false)
+  comments         LevelComments[]
 
   @@index([accountId, name])
+}
+
+model LevelComments {
+  id        Int      @id @default(autoincrement())
+  levelId   Int
+  accountId Int
+  content   String
+  likes     Int      @default(0)
+  percent   Int      @default(0)
+  createdAt DateTime @default(now())
+  level     Levels   @relation(fields: [levelId], references: [id])
+}
+
+model LevelsData {
+  id   Int    @id
+  data String
+}
+
+model SavedData {
+  id            Int    @id
+  data          String
+  gameVersion   Int
+  binaryVersion Int
+}
+
+model Songs {
+  id         Int      @id
+  name       String
+  artistId   Int
+  artistName String
+  size       Int
+  url        String
+  updatedAt  DateTime @updatedAt
+}
+
+enum ModBadge {
+  None
+  Moderator
+  ElderModerator
+  LeaderboardModerator
+}
+
+enum LikeType {
+  Level
+  LevelComment
+  AccountComment
+  List
 }
 
 enum LevelRating {
@@ -221,38 +246,4 @@ enum LevelVisibility {
   Listed
   FriendsOnly
   Unlisted
-}
-
-model LevelComments {
-  id        Int      @id @default(autoincrement())
-  levelId   Int
-  level     Levels   @relation(fields: [levelId], references: [id])
-  accountId Int
-  content   String
-  likes     Int      @default(0)
-  percent   Int      @default(0)
-  createdAt DateTime @default(now())
-}
-
-model LevelsData {
-  id   Int    @id
-  data String
-}
-
-model SavedData {
-  id Int @id
-
-  data          String
-  gameVersion   Int
-  binaryVersion Int
-}
-
-model Songs {
-  id         Int      @id
-  name       String
-  artistId   Int
-  artistName String
-  size       Int
-  url        String
-  updatedAt  DateTime @updatedAt
 }

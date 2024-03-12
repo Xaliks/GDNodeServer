@@ -26,7 +26,7 @@ module.exports = (fastify) => {
 
 			try {
 				const level = await database.levels.findFirst({ where: { id: levelID } });
-				if (!level) return reply.send("-1");
+				if (!level || level.isDeleted) return reply.send("1");
 
 				// [TODO]: check if user is mod. Create permissions
 

@@ -28,7 +28,7 @@ module.exports = (fastify) => {
 			const { extras, accountID, levelID, inc } = req.body;
 
 			const level = await database.levels.findFirst({ where: { id: levelID } });
-			if (!level) return reply.send("-1");
+			if (!level || level.isDeleted) return reply.send("-1");
 
 			if (level.visibility === "FriendsOnly") {
 				if (!(await checkPassword(req.body))) return reply.send("-1");

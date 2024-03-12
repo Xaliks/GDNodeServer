@@ -33,7 +33,7 @@ module.exports = (fastify) => {
 				let table;
 				if (type === Constants.likeCommentType.Level) {
 					const level = await database.levels.findFirst({ where: { id: itemID } });
-					if (!level) return reply.send("1");
+					if (!level || level.isDeleted) return reply.send("1");
 
 					if (level.visibility === "FriendsOnly" && level.accountId !== accountID) {
 						const friendship = await database.friends.findFirst({

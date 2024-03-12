@@ -31,7 +31,7 @@ module.exports = (fastify) => {
 				if (!(await checkPassword(req.body))) return reply.send("-1");
 
 				const level = await database.levels.findFirst({ where: { id: levelID } });
-				if (!level) return reply.send("-1");
+				if (!level || level.isDeleted) return reply.send("-1");
 
 				const content = fromSafeBase64(base64Content).toString().slice(0, maxLevelCommentLength);
 

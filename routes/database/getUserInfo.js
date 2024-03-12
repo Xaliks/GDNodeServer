@@ -104,7 +104,7 @@ module.exports = (fastify) => {
 				[16, targetAccount.id],
 				[3, user.stars],
 				[4, user.demons],
-				[55, "0,0,0,0,0,0,0,0,0,0,0,0"], // easyDemons,mediumDemons,hardDemons,insaneDemons,extremeDemons,easyPlatformerDemons,mediumPlatformerDemons,hardPlatformerDemons,insanePlatformerDemons,extremePlatformerDemons,weeklyDemons,gauntletDemons
+				[55, user.demonsInfo ?? ""],
 				[8, user.creatorPoints],
 				[13, user.coins],
 				[17, user.userCoins],

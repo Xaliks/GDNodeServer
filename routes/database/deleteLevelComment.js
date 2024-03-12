@@ -32,7 +32,7 @@ module.exports = (fastify) => {
 
 				if (comment.accountId !== accountID) {
 					const level = await database.levels.findFirst({ where: { id: comment.levelId } });
-					if (!level) return reply.send("-1");
+					if (!level || level.isDeleted) return reply.send("-1");
 
 					if (level.accountId !== accountID) return reply.send("-1");
 				}
