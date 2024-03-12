@@ -5,7 +5,6 @@ const PoisonShard = 3;
 const ShadowShard = 4;
 const LavaShard = 5;
 const Key = 6;
-const CrashShard = 9; // IT LITERALLY CRASHES THE GAME
 const EarthShard = 10;
 const BloodShard = 11;
 const MetalShard = 12;
@@ -16,8 +15,8 @@ module.exports = {
 	port: 34602,
 	dashboardPath: "dashboard",
 	databasePath: ["gd_database", "gddatabase"], // 1 - for http; 2 - for https. If your host starts with https, then set them to the same with final length 34
-	host: "http://localhost:59999",
-	// In this case, it will be "http://localhost:59999/gd_database" and "http://localhost:59999/gddatabase" - [34, 33] symbols, no more, no less.
+	host: "http://localhost:34602",
+	// In this case, it will be "http://localhost:34602/gd_database" and "http://localhost:34602/gddatabase" - [34, 33] symbols, no more, no less.
 
 	preActiveAccounts: true,
 	showNotRegisteredUsersInLeaderboard: true,
@@ -30,7 +29,7 @@ module.exports = {
 			minDiamonds: 1,
 			maxDiamonds: 4,
 			items: [
-				// Put a "//" before the shard name to remove it from the awards (Like in CrashShard)
+				// Put a "//" before the shard name to remove it from the awards
 				FireShard,
 				IceShard,
 				PoisonShard,
@@ -41,8 +40,6 @@ module.exports = {
 				MetalShard,
 				LightShard,
 				SoulShard,
-				// Remove "//" before CrashShard to do some trolling
-				// CrashShard,
 			],
 			/**
 			 * Translate it to english yourself cuz I'm too lazy lol :D
@@ -78,7 +75,6 @@ module.exports = {
 				MetalShard,
 				LightShard,
 				SoulShard,
-				// CrashShard,
 			],
 			item1Chance: (user) => 0.65,
 			item2Chance: (user) => 0.4,
