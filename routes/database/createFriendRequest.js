@@ -32,7 +32,7 @@ module.exports = (fastify) => {
 				if (!(await checkPassword(req.body))) return reply.send("-1");
 
 				const toAccount = await database.accounts.findFirst({ where: { id: toAccountID } });
-				if (!toAccount) return reply.send("-1");
+				if (!toAccount?.isActive) return reply.send("-1");
 
 				if (toAccount.friendRequestState === 1) return reply.send("-1");
 

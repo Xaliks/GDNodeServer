@@ -31,7 +31,7 @@ module.exports = (fastify) => {
 			let totalCount = total;
 
 			const targetAccount = await database.accounts.findFirst({ where: { id: targetAccountId } });
-			if (!targetAccount) return reply.send("-1");
+			if (!targetAccount?.isActive) return reply.send("-1");
 
 			if (targetAccount.commentHistoryState !== 0) {
 				const password = getPassword(req.body);

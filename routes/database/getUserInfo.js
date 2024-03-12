@@ -25,8 +25,8 @@ module.exports = (fastify) => {
 		handler: async (req, reply) => {
 			const { accountID, targetAccountID } = req.body;
 
-			const targetAccount = await database.accounts.findFirst({ where: { id: targetAccountID, isActive: true } });
-			if (!targetAccount) return reply.send("-1");
+			const targetAccount = await database.accounts.findFirst({ where: { id: targetAccountID } });
+			if (!targetAccount?.isActive) return reply.send("-1");
 
 			let isMe = false;
 			if (accountID === targetAccountID && targetAccount.password === getPassword(req.body)) isMe = true;

@@ -84,9 +84,9 @@ async function getUser(body) {
 	if (password) {
 		const accountId = Number(body.accountID);
 
-		if (accountId) account = await database.accounts.findFirst({ where: { id: accountId, password } });
+		if (accountId) account = await database.accounts.findFirst({ where: { id: accountId, password, isActive: true } });
 		else if (body.userName) {
-			account = await database.accounts.findFirst({ where: { username: body.userName, password } });
+			account = await database.accounts.findFirst({ where: { username: body.userName, password, isActive: true } });
 		}
 
 		if (!account) account = 0;

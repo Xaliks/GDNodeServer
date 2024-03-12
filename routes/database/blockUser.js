@@ -30,7 +30,7 @@ module.exports = (fastify) => {
 				if (!(await checkPassword(req.body))) return reply.send("-1");
 
 				const targetAccount = await database.accounts.findFirst({ where: { id: targetAccountID } });
-				if (!targetAccount) return reply.send("1");
+				if (!targetAccount?.isActive) return reply.send("1");
 
 				const block = await database.blocks.upsert({
 					where: { accountId_targetAccountId: { accountId: accountID, targetAccountId: targetAccount.id } },
