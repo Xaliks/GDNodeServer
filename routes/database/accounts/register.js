@@ -46,10 +46,10 @@ module.exports = (fastify) => {
 			if (!passwordRegex.test(password)) return reply.send(ResponseEnum.InvalidPassword);
 
 			const existingAccount = await database.accounts.findFirst({
-				where: { OR: [{ email: email.toLowerCase() }, { username: userName }] },
+				where: { OR: [{ email: email.toLowerCase() }, { username: { equals: userName, mode: "insensitive" } }] },
 			});
 			if (existingAccount?.email === email) return reply.send(ResponseEnum.EmailInUse);
-			if (existingAccount?.username === userName) return reply.send(ResponseEnum.UsernameInUse);
+			else if (existingAccount) return reply.send(ResponseEnum.UsernameInUse);
 
 			return database.accounts
 				.create({
@@ -67,8 +67,6 @@ module.exports = (fastify) => {
 					);
 
 					reply.send(ResponseEnum.Success);
-
-					await database.users.create({ data: { username: userName, extId: String(account.id), isRegistered: true } });
 				})
 				.catch((error) => {
 					Logger.error("Account create", error);
