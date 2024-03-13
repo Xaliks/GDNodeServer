@@ -5,7 +5,7 @@ const Logger = require("./scripts/Logger");
 const config = require("./config/config");
 
 function log(request, ...message) {
-	if (process.env.EnableLogging) {
+	if (process.env.EnableLogging === "true") {
 		return Logger.log(
 			request.method,
 			`${Logger.colors.cyan(request.ip)} -> ${Logger.colors.gray(request.hostname)}${request.url}`,
@@ -58,6 +58,11 @@ fastify.setNotFoundHandler((request, reply) => {
 });
 
 fastify.setErrorHandler((error, request, reply) => {
+	Logger.devLog(
+		"Validation error",
+		`${Logger.colors.cyan(request.ip)} -> ${Logger.colors.gray(request.hostname)}${request.url}`,
+		error.validation,
+	);
 	if (error.validation) return reply.status(400).send("-1");
 
 	Logger.error("Server", error);

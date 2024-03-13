@@ -67,6 +67,10 @@ module.exports = (fastify) => {
 					);
 
 					reply.send(ResponseEnum.Success);
+
+					if (preActiveAccounts) {
+						await database.users.create({ data: { username: userName, extId: String(account.id), isRegistered: true } });
+					}
 				})
 				.catch((error) => {
 					Logger.error("Account create", error);

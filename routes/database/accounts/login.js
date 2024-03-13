@@ -31,7 +31,7 @@ module.exports = (fastify) => {
 		handler: async (req, reply) => {
 			try {
 				const { account, user } = await getUser(req.body);
-				if (!account) return reply.send(ResponseEnum.Failed);
+				if (!account || !user) return reply.send(ResponseEnum.Failed);
 				if (user.isBanned) return reply.send(ResponseEnum.AccountDisabled);
 
 				Logger.log(

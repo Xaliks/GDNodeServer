@@ -30,10 +30,10 @@
     - [ ] Map packs
     - [ ] Gauntlets
 - [ ] Test
-    - [x] 2.2
-    - [x] 2.1
-    - [ ] 2.0
-    - [ ] 1.9
+    - [x] 2.2 ([`2530486154587189554`](https://steamdb.info/depot/322171/history/?changeid=M:2530486154587189554))
+    - [x] 2.1 ([`641118531549408775`](https://steamdb.info/depot/322171/history/?changeid=M:641118531549408775))
+    - [x] 2.0 ([`2135166447199899913`](https://steamdb.info/depot/322171/history/?changeid=M:2135166447199899913))
+    - [ ] 1.9 ([`1039208287639585563`](https://steamdb.info/depot/322171/history/?changeid=M:1039208287639585563))
     - [ ] 1.8
     - [ ] 1.7
     - [ ] 1.6
@@ -43,4 +43,4 @@
     - [ ] 1.2
     - [ ] 1.1
     - [ ] 1.0
-- [x] Update exe game file
+- [x] Update game file

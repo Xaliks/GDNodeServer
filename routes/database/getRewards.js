@@ -34,7 +34,7 @@ module.exports = (fastify) => {
 			try {
 				// eslint-disable-next-line prefer-const
 				let { account, user } = await getUser(req.body);
-				if (account === 0) return reply.send("-1");
+				if (account === 0 || !user) return reply.send("-1");
 
 				let totalSmallChests = Math.max(user.totalSmallChests, r1);
 				let totalBigChests = Math.max(user.totalSmallChests, r2);

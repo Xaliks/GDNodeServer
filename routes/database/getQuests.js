@@ -29,7 +29,7 @@ module.exports = (fastify) => {
 			const { udid, accountID, chk } = req.body;
 
 			const { account, user } = await getUser(req.body);
-			if (account === 0) return reply.send("-1");
+			if (account === 0 || !user) return reply.send("-1");
 
 			const quests = _.sampleSize(
 				rewards.quests.map((quest, i) => {

@@ -103,7 +103,7 @@ class Logger {
 	}
 
 	devLog(category, ...message) {
-		if (process.env.BotLogs === "true") return this._log(this.colors.bgMagenta, category, ...message);
+		if (process.env.EnableLogging === "true") return this._log(this.colors.bgMagenta, category, ...message);
 	}
 }
 
