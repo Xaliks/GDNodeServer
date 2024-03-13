@@ -8,6 +8,7 @@ const { secret, levelNamePattern, safeBase64Pattern, defaultLevel, maxLevelSize 
  * @param {import("fastify").FastifyInstance} fastify
  */
 module.exports = (fastify) => {
+	// 2.0, 2.1-2.2
 	["/uploadGJLevel20.php", "/uploadGJLevel21.php"].forEach((url) =>
 		fastify.route({
 			method: ["POST"],

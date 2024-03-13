@@ -8,6 +8,7 @@ const { secret, commentColors } = require("../../config/config");
  * @param {import("fastify").FastifyInstance} fastify
  */
 module.exports = (fastify) => {
+	// 2.0, 2.1-2.2
 	["/getGJComments20.php", "/getGJComments21.php"].forEach((url) =>
 		fastify.route({
 			method: ["POST"],

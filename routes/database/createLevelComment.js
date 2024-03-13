@@ -7,6 +7,7 @@ const { maxLevelCommentLength, secret, safeBase64Pattern } = require("../../conf
  * @param {import("fastify").FastifyInstance} fastify
  */
 module.exports = (fastify) => {
+	// 2.0, 2.1-2.2
 	["/uploadGJComment20.php", "/uploadGJComment21.php"].forEach((url) =>
 		fastify.route({
 			method: ["POST"],

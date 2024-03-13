@@ -58,11 +58,6 @@ fastify.setNotFoundHandler((request, reply) => {
 });
 
 fastify.setErrorHandler((error, request, reply) => {
-	Logger.devLog(
-		"Validation error",
-		`${Logger.colors.cyan(request.ip)} -> ${Logger.colors.gray(request.hostname)}${request.url}`,
-		error.validation,
-	);
 	if (error.validation) return reply.status(400).send("-1");
 
 	Logger.error("Server", error);
