@@ -8,8 +8,9 @@ const { secret, levelNamePattern, safeBase64Pattern, defaultLevel, maxLevelSize 
  * @param {import("fastify").FastifyInstance} fastify
  */
 module.exports = (fastify) => {
-	// 2.0, 2.1-2.2
-	["/uploadGJLevel20.php", "/uploadGJLevel21.php"].forEach((url) =>
+	// 1.9, 2.0, 2.1-2.2
+	// No support for <2.0 cause the body doesn't contain the account password
+	["/uploadGJLevel19.php", "/uploadGJLevel20.php", "/uploadGJLevel21.php"].forEach((url) =>
 		fastify.route({
 			method: ["POST"],
 			url,
@@ -32,8 +33,8 @@ module.exports = (fastify) => {
 						original: { type: "number", default: 0 },
 						twoPlayer: { type: "number", enum: [0, 1] },
 						objects: { type: "number", minimum: 1 },
-						coins: { type: "number", enum: [0, 1, 2, 3] },
-						requestedStars: { type: "number", enum: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
+						coins: { type: "number", enum: [0, 1, 2, 3], default: 0 },
+						requestedStars: { type: "number", enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], default: 0 },
 						unlisted: { type: "number", enum: Constants.levelVisibility.values(), default: 0 },
 						wt: { type: "number", default: 0 }, // time spent in the editor (local copy) seconds
 						wt2: { type: "number", default: 0 }, // time spent in the editor (previous copies) seconds
@@ -60,8 +61,6 @@ module.exports = (fastify) => {
 						"original",
 						"twoPlayer",
 						"objects",
-						"coins",
-						"requestedStars",
 						"levelString",
 					],
 				},

@@ -14,6 +14,7 @@
     - [x] Search
     - [x] Download
     - [x] Upload
+    - [ ] Delete
     - [x] Comments
     - [ ] Lists
     - [ ] Daily/Weekly levels
@@ -33,7 +34,7 @@
     - [x] 2.2 ([`2530486154587189554`](https://steamdb.info/depot/322171/history/?changeid=M:2530486154587189554))
     - [x] 2.1 ([`641118531549408775`](https://steamdb.info/depot/322171/history/?changeid=M:641118531549408775))
     - [x] 2.0 ([`2135166447199899913`](https://steamdb.info/depot/322171/history/?changeid=M:2135166447199899913))
-    - [ ] 1.9 ([`1039208287639585563`](https://steamdb.info/depot/322171/history/?changeid=M:1039208287639585563))
+    - [x] 1.9 :warning: no upload/delete levels/comments; no weekly leaderboard ([`1039208287639585563`](https://steamdb.info/depot/322171/history/?changeid=M:1039208287639585563))
     - [ ] 1.8
     - [ ] 1.7
     - [ ] 1.6

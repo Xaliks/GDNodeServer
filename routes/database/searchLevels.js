@@ -14,8 +14,8 @@ const { Constants } = require("../../scripts/util");
  * @param {import("fastify").FastifyInstance} fastify
  */
 module.exports = (fastify) => {
-	// 2.0, 2.1-2.2
-	["/getGJLevels20.php", "/getGJLevels21.php"].forEach((url) =>
+	// 1.9, 2.0, 2.1-2.2
+	["/getGJLevels19.php", "/getGJLevels20.php", "/getGJLevels21.php"].forEach((url, i, urls) =>
 		fastify.route({
 			method: ["POST"],
 			url,
@@ -79,9 +79,7 @@ module.exports = (fastify) => {
 					completedLevels,
 				} = req.body;
 
-				if (uncompleted === 1 && onlyCompleted === 1) {
-					return reply.send(await returnReplyString(levels, totalCount, page));
-				}
+				if (uncompleted === 1 && onlyCompleted === 1) return reply.send(await returnReplyString());
 
 				let levels = [];
 				let totalCount = total;
@@ -275,13 +273,13 @@ module.exports = (fastify) => {
 				if (levels.length < searchLevelsPageSize) totalCount = page * searchLevelsPageSize + levels.length;
 				else if (!totalCount) totalCount = await database.levels.count(queryArgs);
 
-				return reply.send(await returnReplyString(levels, totalCount, page));
+				return reply.send(await returnReplyString(levels, totalCount, page, i, urls));
 			},
 		}),
 	);
 };
 
-async function returnReplyString(levels = [], totalCount = 0, page = 0) {
+async function returnReplyString(levels = [], totalCount = 0, page = 0, i = 0, urls = []) {
 	let users = [];
 	if (levels.length) {
 		users = await database.users.findMany({
@@ -301,7 +299,8 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0) {
 			return [
 				[1, level.id],
 				[2, level.name],
-				[3, toBase64(level.description ?? "")],
+				// base64 level description for 2.0+
+				[3, i <= urls.length - 2 ? level.description ?? "" : toBase64(level.description ?? "")],
 				[5, level.version],
 				[6, user.id],
 				[8, level.difficulty === "NA" ? 0 : 10],

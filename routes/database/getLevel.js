@@ -7,8 +7,8 @@ const { secret } = require("../../config/config");
  * @param {import("fastify").FastifyInstance} fastify
  */
 module.exports = (fastify) => {
-	// 2.0, 2.1-2.2
-	["/downloadGJLevel20.php", "/downloadGJLevel22.php"].forEach((url) =>
+	// 1.9, 2.0, 2.1-2.2
+	["/downloadGJLevel19.php", "/downloadGJLevel20.php", "/downloadGJLevel22.php"].forEach((url, i, urls) =>
 		fastify.route({
 			method: ["POST"],
 			url,
@@ -59,7 +59,8 @@ module.exports = (fastify) => {
 				const response = [
 					[1, level.id],
 					[2, level.name],
-					[3, toBase64(level.description ?? "")],
+					// base64 level description for 2.0+
+					[3, i <= urls.length - 2 ? level.description ?? "" : toBase64(level.description ?? "")],
 					[4, levelData.data],
 					[5, level.version],
 					[6, user.id],

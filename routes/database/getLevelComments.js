@@ -8,8 +8,8 @@ const { secret, commentColors } = require("../../config/config");
  * @param {import("fastify").FastifyInstance} fastify
  */
 module.exports = (fastify) => {
-	// 2.0, 2.1-2.2
-	["/getGJComments20.php", "/getGJComments21.php"].forEach((url) =>
+	// 1.9, 2.0, 2.1-2.2
+	["/getGJComments19.php", "/getGJComments20.php", "/getGJComments21.php"].forEach((url, i, urls) =>
 		fastify.route({
 			method: ["POST"],
 			url,
@@ -107,7 +107,8 @@ module.exports = (fastify) => {
 									.join("~"),
 							];
 
-							if (!req.url.endsWith("getGJComments20.php")) {
+							// only for 2.1+
+							if (i <= urls.length - 2) {
 								userData += `:${[
 									[1, account?.username || user.username],
 									[9, user.displayIcon],

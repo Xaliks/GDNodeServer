@@ -7,8 +7,8 @@ const { database, getUser, CacheManager } = require("../../scripts/database");
  * @param {import("fastify").FastifyInstance} fastify
  */
 module.exports = (fastify) => {
-	// 2.0, 2.1-2.2
-	["/updateGJUserScore20.php", "/updateGJUserScore22.php"].forEach((url) =>
+	// 1.9, 2.0, 2.1-2.2
+	["/updateGJUserScore19.php", "/updateGJUserScore20.php", "/updateGJUserScore22.php"].forEach((url) =>
 		fastify.route({
 			method: ["POST"],
 			url,
@@ -50,24 +50,7 @@ module.exports = (fastify) => {
 						seed: { type: "string", pattern: "^[0-9a-zA-Z]{10}$" },
 						seed2: { type: "string", pattern: base64Pattern },
 					},
-					required: [
-						"secret",
-						"stars",
-						"demons",
-						"icon",
-						"iconType",
-						"color1",
-						"color2",
-						"coins",
-						"userCoins",
-						"accIcon",
-						"accShip",
-						"accBall",
-						"accBird",
-						"accDart",
-						"accRobot",
-						"accGlow",
-					],
+					required: ["secret", "stars", "demons", "icon", "iconType", "color1", "color2", "coins"],
 				},
 			},
 			handler: async (req, reply) => {
@@ -91,33 +74,35 @@ module.exports = (fastify) => {
 						stars: req.body.stars,
 						demons: req.body.demons,
 						coins: req.body.coins,
-						userCoins: req.body.userCoins,
 						special: req.body.special,
 						displayIcon: req.body.icon,
 						displayIconType: req.body.iconType,
 						mainColor: req.body.color1,
 						secondColor: req.body.color2,
-						glow: req.body.accGlow === 1,
-						cube: req.body.accIcon,
-						ship: req.body.accShip,
-						ball: req.body.accBall,
-						ufo: req.body.accBird,
-						wave: req.body.accDart,
-						robot: req.body.accRobot,
 						isRegistered: Boolean(account),
 					};
 
+					// 2.0
+					if ("accIcon" in req.body) userData.cube = req.body.accIcon;
+					if ("accShip" in req.body) userData.ship = req.body.accShip;
+					if ("accBall" in req.body) userData.ball = req.body.accBall;
+					if ("accBird" in req.body) userData.ufo = req.body.accBird;
+					if ("accDart" in req.body) userData.wave = req.body.accDart;
+					if ("accRobot" in req.body) userData.robot = req.body.accRobot;
+					if ("accGlow" in req.body) userData.glow = req.body.accGlow === 1;
+					if ("userCoins" in req.body) userData.userCoins = req.body.userCoins;
+
 					// 2.1
-					if (req.body.diamonds) userData.diamonds = req.body.diamonds;
-					if (req.body.accSpider) userData.spider = req.body.accSpider;
-					if (req.body.accExplosion) userData.explosion = req.body.accExplosion;
+					if ("diamonds" in req.body) userData.diamonds = req.body.diamonds;
+					if ("accSpider" in req.body) userData.spider = req.body.accSpider;
+					if ("accExplosion" in req.body) userData.explosion = req.body.accExplosion;
 
 					// 2.2
-					if (req.body.moons) userData.moons = req.body.moons;
-					if (req.body.color3) userData.glowColor = req.body.color3;
-					if (req.body.accSwing) userData.swing = req.body.accSwing;
-					if (req.body.jetpack) userData.jetpack = req.body.accJetpack;
-					if (req.body.dinfo) {
+					if ("moons" in req.body) userData.moons = req.body.moons;
+					if ("color3" in req.body) userData.glowColor = req.body.color3;
+					if ("accSwing" in req.body) userData.swing = req.body.accSwing;
+					if ("accJetpack" in req.body) userData.jetpack = req.body.accJetpack;
+					if ("dinfo" in req.body) {
 						const demonsIds = _.uniq(
 							req.body.dinfo
 								.split(",")
