@@ -225,5 +225,10 @@ module.exports = {
 			ElderModerator: 2,
 			LeaderboardModerator: 3,
 		}),
+		questType: reverseObject({
+			Orbs: 1,
+			Coins: 2,
+			Stars: 3,
+		}),
 	},
 };

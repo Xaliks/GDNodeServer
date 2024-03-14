@@ -83,19 +83,6 @@ module.exports = {
 
 			cooldown: 24 * 60 * 60, // In seconds. 0 for no cooldown
 		},
-		quests: [
-			{ name: "Orb finder", type: "orbs", amount: 200, reward: 10 },
-			{ name: "Star collector", type: "stars", amount: 5, reward: 10 },
-			{ name: "Coin master", type: "coins", amount: 2, reward: 10 },
-
-			{ name: "Orb finder", type: "orbs", amount: 500, reward: 15 },
-			{ name: "Star collector", type: "stars", amount: 10, reward: 15 },
-			{ name: "Coin master", type: "coins", amount: 4, reward: 15 },
-
-			{ name: "Orb finder", type: "orbs", amount: 1000, reward: 20 },
-			{ name: "Star collector", type: "stars", amount: 15, reward: 20 },
-			{ name: "Coin master", type: "coins", amount: 6, reward: 20 },
-		],
 	},
 
 	commentColors: {

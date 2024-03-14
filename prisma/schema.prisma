@@ -196,6 +196,14 @@ model Songs {
   updatedAt  DateTime @updatedAt
 }
 
+model Quests {
+  id     Int       @id @default(autoincrement())
+  name   String
+  type   QuestType
+  amount Int
+  reward Int
+}
+
 enum ModBadge {
   None
   Moderator
@@ -246,4 +254,10 @@ enum LevelVisibility {
   Listed
   FriendsOnly
   Unlisted
+}
+
+enum QuestType {
+  Orbs
+  Coins
+  Stars
 }

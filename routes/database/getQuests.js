@@ -1,9 +1,7 @@
-const _ = require("lodash");
 const { getSolo3, cipher, fromBase64, toSafeBase64 } = require("../../scripts/security");
-const { getUser } = require("../../scripts/database");
-const { rewards, secret, udidPattern, base64Pattern } = require("../../config/config");
-
-const startQuestsTimestamp = new Date("2024-02-12T00:00:00.000Z");
+const { getUser, database } = require("../../scripts/database");
+const { secret, udidPattern, base64Pattern } = require("../../config/config");
+const { Constants } = require("../../scripts/util");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -31,15 +29,8 @@ module.exports = (fastify) => {
 			const { account, user } = await getUser(req.body);
 			if (account === 0 || !user) return reply.send("-1");
 
-			const quests = _.sampleSize(
-				rewards.quests.map((quest, i) => {
-					const type = { orbs: 1, coins: 2, stars: 3 }[quest.type];
-					const id = Date.now() - startQuestsTimestamp.getTime() + i;
-
-					return [id, type, quest.amount, quest.reward, quest.name].join(",");
-				}),
-				3,
-			);
+			const quests = await database.$queryRaw`select * from "public"."Quests" order by random() limit 3`;
+			const now = Date.now();
 
 			const result = toSafeBase64(
 				cipher(
@@ -49,8 +40,10 @@ module.exports = (fastify) => {
 						cipher(fromBase64(chk.slice(5)).toString(), 19847),
 						udid,
 						accountID ?? "",
-						Math.round((new Date().setHours(0, 0, 0, 0) + 24 * 60 * 60_000 - Date.now()) / 1_000),
-						...quests,
+						Math.round((new Date().setHours(0, 0, 0, 0) + 24 * 60 * 60_000 - now) / 1_000),
+						...quests.map((quest) =>
+							[now + quest.id, Constants.questType[quest.type], quest.amount, quest.reward, quest.name].join(","),
+						),
 					].join(":"),
 					19847,
 				),
