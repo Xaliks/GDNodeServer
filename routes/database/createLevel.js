@@ -1,8 +1,16 @@
+const _ = require("lodash");
 const Logger = require("../../scripts/Logger");
 const { database, checkPassword, getCustomSong } = require("../../scripts/database");
 const { fromSafeBase64 } = require("../../scripts/security");
 const { Constants, byteLengthOf } = require("../../scripts/util");
-const { secret, levelNamePattern, safeBase64Pattern, defaultLevel, maxLevelSize } = require("../../config/config");
+const {
+	secret,
+	levelNamePattern,
+	safeBase64Pattern,
+	defaultLevel,
+	maxLevelSize,
+	separatedNumbersPattern,
+} = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -45,8 +53,8 @@ module.exports = (fastify) => {
 						levelString: { type: "string", pattern: safeBase64Pattern },
 						levelInfo: { type: "string", pattern: `|${safeBase64Pattern}` },
 						ts: { type: "number" }, // idk
-						// sfxIDs
-						// songIDs
+						sfxIDs: { type: "string", pattern: `|${separatedNumbersPattern}` },
+						songIDs: { type: "string", pattern: `|${separatedNumbersPattern}` },
 					},
 					required: [
 						"secret",
@@ -90,6 +98,8 @@ module.exports = (fastify) => {
 					extraString,
 					levelInfo,
 					ts,
+					sfxIDs,
+					songIDs,
 				} = req.body;
 
 				if (byteLengthOf(levelString) > maxLevelSize) return reply.send("-1");
@@ -126,6 +136,8 @@ module.exports = (fastify) => {
 						downloads: Math.max(0, defaultLevel.downloads) || 0,
 						likes: Math.max(0, defaultLevel.likes) || 0,
 						updatedAt: new Date(),
+						songIds: _.uniq(songIDs.split(",").map(Number).filter(Boolean)),
+						sfxIds: _.uniq(sfxIDs.split(",").map(Number).filter(Boolean)),
 					};
 
 					const existingLevel = await database.levels.findFirst({

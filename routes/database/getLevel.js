@@ -94,6 +94,8 @@ module.exports = (fastify) => {
 					[45, level.objectCount],
 					[46, level.editorTime],
 					[47, level.editorTimeCopies],
+					[52, level.songIds.join(",")],
+					[53, level.sfxIds.join(",")],
 					[57, level.ts || ""],
 				];
 

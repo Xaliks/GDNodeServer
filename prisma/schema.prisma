@@ -159,6 +159,8 @@ model Levels {
   boomlingsId      Int?
   isDeleted        Boolean         @default(false)
   comments         LevelComments[]
+  songIds          Int[]
+  sfxIds           Int[]
 
   @@index([accountId, name])
 }
