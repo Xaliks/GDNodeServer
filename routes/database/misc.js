@@ -7,4 +7,5 @@ module.exports = (fastify) => {
 	fastify.post("/getAccountURL.php", (req, reply) =>
 		reply.send(`${config.host}/${config.host.startsWith("https") ? config.databasePath[1] : config.databasePath[0]}`),
 	);
+	fastify.post("/getCustomContentURL.php", (req, reply) => reply.send("https://geometrydashfiles.b-cdn.net"));
 };
