@@ -1,4 +1,3 @@
-const _ = require("lodash");
 const { database, checkPassword, getUser } = require("../../scripts/database");
 const { showNotRegisteredUsersInLeaderboard, secret, udidPattern } = require("../../config/config");
 
@@ -34,7 +33,7 @@ module.exports = (fastify) => {
 
 				if (type === "top") {
 					users = await database.users.findMany({
-						where: { ...where, OR: [{ stars: { gt: 0 } }, { moons: { gt: 0 } }] },
+						where: { ...where, stars: { gt: 0 } },
 						orderBy: [{ stars: "desc" }, { moons: "desc" }],
 						take,
 					});
@@ -65,71 +64,21 @@ module.exports = (fastify) => {
 					if (!user.stars) {
 						const greaterUsers = await database.users.findMany({
 							where: { ...where, stars: { gt: 0 } },
-							orderBy: { stars: "asc" },
+							orderBy: [{ stars: "asc" }, { moons: "asc" }],
 							take,
 						});
 
 						users = [...greaterUsers, user].map((user, i) => ({ ...user, rank: userRank - greaterUsers.length + i + 1 }));
 					} else {
-						const takeCount = Math.floor(take / 2);
+						const highestRank = Math.floor(userRank / take) * take + 1;
+						const relativeUsers = await database.users.findMany({
+							where: { ...where, stars: { gt: 0 } },
+							orderBy: [{ stars: "desc" }, { moons: "desc" }],
+							skip: highestRank - 1,
+							take,
+						});
 
-						let relativeUsers;
-						if (showNotRegisteredUsersInLeaderboard) {
-							relativeUsers = await database.$queryRaw`select * from (
-							(
-								select *
-								from "public"."Users"
-								where stars < ${user.stars}
-									and stars > 0
-									and "isBanned" = false
-								order by stars desc
-								limit ${takeCount}
-							)
-							union
-							(
-								select *
-								from "public"."Users"
-								where stars >= ${user.stars}
-									and "isBanned" = false
-									and id != ${user.id}
-								order by stars asc
-								limit ${takeCount}
-							)
-						) order by stars desc`;
-						} else {
-							relativeUsers = await database.$queryRaw`select * from (
-							(
-								select *
-								from "public"."Users"
-								where stars < ${user.stars}
-									and stars > 0
-									and "isBanned" = false
-									and "isRegistered" = true
-								order by stars desc
-								limit ${takeCount}
-							)
-							union
-							(
-								select *
-								from "public"."Users"
-								where stars >= ${user.stars}
-									and "isBanned" = false
-									and "isRegistered" = true
-									and id != ${user.id}
-								order by stars asc
-								limit ${takeCount}
-							)
-						) order by stars desc`;
-						}
-
-						const [greaterUsers, lowerUsers] = _.partition(relativeUsers, (u) => u.stars >= user.stars);
-
-						user.rank = userRank;
-						users = [
-							...greaterUsers.map((user, i) => ({ ...user, rank: userRank - greaterUsers.length - i })),
-							user,
-							...lowerUsers.map((user, i) => ({ ...user, rank: userRank + i + 1 })),
-						];
+						users = relativeUsers.map((user, i) => ({ ...user, rank: highestRank + i }));
 					}
 				}
 
