@@ -63,7 +63,7 @@ model Users {
   totalBigChests   Int       @default(0)
   lastBigChest     DateTime?
   /// easy,medium,hard,insane,extreme,platEasy,platMedium,platHard,platInsane,platExtreme,weekly,gauntlet
-  demonsInfo       String?
+  demonsInfo       String    @default("0,0,0,0,0,0,0,0,0,0,0,0")
 }
 
 model AccountComments {
