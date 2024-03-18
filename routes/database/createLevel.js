@@ -136,8 +136,8 @@ module.exports = (fastify) => {
 						downloads: Math.max(0, defaultLevel.downloads) || 0,
 						likes: Math.max(0, defaultLevel.likes) || 0,
 						updatedAt: new Date(),
-						songIds: _.uniq(songIDs.split(",").map(Number).filter(Boolean)),
-						sfxIds: _.uniq(sfxIDs.split(",").map(Number).filter(Boolean)),
+						songIds: _.uniq(songIDs?.split(",").map(Number).filter(Boolean)),
+						sfxIds: _.uniq(sfxIDs?.split(",").map(Number).filter(Boolean)),
 					};
 
 					const existingLevel = await database.levels.findFirst({
