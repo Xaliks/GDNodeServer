@@ -130,7 +130,7 @@ module.exports = (fastify) => {
 						for (const difficulty of _.uniq(difficulties.split(","))) {
 							if (difficulty === "-2") {
 								if (demonFilter) fetchedDifficulties.push(Constants.selectDemonDifficulty[demonFilter]);
-								else fetchedDifficulties.push(...Constants.selectDemonDifficulty.values());
+								else fetchedDifficulties.push(...Constants.selectDemonDifficulty.keys());
 							} else fetchedDifficulties.push(Constants.selectLevelDifficulty[difficulty]);
 						}
 
