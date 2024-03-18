@@ -35,7 +35,7 @@ module.exports = (fastify) => {
 					users = await database.users.findMany({
 						where: { ...where, stars: { gt: 0 } },
 						orderBy: [{ stars: "desc" }, { moons: "desc" }],
-						take: i <= urls.length - 2 ? 50 : take, // top 50 for <=1.8,
+						take: i > urls.length - 3 ? take : 50, // top 50 for <=1.8,
 					});
 				}
 
