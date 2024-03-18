@@ -1,3 +1,4 @@
+const querystring = require("node:querystring");
 const fs = require("node:fs");
 const _ = require("lodash");
 const fastify = require("fastify")({ trustProxy: true });
@@ -14,7 +15,9 @@ function log(request, ...message) {
 	}
 }
 
-fastify.register(require("@fastify/formbody"));
+fastify.addContentTypeParser("application/x-www-form-urlencoded", { parseAs: "buffer" }, (req, body, done) =>
+	done(null, querystring.parse(body.toString())),
+);
 
 // Logging
 fastify.addHook("onRequest", (request, reply, done) => {

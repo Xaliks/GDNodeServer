@@ -7,7 +7,6 @@
     "dev": "cross-env EnableLogging=true nodemon ."
   },
   "dependencies": {
-    "@fastify/formbody": "^7.4.0",
     "@prisma/client": "^5.11.0",
     "fastify": "^4.26.2",
     "lodash": "^4.17.21"
