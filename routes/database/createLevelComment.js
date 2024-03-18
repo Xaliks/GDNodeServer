@@ -7,9 +7,9 @@ const { maxLevelCommentLength, secret, safeBase64Pattern } = require("../../conf
  * @param {import("fastify").FastifyInstance} fastify
  */
 module.exports = (fastify) => {
-	// 1.9, 2.0, 2.1-2.2
+	// 1.8, 1.9, 2.0, 2.1-2.2
 	// No support for <2.0 cause the body doesn't contain the account password
-	["/uploadGJComment19.php", "/uploadGJComment20.php", "/uploadGJComment21.php"].forEach((url) =>
+	["/uploadGJComment.php", "/uploadGJComment19.php", "/uploadGJComment20.php", "/uploadGJComment21.php"].forEach((url) =>
 		fastify.route({
 			method: ["POST"],
 			url,

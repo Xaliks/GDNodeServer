@@ -5,8 +5,8 @@ const { showNotRegisteredUsersInLeaderboard, secret, udidPattern } = require("..
  * @param {import("fastify").FastifyInstance} fastify
  */
 module.exports = (fastify) => {
-	// 1.9, 2.0-2.2
-	["/getGJScores19.php", "/getGJScores20.php"].forEach((url) =>
+	// 1.8, 1.9, 2.0-2.2
+	["/getGJScores.php", "/getGJScores19.php", "/getGJScores20.php"].forEach((url, i, urls) =>
 		fastify.route({
 			method: ["POST"],
 			url,
@@ -35,7 +35,7 @@ module.exports = (fastify) => {
 					users = await database.users.findMany({
 						where: { ...where, stars: { gt: 0 } },
 						orderBy: [{ stars: "desc" }, { moons: "desc" }],
-						take,
+						take: i <= urls.length - 2 ? 50 : take, // top 50 for <=1.8,
 					});
 				}
 
@@ -95,29 +95,31 @@ module.exports = (fastify) => {
 		}),
 	);
 
-	fastify.route({
-		method: ["POST"],
-		url: "/getGJCreators19.php",
-		schema: {
-			consumes: ["x-www-form-urlencoded"],
-			body: {
-				type: "object",
-				properties: {
-					secret: { type: "string", const: secret },
-					count: { type: "number", minimum: 1, maximum: 200, default: 100 },
+	["/getGJCreators.php", "/getGJCreators19.php"].forEach((url) =>
+		fastify.route({
+			method: ["POST"],
+			url,
+			schema: {
+				consumes: ["x-www-form-urlencoded"],
+				body: {
+					type: "object",
+					properties: {
+						secret: { type: "string", const: secret },
+						count: { type: "number", minimum: 1, maximum: 200, default: 100 },
+					},
+					required: ["secret"],
 				},
-				required: ["secret"],
 			},
-		},
-		handler: async (req, reply) => {
-			const where = { isBanned: false, isCreatorBanned: false, creatorPoints: { gt: 0 } };
-			if (!showNotRegisteredUsersInLeaderboard) where.isRegistered = true;
+			handler: async (req, reply) => {
+				const where = { isBanned: false, isCreatorBanned: false, creatorPoints: { gt: 0 } };
+				if (!showNotRegisteredUsersInLeaderboard) where.isRegistered = true;
 
-			const users = await database.users.findMany({ where, orderBy: { creatorPoints: "desc" }, take: req.body.count });
+				const users = await database.users.findMany({ where, orderBy: { creatorPoints: "desc" }, take: req.body.count });
 
-			return reply.send(sendUsers(users));
-		},
-	});
+				return reply.send(sendUsers(users));
+			},
+		}),
+	);
 
 	function sendUsers(users) {
 		return users

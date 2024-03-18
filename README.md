@@ -20,6 +20,7 @@
     - [ ] Daily/Weekly levels
     - [ ] Gauntlets
     - [ ] Map Packs
+    - [ ] Level game version based on level blocks/triggers/etc
 - [x] Rewards
 - [x] Quests
 - [ ] User panel
@@ -34,8 +35,8 @@
     - [x] 2.2 ([`2530486154587189554`](https://steamdb.info/depot/322171/history/?changeid=M:2530486154587189554))
     - [x] 2.1 ([`641118531549408775`](https://steamdb.info/depot/322171/history/?changeid=M:641118531549408775))
     - [x] 2.0 ([`2135166447199899913`](https://steamdb.info/depot/322171/history/?changeid=M:2135166447199899913))
-    - [x] 1.9 :warning: no upload/delete levels/comments; no weekly leaderboard ([`1039208287639585563`](https://steamdb.info/depot/322171/history/?changeid=M:1039208287639585563))
-    - [ ] 1.8
+    - [x] 1.9 :warning: no upload/delete levels/comments; ([`1039208287639585563`](https://steamdb.info/depot/322171/history/?changeid=M:1039208287639585563))
+    - [x] 1.8 :warning: no upload/delete levels/comments;
     - [ ] 1.7
     - [ ] 1.6
     - [ ] 1.5

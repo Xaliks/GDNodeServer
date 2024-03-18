@@ -6,9 +6,9 @@ const { database, checkPassword } = require("../../scripts/database");
  * @param {import("fastify").FastifyInstance} fastify
  */
 module.exports = (fastify) => {
-	// 1.9, 2.0-2.2
+	// 1.8, 1.9, 2.0-2.2
 	// No support for <2.0 cause the body doesn't contain the account password
-	["/deleteGJComment19.php", "/deleteGJComment20.php"].forEach((url) =>
+	["/deleteGJComment.php", "/deleteGJComment19.php", "/deleteGJComment20.php"].forEach((url) =>
 		fastify.route({
 			method: ["POST"],
 			url,

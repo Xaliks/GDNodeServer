@@ -14,8 +14,8 @@ const { Constants } = require("../../scripts/util");
  * @param {import("fastify").FastifyInstance} fastify
  */
 module.exports = (fastify) => {
-	// 1.9, 2.0, 2.1-2.2
-	["/getGJLevels19.php", "/getGJLevels20.php", "/getGJLevels21.php"].forEach((url, i, urls) =>
+	// 1.8, 1.9, 2.0, 2.1-2.2
+	["/getGJLevels.php", "/getGJLevels19.php", "/getGJLevels20.php", "/getGJLevels21.php"].forEach((url, i, urls) =>
 		fastify.route({
 			method: ["POST"],
 			url,
@@ -42,6 +42,7 @@ module.exports = (fastify) => {
 						twoPlayer: { type: "number", enum: [0, 1], default: 0 },
 						coins: { type: "number", enum: [0, 1], default: 0 },
 						noStar: { type: "number", enum: [0, 1], default: 0 },
+						star: { type: "number", enum: [0, 1], default: 0 },
 						song: { type: "number", default: 0 },
 						customSong: { type: "number", default: 0 },
 						demonFilter: { type: "number", enum: [1, 2, 3, 4, 5] },
@@ -69,6 +70,7 @@ module.exports = (fastify) => {
 					twoPlayer,
 					coins,
 					noStar,
+					star,
 					song,
 					customSong,
 					demonFilter,
@@ -79,7 +81,9 @@ module.exports = (fastify) => {
 					completedLevels,
 				} = req.body;
 
-				if (uncompleted === 1 && onlyCompleted === 1) return reply.send(await returnReplyString());
+				if ((uncompleted === 1 && onlyCompleted === 1) || (star === 1 && noStar === 1)) {
+					return reply.send(await returnReplyString());
+				}
 
 				let levels = [];
 				let totalCount = total;
@@ -99,6 +103,7 @@ module.exports = (fastify) => {
 					else if (customSong !== 0) queryArgs.where.songId = customSong;
 
 					if (noStar === 1) queryArgs.where.stars = 0;
+					else if (star === 1) queryArgs.where.stars = { not: 0 };
 					if (mythic || legendary || epic || featured) {
 						queryArgs.where.ratingType = { in: [] };
 
@@ -296,11 +301,12 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0, i = 0, u
 			const user = users.find((user) => user.extId === String(level.accountId));
 			const isDemon = Constants.selectDemonDifficulty.keys().includes(level.difficulty) ? 1 : 0;
 
+			// 2.0+
+			if (i > urls.length - 3) level.description = toBase64(level.description ?? "");
+
 			return [
 				[1, level.id],
 				[2, level.name],
-				// base64 level description for 2.0+
-				[3, i <= urls.length - 2 ? level.description ?? "" : toBase64(level.description ?? "")],
 				[5, level.version],
 				[6, user.id],
 				[8, level.difficulty === "NA" ? 0 : 10],
