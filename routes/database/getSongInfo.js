@@ -22,7 +22,7 @@ module.exports = (fastify) => {
 		handler: async (req, reply) => {
 			const { songID } = req.body;
 
-			const song = await getCustomSong(songID);
+			const song = await getCustomSong(songID, req.ip);
 			if (!song) return reply.send("-1");
 
 			return reply.send(

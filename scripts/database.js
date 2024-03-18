@@ -3,6 +3,7 @@ const { PrismaClient } = require("@prisma/client");
 const crypto = require("node:crypto");
 const { getGJP2, fromBase64, cipher } = require("./security");
 const { gjp2Pattern, safeBase64Pattern, udidPattern } = require("../config/config");
+const { fetchBoomlings } = require("./util");
 
 const gjp2Regex = new RegExp(gjp2Pattern);
 const base64Regex = new RegExp(safeBase64Pattern);
@@ -128,9 +129,27 @@ function saveUserPasswordToCache(accountId, password) {
 	);
 }
 
-async function getCustomSong(songId) {
+async function getCustomSong(songId, ip) {
 	const song = await database.songs.findFirst({ where: { id: songId } });
 	if (song) return song;
+
+	const boomlings = await fetchBoomlings("getGJSongInfo", { songID: songId, inc: 0, ip }).catch(() => null);
+	if (boomlings?.startsWith("1~|~")) {
+		const data = boomlings.split("~|~");
+		const result = {};
+		for (let i = 0; i < data.length; i += 2) result[data[i]] = data[i + 1];
+
+		return database.songs.create({
+			data: {
+				id: songId,
+				name: result[2],
+				artistId: parseInt(result[3]),
+				artistName: result[4],
+				size: parseInt(result[5]) * 1024 * 1024,
+				url: result[10],
+			},
+		});
+	}
 
 	const newgrounds = await fetch(`https://www.newgrounds.com/audio/listen/${songId}`);
 	if (!newgrounds.ok) return null;

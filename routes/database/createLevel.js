@@ -178,7 +178,7 @@ module.exports = (fastify) => {
 					}
 
 					reply.send(level.id);
-					if (data.songId) await getCustomSong(data.songId);
+					if (data.songId) await getCustomSong(data.songId, req.ip);
 				} catch (error) {
 					Logger.error("Create level", req.body, error);
 

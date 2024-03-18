@@ -87,7 +87,7 @@ module.exports = (fastify) => {
 			else data.password = 0;
 			if (data.songId) {
 				data.officialSongId = 0;
-				await getCustomSong(data.songId);
+				await getCustomSong(data.songId, req.ip);
 			}
 
 			const level = await database.levels.create({ data });
