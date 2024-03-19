@@ -14,7 +14,7 @@
     - [x] Search
     - [x] Download
     - [x] Upload
-    - [ ] Delete
+    - [x] Delete
     - [x] Comments
     - [ ] Lists
     - [ ] Daily/Weekly levels

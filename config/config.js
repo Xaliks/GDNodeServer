@@ -121,6 +121,7 @@ module.exports = {
 	// Don't touch the lines below this one
 	secret: "Wmfd2893gb7",
 	accountSecret: "Wmfv3899gc9",
+	deleteLevelSecret: "Wmfv2898gc9",
 	gjp2Pattern: "^[0-9a-f]{40}$",
 	udidPattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
 	safeBase64Pattern: "^[A-Za-z0-9-_]{2,}={0,2}$",
