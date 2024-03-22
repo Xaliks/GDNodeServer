@@ -37,7 +37,7 @@
     - [x] 2.0 ([`2135166447199899913`](https://steamdb.info/depot/322171/history/?changeid=M:2135166447199899913))
     - [x] 1.9 :warning: no upload/delete levels/comments; ([`1039208287639585563`](https://steamdb.info/depot/322171/history/?changeid=M:1039208287639585563))
     - [x] 1.8 :warning: no upload/delete levels/comments;
-    - [ ] 1.7
+    - [x] 1.7 :warning: no upload/delete levels/comments;
     - [ ] 1.6
     - [ ] 1.5
     - [ ] 1.4
