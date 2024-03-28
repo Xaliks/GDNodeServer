@@ -56,6 +56,9 @@ module.exports = (fastify) => {
 					]);
 					if (!user || !levelData) return reply.send("-1");
 
+					const isDemon = Constants.selectDemonDifficulty.keys().includes(level.difficulty) ? 1 : 0;
+					const levelPasswordBeforeEncoding = level.password;
+
 					// <=1.8
 					if (i < urls.length - 3) levelData.data = zlib.inflateSync(fromSafeBase64(levelData.data)).toString();
 					// 2.0+
@@ -63,8 +66,6 @@ module.exports = (fastify) => {
 						if (level.password !== 0) level.password = toBase64(cipher(level.password, 26364)).toString();
 						level.description = toBase64(level.description ?? "");
 					}
-
-					const isDemon = Constants.selectDemonDifficulty.keys().includes(level.difficulty) ? 1 : 0;
 
 					const response = [
 						[1, level.id],
@@ -110,7 +111,7 @@ module.exports = (fastify) => {
 
 					if (extras) response.push([26, level.levelInfo || ""]);
 
-					const levelResponse = `${user.id},${level.stars},${isDemon},${level.id},${level.coins && level.stars ? 1 : 0},${level.ratingType === "Featured" ? 1 : 0},${level.password},0`; // last - daily/weekly/event id
+					const levelResponse = `${user.id},${level.stars},${isDemon},${level.id},${level.coins && level.stars ? 1 : 0},${level.ratingType === "Featured" ? 1 : 0},${levelPasswordBeforeEncoding},0`; // last - daily/weekly/event id
 
 					reply.send(
 						`${response.map(([key, value]) => `${key}:${value}`).join(":")}#${getSolo(levelData.data)}#${getSolo2(levelResponse)}`,
