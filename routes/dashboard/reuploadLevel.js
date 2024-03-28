@@ -44,7 +44,7 @@ module.exports = (fastify) => {
 			if (!levelRawBody) return send("<h2>An error has occurred while connecting to the server.</h2>");
 			if (levelRawBody === "-1") return send("<h2>This level doesn't exist.</h2>");
 
-			const body = _.chunk(levelRawBody.split(":"), 2).reduce((obj, [key, value]) => {
+			const body = _.chunk(levelRawBody.split("#")[0].split(":"), 2).reduce((obj, [key, value]) => {
 				obj[key] = value;
 				return obj;
 			}, {});
@@ -80,6 +80,8 @@ module.exports = (fastify) => {
 				editorTime: parseInt(body["46"]) || 0,
 				editorTimeCopies: parseInt(body["47"]) || 0,
 				ts: parseInt(body["57"]) || 0,
+				songIds: body["52"].split(",").map(Number).filter(Boolean) || [],
+				sfxIds: body["53"].split(",").map(Number).filter(Boolean) || [],
 			};
 			if (body["17"] === "1") data.difficulty = Constants.returnDemonDifficulty[body["43"]];
 			else if (body["8"] === "10") data.difficulty = Constants.returnLevelDifficulty[body["9"]];
