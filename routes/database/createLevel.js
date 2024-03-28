@@ -32,7 +32,6 @@ module.exports = (fastify) => {
 						accountID: { type: "number" },
 						levelName: { type: "string", pattern: levelNamePattern },
 						levelDesc: { type: "string", pattern: `|${safeBase64Pattern}`, default: "" },
-						levelVersion: { type: "number", minimum: 1 },
 						levelLength: { type: "number", enum: Constants.levelLength.values() },
 						audioTrack: { type: "number", minimum: 0 }, // official song
 						songID: { type: "number", minimum: 0 }, // newgrounds song id
@@ -61,7 +60,6 @@ module.exports = (fastify) => {
 						"gameVersion",
 						"accountID",
 						"levelName",
-						"levelVersion",
 						"levelLength",
 						"audioTrack",
 						"songID",
@@ -79,7 +77,6 @@ module.exports = (fastify) => {
 					accountID,
 					levelName,
 					levelDesc,
-					levelVersion,
 					levelString,
 					levelLength,
 					audioTrack,
@@ -115,7 +112,7 @@ module.exports = (fastify) => {
 						accountId: accountID,
 						name: levelName,
 						description: levelDescription || null,
-						version: levelVersion,
+						version: 1,
 						length: Constants.levelLength[levelLength],
 						officialSongId: audioTrack,
 						songId: songID,
@@ -145,6 +142,7 @@ module.exports = (fastify) => {
 					});
 					let level;
 					if (existingLevel) {
+						data.version = existingLevel.version + 1;
 						[level] = await database.$transaction([
 							database.levels.update({ where: { id: existingLevel.id }, data }),
 							database.levelsData.upsert({
