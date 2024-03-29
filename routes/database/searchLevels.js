@@ -1,6 +1,6 @@
 const _ = require("lodash");
 const { database, checkPassword } = require("../../scripts/database");
-const { toBase64, getSolo2 } = require("../../scripts/security");
+const { getSolo2 } = require("../../scripts/security");
 const {
 	secret,
 	searchLevelsPageSize,
@@ -15,7 +15,7 @@ const { Constants } = require("../../scripts/util");
  */
 module.exports = (fastify) => {
 	// 1.8, 1.9, 2.0, 2.1-2.2
-	["/getGJLevels.php", "/getGJLevels19.php", "/getGJLevels20.php", "/getGJLevels21.php"].forEach((url, i, urls) =>
+	["/getGJLevels.php", "/getGJLevels19.php", "/getGJLevels20.php", "/getGJLevels21.php"].forEach((url) =>
 		fastify.route({
 			method: ["POST"],
 			url,
@@ -278,13 +278,13 @@ module.exports = (fastify) => {
 				if (levels.length < searchLevelsPageSize) totalCount = page * searchLevelsPageSize + levels.length;
 				else if (!totalCount) totalCount = await database.levels.count(queryArgs);
 
-				return reply.send(await returnReplyString(levels, totalCount, page, i, urls));
+				return reply.send(await returnReplyString(levels, totalCount, page));
 			},
 		}),
 	);
 };
 
-async function returnReplyString(levels = [], totalCount = 0, page = 0, i = 0, urls = []) {
+async function returnReplyString(levels = [], totalCount = 0, page = 0) {
 	let users = [];
 	if (levels.length) {
 		users = await database.users.findMany({
@@ -300,9 +300,6 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0, i = 0, u
 		.map((level) => {
 			const user = users.find((user) => user.extId === String(level.accountId));
 			const isDemon = Constants.selectDemonDifficulty.keys().includes(level.difficulty) ? 1 : 0;
-
-			// 2.0+
-			if (i > urls.length - 3) level.description = toBase64(level.description ?? "");
 
 			return [
 				[1, level.id],
