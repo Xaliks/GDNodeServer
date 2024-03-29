@@ -51,7 +51,7 @@ module.exports = (fastify) => {
 					table = "levels";
 				}
 				if (type === Constants.likeCommentType.LevelComment) {
-					const comment = await database.levelComments.findFirst({ where: { id: itemID } });
+					const comment = await database.comments.findFirst({ where: { id: itemID } });
 					if (!comment) return reply.send("1");
 
 					let levelOrList;
@@ -72,7 +72,7 @@ module.exports = (fastify) => {
 						if (!friendship) return reply.send("1");
 					}
 
-					table = "levelComments";
+					table = "comments";
 				}
 				if (type === Constants.likeCommentType.AccountComment) {
 					const comment = await database.accountComments.findFirst({ where: { id: itemID }, include: { account: true } });

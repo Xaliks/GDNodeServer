@@ -158,13 +158,13 @@ model Levels {
   isAuto           Boolean         @default(false)
   boomlingsId      Int?
   isDeleted        Boolean         @default(false)
-  songIds          Int[]
   sfxIds           Int[]
+  songIds          Int[]
 
   @@index([accountId, name])
 }
 
-model LevelComments {
+model Comments {
   id        Int      @id @default(autoincrement())
   levelId   Int
   accountId Int

@@ -269,7 +269,9 @@ module.exports = (fastify) => {
 					case 25: // List's levels
 						if (!isId) return reply.send(await returnReplyString());
 
-						const list = await database.lists.update({ where: { id: str }, data: { downloads: { increment: 1 } } });
+						const list = await database.lists
+							.update({ where: { id: str }, data: { downloads: { increment: 1 } } })
+							.catch(_.noop);
 						if (!list) return reply.send(await returnReplyString());
 
 						queryArgs.where.id = { in: list.levels };

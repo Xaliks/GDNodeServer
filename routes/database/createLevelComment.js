@@ -56,7 +56,7 @@ module.exports = (fastify) => {
 
 					const content = fromSafeBase64(base64Content).toString().slice(0, maxLevelCommentLength);
 
-					const comment = await database.levelComments.create({
+					const comment = await database.comments.create({
 						data: { levelId: levelID, accountId: accountID, content, percent },
 					});
 

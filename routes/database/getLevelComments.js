@@ -58,7 +58,7 @@ module.exports = (fastify) => {
 				let orderBy = [{ id: "desc" }];
 				if (mode === 1) orderBy = [{ likes: "desc" }, { id: "asc" }];
 
-				const comments = await database.levelComments.findMany({
+				const comments = await database.comments.findMany({
 					where: { levelId: levelID },
 					take: count,
 					skip: page * count,
@@ -68,7 +68,7 @@ module.exports = (fastify) => {
 
 				if (comments.length < count) totalCount = page * count + comments.length;
 				else if (!totalCount) {
-					totalCount = await database.levelComments.count({ where: { levelId: levelID } });
+					totalCount = await database.comments.count({ where: { levelId: levelID } });
 				}
 
 				const [accounts, users] = await database.$transaction([
@@ -161,7 +161,7 @@ module.exports = (fastify) => {
 			const query = (select) =>
 				database.$queryRawUnsafe(
 					`select ${select}
-					from "public"."LevelComments" comment
+					from "public"."Comments" comment
 					where comment."accountId" = $1
 						and (
 							(comment."levelId" > 0 and exists (
