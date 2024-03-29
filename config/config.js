@@ -94,6 +94,18 @@ module.exports = {
 		downloads: 0,
 		likes: 0,
 	},
+	defaultList: {
+		downloads: 0,
+		likes: 0,
+	},
+
+	magicLevelRequirements: {
+		length: "Medium", // Minimum length of the level (Tiny | Short | Medium | Long | XL). Default: Medium
+		objects: 10000, // Minimum number of the objects. Default: 10000
+		LDM: true, // Level must have LDM (true | false). Default: true
+		original: true, // Level must be original (true | false). Default: true
+		editorTime: 2700, // Seconds spent in the editor. Default: 2700 (45 min)
+	},
 
 	timeMaxCounts: 2, // -> years, months, days, hours, minutes, seconds
 	userCommentsPageSize: 10, // Number of comments per page
@@ -106,17 +118,10 @@ module.exports = {
 	userMessagesPageSize: 10, // Number of messages per page
 	searchUsersPageSize: 10, // Number of users per page
 	searchLevelsPageSize: 10, // Number of levels per page
+	searchListsPageSize: 10, // Number of lists per page
 	maxAccountBackupSize: 50 * 1024 * 1024, // Maximum size of the account backup in bytes
 	maxLevelSize: 5 * 1024 * 1024,
 	maxLevelCommentLength: 100,
-
-	magicLevelRequirements: {
-		length: "Medium", // Minimum length of the level (Tiny | Short | Medium | Long | XL). Default: Medium
-		objects: 10000, // Minimum number of the objects. Default: 10000
-		LDM: true, // Level must have LDM (true | false). Default: true
-		original: true, // Level must be original (true | false). Default: true
-		editorTime: 2700, // Seconds spent in the editor. Default: 2700 (45 min)
-	},
 
 	// Don't touch the lines below this one
 	secret: "Wmfd2893gb7",
@@ -127,6 +132,7 @@ module.exports = {
 	safeBase64Pattern: "^[A-Za-z0-9-_]{2,}={0,2}$",
 	base64Pattern: "^[A-Za-z0-9+/]{2,}={0,2}$",
 	levelNamePattern: "^[ a-zA-Z0-9]{1,20}$",
+	listNamePattern: "^[ a-zA-Z0-9]{1,25}$",
 	separatedNumbersPattern: "^(?:\\d+,)*\\d+$",
 	chestKeyItemValue: Key,
 	chest21Items: [FireShard, IceShard, PoisonShard, ShadowShard, LavaShard, Key],

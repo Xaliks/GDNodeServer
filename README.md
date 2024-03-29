@@ -16,7 +16,7 @@
     - [x] Upload
     - [x] Delete
     - [x] Comments
-    - [ ] Lists
+    - [ ] Lists (~~create~~ ~~like~~ ~~search~~ delete)
     - [ ] Daily/Weekly levels
     - [ ] Gauntlets
     - [ ] Map Packs
@@ -26,6 +26,12 @@
 - [ ] User panel
     - [ ] Custom songs
     - [x] Reupload level from boomlings
+- [ ] Mod panel/command
+    - [ ] Rate levels/lists
+    - [ ] Send levels/lists
+    - [ ] Delete comments
+    - [x] Delete levels
+    - [ ] Delete lists
 - [ ] Admin panel
     - [ ] Create quests
     - [ ] Daily/Weekly levels

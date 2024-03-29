@@ -29,7 +29,7 @@ module.exports = (fastify) => {
 						str: {
 							anyOf: [{ type: "number" }, { type: "string", pattern: `|${levelNamePattern}` }],
 						},
-						type: { type: "number", enum: [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18, 21, 22, 27] },
+						type: { type: "number", enum: [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 15, 16, 17, 21, 22, 23, 25, 27] },
 						diff: { type: "array", items: { type: "string", pattern: "-|^(?:(?:-[1-3]|[1-5]),)*(?:-[1-3]|[1-5])$" } },
 						len: { type: "string", pattern: "-|^(?:[0-5],)*(?:[0-5])$" },
 						page: { type: "number", minimum: 0, default: 0 },
@@ -103,7 +103,7 @@ module.exports = (fastify) => {
 					else if (customSong !== 0) queryArgs.where.songId = customSong;
 
 					if (noStar === 1) queryArgs.where.stars = 0;
-					else if (star === 1) queryArgs.where.stars = { not: 0 };
+					else if (star === 1) queryArgs.where.stars = { gt: 0 };
 					if (mythic || legendary || epic || featured) {
 						queryArgs.where.ratingType = { in: [] };
 
@@ -265,6 +265,14 @@ module.exports = (fastify) => {
 						break;
 					case 16: // Hall of fame
 						queryArgs.where.ratingType = "Epic";
+						break;
+					case 25: // List's levels
+						if (!isId) return reply.send(await returnReplyString());
+
+						const list = await database.lists.update({ where: { id: str }, data: { downloads: { increment: 1 } } });
+						if (!list) return reply.send(await returnReplyString());
+
+						queryArgs.where.id = { in: list.levels };
 						break;
 					case 21: // Daily safe
 					case 22: // Weekly safe
