@@ -16,7 +16,7 @@
     - [x] Upload
     - [x] Delete
     - [x] Comments
-    - [ ] Lists
+    - [x] Lists
     - [ ] Daily/Weekly levels
     - [ ] Gauntlets
     - [ ] Map Packs

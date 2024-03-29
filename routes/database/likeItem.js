@@ -51,15 +51,20 @@ module.exports = (fastify) => {
 					table = "levels";
 				}
 				if (type === Constants.likeCommentType.LevelComment) {
-					const comment = await database.levelComments.findFirst({ where: { id: itemID }, include: { level: true } });
+					const comment = await database.levelComments.findFirst({ where: { id: itemID } });
 					if (!comment) return reply.send("1");
 
-					if (comment.level.visibility === "FriendsOnly" && comment.level.accountId !== accountID) {
+					let levelOrList;
+					if (comment.levelId > 0) levelOrList = await database.levels.findFirst({ where: { id: comment.levelId } });
+					else levelOrList = await database.lists.findFirst({ where: { id: Math.abs(comment.levelId) } });
+					if (!levelOrList || levelOrList.isDeleted) return reply.send("1");
+
+					if (levelOrList.visibility === "FriendsOnly" && levelOrList.accountId !== accountID) {
 						const friendship = await database.friends.findFirst({
 							where: {
 								OR: [
-									{ accountId1: accountID, accountId2: comment.level.accountId },
-									{ accountId1: comment.level.accountId, accountId2: accountID },
+									{ accountId1: accountID, accountId2: levelOrList.accountId },
+									{ accountId1: levelOrList.accountId, accountId2: accountID },
 								],
 							},
 						});

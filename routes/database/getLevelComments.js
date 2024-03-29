@@ -20,7 +20,7 @@ module.exports = (fastify) => {
 					properties: {
 						secret: { type: "string", const: secret },
 						accountID: { type: "number" },
-						levelID: { type: "number", minimum: 1 },
+						levelID: { type: "number" },
 						page: { type: "number", minimum: 0, default: 0 },
 						total: { type: "number", minimum: 0, default: 0 },
 						mode: { type: "number", enum: [0, 1], default: 0 },
@@ -34,18 +34,20 @@ module.exports = (fastify) => {
 
 				let totalCount = total;
 
-				const level = await database.levels.findFirst({ where: { id: levelID } });
-				if (!level || level.isDeleted) return reply.send("-1");
+				let levelOrList;
+				if (levelID > 0) levelOrList = await database.levels.findFirst({ where: { id: levelID } });
+				else levelOrList = await database.lists.findFirst({ where: { id: Math.abs(levelID) } });
+				if (!levelOrList || levelOrList.isDeleted) return reply.send("-1");
 
-				if (level.visibility === "FriendsOnly") {
+				if (levelOrList.visibility === "FriendsOnly") {
 					if (!(await checkPassword(req.body))) return reply.send("-1");
 
-					if (level.accountId !== accountID) {
+					if (levelOrList.accountId !== accountID) {
 						const friend = await database.friends.findFirst({
 							where: {
 								OR: [
-									{ accountId1: accountID, accountId2: level.accountId },
-									{ accountId1: level.accountId, accountId2: accountID },
+									{ accountId1: accountID, accountId2: levelOrList.accountId },
+									{ accountId1: levelOrList.accountId, accountId2: accountID },
 								],
 							},
 						});
@@ -57,7 +59,7 @@ module.exports = (fastify) => {
 				if (mode === 1) orderBy = [{ likes: "desc" }, { id: "asc" }];
 
 				const comments = await database.levelComments.findMany({
-					where: { levelId: level.id },
+					where: { levelId: levelID },
 					take: count,
 					skip: page * count,
 					orderBy,
@@ -66,7 +68,7 @@ module.exports = (fastify) => {
 
 				if (comments.length < count) totalCount = page * count + comments.length;
 				else if (!totalCount) {
-					totalCount = await database.levelComments.count({ where: { levelId: level.id } });
+					totalCount = await database.levelComments.count({ where: { levelId: levelID } });
 				}
 
 				const [accounts, users] = await database.$transaction([
@@ -156,23 +158,38 @@ module.exports = (fastify) => {
 			const user = await database.users.findFirst({ where: { id: userID } });
 			if (!user || isNaN(user.extId)) return reply.send("-1");
 
-			let orderBy = [{ id: "desc" }];
-			if (mode === 1) orderBy = [{ likes: "desc" }, { id: "asc" }];
-
-			const comments = await database.levelComments.findMany({
-				where: { accountId: Number(user.extId), level: { visibility: "Listed" } },
-				take: count,
-				skip: page * count,
-				orderBy,
-			});
+			const query = (select) =>
+				database.$queryRawUnsafe(
+					`select ${select}
+					from "public"."LevelComments" comment
+					where comment."accountId" = $1
+						and (
+							(comment."levelId" > 0 and exists (
+								select 1
+								from "public"."Levels" level
+								where level.id = comment."levelId"
+									and level.visibility = 'Listed'
+							))
+							or
+							(comment."levelId" < 0 and exists (
+								select 1
+								from "public"."Lists" list
+								where list.id = abs(comment."levelId")
+									and list.visibility = 'Listed'
+							))
+						)
+					order by ${mode === 1 ? "comment.likes desc, " : ""}comment.id desc
+					limit $2
+					offset $3`,
+					Number(user.extId),
+					count,
+					page * count,
+				);
+			const comments = await query("*");
 			if (!comments.length) return reply.send("#0:0:0");
 
 			if (comments.length < count) totalCount = page * count + comments.length;
-			else if (!totalCount) {
-				totalCount = await database.levelComments.count({
-					where: { accountId: Number(user.extId), level: { visibility: "Listed" } },
-				});
-			}
+			else if (!totalCount) totalCount = await query("count(*)");
 
 			const account = await database.accounts.findFirst({ where: { id: Number(user.extId) } });
 
@@ -180,6 +197,7 @@ module.exports = (fastify) => {
 				`${comments
 					.map((comment) => {
 						return `${[
+							[1, comment.levelId],
 							[2, toSafeBase64(comment.content)],
 							[3, user.id],
 							[4, comment.likes],

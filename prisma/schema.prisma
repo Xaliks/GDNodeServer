@@ -158,7 +158,6 @@ model Levels {
   isAuto           Boolean         @default(false)
   boomlingsId      Int?
   isDeleted        Boolean         @default(false)
-  comments         LevelComments[]
   songIds          Int[]
   sfxIds           Int[]
 
@@ -173,7 +172,6 @@ model LevelComments {
   likes     Int      @default(0)
   percent   Int      @default(0)
   createdAt DateTime @default(now())
-  level     Levels   @relation(fields: [levelId], references: [id])
 }
 
 model LevelsData {
