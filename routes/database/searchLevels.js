@@ -288,7 +288,7 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0) {
 	let users = [];
 	if (levels.length) {
 		users = await database.users.findMany({
-			where: { extId: { in: _.uniq(levels).map((level) => String(level.accountId)) } },
+			where: { extId: { in: _.uniq(levels.map((level) => String(level.accountId))) } },
 		});
 	}
 
