@@ -20,7 +20,7 @@ module.exports = (fastify) => {
 					properties: {
 						secret: { type: "string", const: secret },
 						accountID: { type: "number" },
-						levelID: { type: "number", minimum: 1 },
+						levelID: { type: "number" },
 						percent: { type: "number", minimum: 0, maximum: 100, default: 0 },
 						comment: { type: "string", pattern: safeBase64Pattern },
 					},
@@ -33,19 +33,37 @@ module.exports = (fastify) => {
 				try {
 					if (!(await checkPassword(req.body))) return reply.send("-1");
 
-					const level = await database.levels.findFirst({ where: { id: levelID } });
-					if (!level || level.isDeleted) return reply.send("-1");
+					let levelOrList;
+					if (levelID > 0) levelOrList = await database.levels.findFirst({ where: { id: levelID } });
+					else levelOrList = await database.lists.findFirst({ where: { id: Math.abs(levelID) } });
+					if (!levelOrList || levelOrList.isDeleted) return reply.send("-1");
+
+					if (levelOrList.visibility === "FriendsOnly") {
+						if (!(await checkPassword(req.body))) return reply.send("-1");
+
+						if (levelOrList.accountId !== accountID) {
+							const friend = await database.friends.findFirst({
+								where: {
+									OR: [
+										{ accountId1: accountID, accountId2: levelOrList.accountId },
+										{ accountId1: levelOrList.accountId, accountId2: accountID },
+									],
+								},
+							});
+							if (!friend) return reply.send("-1");
+						}
+					}
 
 					const content = fromSafeBase64(base64Content).toString().slice(0, maxLevelCommentLength);
 
-					const comment = await database.levelComments.create({
-						data: { levelId: level.id, accountId: accountID, content, percent },
+					const comment = await database.comments.create({
+						data: { levelId: levelID, accountId: accountID, content, percent },
 					});
 
 					Logger.log(
 						"Create level comment",
 						`ID: ${Logger.colors.cyan(comment.id)}\n`,
-						`Level ID: ${Logger.colors.cyan(level.id)}\n`,
+						`Level ID: ${Logger.colors.cyan(levelID)}\n`,
 						`Account: ${Logger.colors.cyan(accountID)}`,
 					);
 

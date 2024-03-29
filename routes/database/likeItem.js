@@ -51,15 +51,20 @@ module.exports = (fastify) => {
 					table = "levels";
 				}
 				if (type === Constants.likeCommentType.LevelComment) {
-					const comment = await database.levelComments.findFirst({ where: { id: itemID }, include: { level: true } });
+					const comment = await database.comments.findFirst({ where: { id: itemID } });
 					if (!comment) return reply.send("1");
 
-					if (comment.level.visibility === "FriendsOnly" && comment.level.accountId !== accountID) {
+					let levelOrList;
+					if (comment.levelId > 0) levelOrList = await database.levels.findFirst({ where: { id: comment.levelId } });
+					else levelOrList = await database.lists.findFirst({ where: { id: Math.abs(comment.levelId) } });
+					if (!levelOrList || levelOrList.isDeleted) return reply.send("1");
+
+					if (levelOrList.visibility === "FriendsOnly" && levelOrList.accountId !== accountID) {
 						const friendship = await database.friends.findFirst({
 							where: {
 								OR: [
-									{ accountId1: accountID, accountId2: comment.level.accountId },
-									{ accountId1: comment.level.accountId, accountId2: accountID },
+									{ accountId1: accountID, accountId2: levelOrList.accountId },
+									{ accountId1: levelOrList.accountId, accountId2: accountID },
 								],
 							},
 						});
@@ -67,7 +72,7 @@ module.exports = (fastify) => {
 						if (!friendship) return reply.send("1");
 					}
 
-					table = "levelComments";
+					table = "comments";
 				}
 				if (type === Constants.likeCommentType.AccountComment) {
 					const comment = await database.accountComments.findFirst({ where: { id: itemID }, include: { account: true } });
@@ -90,25 +95,42 @@ module.exports = (fastify) => {
 					table = "accountComments";
 				}
 				if (type === Constants.likeCommentType.List) {
-					// TODO
+					const list = await database.lists.findFirst({ where: { id: itemID } });
+					if (!list || list.isDeleted) return reply.send("1");
+
+					if (list.visibility === "FriendsOnly" && list.accountId !== accountID) {
+						const friendship = await database.friends.findFirst({
+							where: {
+								OR: [
+									{ accountId1: accountID, accountId2: list.accountId },
+									{ accountId1: list.accountId, accountId2: accountID },
+								],
+							},
+						});
+
+						if (!friendship) return reply.send("1");
+					}
+
+					table = "lists";
 				}
 
-				const createdLike = await database.likes
-					.create({
-						data: {
-							itemType: Constants.likeCommentType[type],
-							itemId: itemID,
-							accountId: accountID,
-							isLike: Boolean(like),
-						},
-					})
-					.catch(() => null);
+				const [createdLike] = await database
+					.$transaction([
+						database.likes.create({
+							data: {
+								itemType: Constants.likeCommentType[type],
+								itemId: itemID,
+								accountId: accountID,
+								isLike: Boolean(like),
+							},
+						}),
+						database[table].update({
+							where: { id: itemID },
+							data: { likes: { [like ? "increment" : "decrement"]: 1 } },
+						}),
+					])
+					.catch(() => []);
 				if (!createdLike) return reply.send("1");
-
-				await database[table].update({
-					where: { id: createdLike.itemId },
-					data: { likes: { [like ? "increment" : "decrement"]: 1 } },
-				});
 
 				Logger.log(
 					`${like ? "Like" : "Dislike"} item`,

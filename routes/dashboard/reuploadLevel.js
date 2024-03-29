@@ -80,8 +80,8 @@ module.exports = (fastify) => {
 				editorTime: parseInt(body["46"]) || 0,
 				editorTimeCopies: parseInt(body["47"]) || 0,
 				ts: parseInt(body["57"]) || 0,
-				songIds: body["52"].split(",").map(Number).filter(Boolean) || [],
-				sfxIds: body["53"].split(",").map(Number).filter(Boolean) || [],
+				songIds: body["52"]?.split(",").map(Number).filter(Boolean) || [],
+				sfxIds: body["53"]?.split(",").map(Number).filter(Boolean) || [],
 			};
 			if (body["17"] === "1") data.difficulty = Constants.returnDemonDifficulty[body["43"]];
 			else if (body["8"] === "10") data.difficulty = Constants.returnLevelDifficulty[body["9"]];

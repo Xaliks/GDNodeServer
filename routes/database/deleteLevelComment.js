@@ -30,7 +30,7 @@ module.exports = (fastify) => {
 				try {
 					if (!(await checkPassword(req.body))) return reply.send("-1");
 
-					const comment = await database.levelComments.findFirst({ where: { id: commentID } });
+					const comment = await database.comments.findFirst({ where: { id: commentID } });
 					if (!comment) return reply.send("-1");
 
 					if (comment.accountId !== accountID) {
@@ -40,7 +40,7 @@ module.exports = (fastify) => {
 						if (level.accountId !== accountID) return reply.send("-1");
 					}
 
-					await database.levelComments.delete({ where: { id: comment.id } });
+					await database.comments.delete({ where: { id: comment.id } });
 
 					Logger.log(
 						"Delete level comment",
