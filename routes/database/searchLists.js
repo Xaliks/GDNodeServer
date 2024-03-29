@@ -127,14 +127,11 @@ module.exports = (fastify) => {
 
 						queryArgs.orderBy = { createdAt: "desc" };
 						break;
-					case 5: // User's lists
+					case 5: // Account's lists
 						if (!isId || str < 1) return reply.send(await returnReplyString());
 
-						const user = await database.users.findFirst({ where: { id: str, isRegistered: true } });
-						if (!user) return reply.send(await returnReplyString());
-
 						delete queryArgs.where.id;
-						queryArgs.where.accountId = Number(user.extId);
+						queryArgs.where.accountId = str;
 						break;
 					case 6: // Top lists
 						queryArgs.where.ratingType = "Featured";
