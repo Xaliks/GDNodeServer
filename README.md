@@ -2,13 +2,8 @@
 
 - [x] Fastify schema validation
 - [ ] Ratelimit
-- [ ] Accounts
-	- [x] Login
-	- [x] Register
-	- [x] Sync
-	- [x] Backup
-    - [x] Update
-	- [ ] Management Page
+- [ ] Account management Page
+- [x] Accounts
 - [x] Users
 - [ ] Levels
     - [x] Search
@@ -30,7 +25,7 @@
     - [ ] Rate levels/lists
     - [ ] Send levels/lists
     - [ ] Delete comments
-    - [x] Delete levels
+    - [ ] Delete levels
     - [ ] Delete lists
 - [ ] Admin panel
     - [ ] Create quests

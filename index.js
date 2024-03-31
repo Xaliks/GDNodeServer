@@ -39,7 +39,11 @@ function registerRoutes(path, urlPath) {
 				(Array.isArray(urlPath) ? _.uniq(urlPath) : [urlPath]).forEach((urlPath) => {
 					fastify.register(
 						(api, options, done) => {
-							endpoint(api);
+							try {
+								endpoint(api);
+							} catch (error) {
+								Logger.error("Server", `Error in ${Logger.colors.cyan(`${path}/${file}`)}:\n`, error);
+							}
 
 							done();
 						},
