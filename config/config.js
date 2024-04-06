@@ -142,4 +142,5 @@ module.exports = {
 	// From login form
 	usernameRegex: /^[a-zA-Z0-9]{3,15}$/,
 	passwordRegex: /^[ -_a-zA-Z0-9]{6,20}$/,
+	weeklyLevelIdInc: 100_001,
 };

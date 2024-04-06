@@ -2,7 +2,7 @@ const zlib = require("node:zlib");
 const { toBase64, getSolo, getSolo2, cipher, fromSafeBase64 } = require("../../scripts/security");
 const { Constants, dateToRelative } = require("../../scripts/util");
 const { checkPassword, database } = require("../../scripts/database");
-const { secret } = require("../../config/config");
+const { secret, weeklyLevelIdInc } = require("../../config/config");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -31,7 +31,33 @@ module.exports = (fastify) => {
 				handler: async (req, reply) => {
 					const { extras, accountID, levelID, inc } = req.body;
 
-					const level = await database.levels.findFirst({ where: { id: levelID } });
+					let level;
+					let eventId = 0;
+					// Daily level
+					if (levelID === -1) {
+						const eventLevel = await getEventLevel("Daily", true);
+						if (!eventLevel?.level) return reply.send("-1");
+
+						level = eventLevel.level;
+						eventId = eventLevel.id;
+					}
+					// Weekly level
+					else if (levelID === -2) {
+						const eventLevel = await getEventLevel("Weekly", true);
+						if (!eventLevel?.level) return reply.send("-1");
+
+						level = eventLevel.level;
+						eventId = eventLevel.id + weeklyLevelIdInc;
+					}
+					// Event
+					else if (levelID === -3) {
+						const eventLevel = await getEventLevel("Event", true);
+						if (!eventLevel?.level) return reply.send("-1");
+
+						level = eventLevel.level;
+						eventId = eventLevel.id;
+					} else level = await database.levels.findFirst({ where: { id: levelID } });
+
 					if (!level || level.isDeleted) return reply.send("-1");
 
 					if (level.visibility === "FriendsOnly") {
@@ -81,7 +107,6 @@ module.exports = (fastify) => {
 						[13, level.gameVersion],
 						[14, level.likes],
 						[15, Constants.levelLength[level.length]],
-						[16, 0],
 						[17, isDemon],
 						[18, level.stars],
 						[19, level.ratingType === "Featured" ? 1 : 0],
@@ -97,28 +122,69 @@ module.exports = (fastify) => {
 						[38, level.coins && level.stars ? 1 : 0],
 						[39, level.requestedStars],
 						[40, level.isLDM ? 1 : 0],
-						[41, 0],
 						[42, Constants.levelRatingType[level.ratingType]],
 						[43, isDemon ? Constants.returnDemonDifficulty[level.difficulty] : 0],
-						[44, 0],
 						[45, level.objectCount],
 						[46, level.editorTime],
 						[47, level.editorTimeCopies],
 						[52, level.songIds.join(",")],
 						[53, level.sfxIds.join(",")],
 						[57, level.ts || ""],
+						[41, eventId],
 					];
 
 					if (extras) response.push([26, level.levelInfo || ""]);
 
-					const levelResponse = `${user.id},${level.stars},${isDemon},${level.id},${level.coins && level.stars ? 1 : 0},${level.ratingType === "Featured" ? 1 : 0},${levelPasswordBeforeEncoding},0`; // last - daily/weekly/event id
+					const levelResponse = `${user.id},${level.stars},${isDemon},${level.id},${level.coins && level.stars ? 1 : 0},${level.ratingType === "Featured" ? 1 : 0},${levelPasswordBeforeEncoding},${eventId}`; // last - daily/weekly/event id
 
 					reply.send(
-						`${response.map(([key, value]) => `${key}:${value}`).join(":")}#${getSolo(levelData.data)}#${getSolo2(levelResponse)}`,
+						`${response.map(([key, value]) => `${key}:${value}`).join(":")}#${getSolo(levelData.data)}#${getSolo2(levelResponse)}#${user.id}:${user.username}:${level.accountId}`,
 					);
 
 					if (inc) await database.levels.update({ where: { id: level.id }, data: { downloads: { increment: 1 } } });
 				},
 			}),
 	);
+
+	fastify.route({
+		method: ["POST"],
+		url: "/getGJDailyLevel.php",
+		schema: {
+			consumes: ["x-www-form-urlencoded"],
+			body: {
+				type: "object",
+				properties: {
+					secret: { type: "string", const: secret },
+					type: { type: "number", enum: [0, 1] },
+				},
+				required: ["secret", "type"],
+			},
+		},
+		handler: async (req, reply) => {
+			const { type } = req.body;
+
+			const midnight = new Date();
+			// next day 00:00:00
+			if (type === Constants.eventLevelType.Daily) midnight.setHours(24, 0, 0, 0);
+			// next monday
+			if (type === Constants.eventLevelType.Weekly) {
+				midnight.setDate(midnight.getDate() + ((1 + 7 - midnight.getDay()) % 7 || 7));
+			}
+
+			const eventLevel = await getEventLevel(Constants.eventLevelType[type]);
+			if (!eventLevel) return reply.send("-1");
+
+			if (type === Constants.eventLevelType.Weekly) eventLevel.id += weeklyLevelIdInc;
+
+			return reply.send(`${eventLevel.id}|${Math.round((midnight - Date.now()) / 1_000)}`);
+		},
+	});
 };
+
+function getEventLevel(type, includeLevel = false) {
+	return database.eventLevels.findFirst({
+		include: { level: includeLevel },
+		where: { type, timestamp: { lt: new Date() } },
+		orderBy: { timestamp: "desc" },
+	});
+}

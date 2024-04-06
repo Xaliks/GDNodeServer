@@ -1,6 +1,7 @@
 const Logger = require("../../scripts/Logger");
 const { secret, separatedNumbersPattern } = require("../../config/config");
 const { database, checkPassword } = require("../../scripts/database");
+const { separatedNumbersToArray } = require("../../scripts/util");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -27,7 +28,7 @@ module.exports = (fastify) => {
 			const { accountID, isSender, messages, messageID } = req.body;
 
 			try {
-				const ids = messages?.split(",") ?? (messageID ? [messageID] : []);
+				const ids = separatedNumbersToArray(messages || `${messageID}`);
 				if (!ids.length) return reply.send("-1");
 
 				if (!(await checkPassword(req.body))) return reply.send("-1");

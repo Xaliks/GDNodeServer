@@ -138,7 +138,7 @@ model Levels {
   password         Int             @default(0)
   originalLevelId  Int             @default(0)
   coins            Int             @default(0)
-  requestedStars   Int
+  requestedStars   Int             @default(0)
   stars            Int             @default(0)
   visibility       LevelVisibility @default(Listed)
   editorTime       Int             @default(0)
@@ -160,8 +160,23 @@ model Levels {
   isDeleted        Boolean         @default(false)
   sfxIds           Int[]
   songIds          Int[]
+  eventLevels      EventLevels[]
 
   @@index([accountId, name])
+  @@index(stars)
+  @@index(difficulty)
+  @@index(length)
+}
+
+model EventLevels {
+  id        Int            @id @default(autoincrement())
+  levelId   Int
+  type      EventLevelType
+  timestamp DateTime
+  level     Levels         @relation(fields: [levelId], references: [id])
+
+  @@index([type, timestamp])
+  @@index(levelId)
 }
 
 model Comments {
@@ -282,6 +297,12 @@ enum LevelVisibility {
   Listed
   FriendsOnly
   Unlisted
+}
+
+enum EventLevelType {
+  Daily
+  Weekly
+  Event
 }
 
 enum QuestType {

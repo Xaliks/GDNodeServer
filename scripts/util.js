@@ -1,3 +1,4 @@
+const _ = require("lodash");
 const { timeMaxCounts } = require("../config/config");
 
 function dateToRelative(_date, unitCount = timeMaxCounts) {
@@ -117,6 +118,10 @@ function hexToRGB(hex) {
 		.map((x) => parseInt(x, 16));
 }
 
+function separatedNumbersToArray(string) {
+	return string ? _.uniq(string.split(",").map(Number).filter(Boolean) || []) : [];
+}
+
 async function fetchBoomlings(target, parameters = {}) {
 	let method = "POST";
 	const headers = {
@@ -154,6 +159,7 @@ module.exports = {
 	reverseObject,
 	byteLengthOf,
 	hexToRGB,
+	separatedNumbersToArray,
 	fetchBoomlings,
 	Constants: {
 		levelLength: reverseObject({
@@ -243,6 +249,11 @@ module.exports = {
 			Orbs: 1,
 			Coins: 2,
 			Stars: 3,
+		}),
+		eventLevelType: reverseObject({
+			Daily: 0,
+			Weekly: 1,
+			Event: 2, // idk. Waiting for 2.21
 		}),
 	},
 };

@@ -12,7 +12,7 @@
     - [x] Delete
     - [x] Comments
     - [x] Lists
-    - [ ] Daily/Weekly levels
+    - [x] Daily/Weekly levels
     - [ ] Gauntlets
     - [ ] Map Packs
     - [ ] Level game version based on level blocks/triggers/etc

@@ -1,7 +1,7 @@
-const _ = require("lodash");
 const Logger = require("../../scripts/Logger");
 const { secret, udidPattern, base64Pattern, usernameRegex, separatedNumbersPattern } = require("../../config/config");
 const { database, getUser, CacheManager } = require("../../scripts/database");
+const { Constants, separatedNumbersToArray } = require("../../scripts/util");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -103,36 +103,37 @@ module.exports = (fastify) => {
 						if ("color3" in req.body) userData.glowColor = req.body.color3;
 						if ("accSwing" in req.body) userData.swing = req.body.accSwing;
 						if ("accJetpack" in req.body) userData.jetpack = req.body.accJetpack;
-						if ("dinfo" in req.body) {
-							const demonsIds = _.uniq(
-								req.body.dinfo
-									.split(",")
-									.map((id) => parseInt(id))
-									.filter(Boolean),
-							);
-							if (demonsIds.length > maxValues.userDemons) return reply.send("-1");
+						if ("dinfo" in req.body || "dinfow" in req.body) {
+							const demonsIds = separatedNumbersToArray(req.body.dinfo);
+							const weeklyDemonsIds = separatedNumbersToArray(req.body.dinfow);
 
-							if (demonsIds.length) {
-								const levels = await database.levels.findMany({ where: { id: { in: demonsIds } } });
+							const [levels, weeklyLevelsCount] = await database.$transaction(async (tx) => {
+								let levels = [];
+								let weeklyDemonsCount = 0;
+								if (demonsIds.length) levels = await tx.levels.findMany({ where: { id: { in: demonsIds } } });
+								if (weeklyDemonsIds.length) {
+									weeklyDemonsCount = await database.eventLevels.count({
+										where: { id: { in: weeklyDemonsIds }, type: "Weekly" },
+									});
+								}
 
-								userData.demonsInfo = `${[
-									["EasyDemon", "MediumDemon", "HardDemon", "InsaneDemon", "ExtremeDemon"],
-									["EasyDemon", "MediumDemon", "HardDemon", "InsaneDemon", "ExtremeDemon"],
-								]
-									.map((difficulties, i) =>
-										difficulties
-											.map(
-												(difficulty) =>
-													levels.filter(
-														(level) =>
-															level.difficulty === difficulty &&
-															(i ? level.length === "Platformer" : level.length !== "Platformer"),
-													).length,
-											)
-											.join(","),
-									)
-									.join(",")},0,0`; // [TODO]: weekly & gauntlets
-							}
+								return [levels, weeklyDemonsCount];
+							});
+
+							userData.demonsInfo = `${[Constants.selectDemonDifficulty.keys(), Constants.selectDemonDifficulty.keys()]
+								.map((difficulties, i) =>
+									difficulties
+										.map(
+											(difficulty) =>
+												levels.filter(
+													(level) =>
+														level.difficulty === difficulty &&
+														(i ? level.length === "Platformer" : level.length !== "Platformer"),
+												).length,
+										)
+										.join(","),
+								)
+								.join(",")},${weeklyLevelsCount},0`; // [TODO]: gauntlets
 						}
 
 						await database.users.update({ where: { id: user.id }, data: userData });
@@ -160,6 +161,8 @@ function checkIfInvalid(body, maxValues) {
 		body.demons > maxValues.demons ||
 		body.coins > maxValues.coins ||
 		body.userCoins > maxValues.userCoins ||
-		(!body.moons && !body.stars && body.userCoins)
+		(!body.moons && !body.stars && body.userCoins) ||
+		(body.dinfo?.split(",").length || 0) > maxValues.userDemons ||
+		(body.dinfow?.split(",").length || 0) > maxValues.weeklyDemons
 	);
 }

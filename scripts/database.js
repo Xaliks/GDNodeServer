@@ -178,62 +178,75 @@ async function getCustomSong(songId, ip) {
 }
 
 async function initCacheMaxValues() {
-	const data = await database.$queryRaw`
-		select
-			length,
-			coalesce(sum(coins), 0) as coins,
-			coalesce(sum(stars), 0) as stars,
-			count(*) filter (where difficulty = 'EasyDemon') as "easyDemons",
-			count(*) filter (where difficulty = 'MediumDemon') as "mediumDemons",
-			count(*) filter (where difficulty = 'HardDemon') as "hardDemons",
-			count(*) filter (where difficulty = 'InsaneDemon') as "insaneDemons",
-			count(*) filter (where difficulty = 'ExtremeDemon') as "extremeDemons"
-		from "public"."Levels"
-		where stars > 0
-		group by length;`;
+	const [levelsData, weeklyDemons] = await database.$transaction([
+		database.$queryRaw`
+			select
+				length,
+				coalesce(sum(coins) filter (where stars > 0), 0) as coins,
+				coalesce(sum(stars), 0) as stars,
+				count(*) filter (where difficulty = 'EasyDemon') as "easyDemons",
+				count(*) filter (where difficulty = 'MediumDemon') as "mediumDemons",
+				count(*) filter (where difficulty = 'HardDemon') as "hardDemons",
+				count(*) filter (where difficulty = 'InsaneDemon') as "insaneDemons",
+				count(*) filter (where difficulty = 'ExtremeDemon') as "extremeDemons"
+			from "public"."Levels"
+			group by length`,
+		database.$queryRaw`
+			select
+				l.length,
+				coalesce(sum(l.stars), 0) as stars,
+				coalesce(sum(l.coins) filter (where l.stars > 0), 0) as coins,
+				count(*)
+			from "Levels" l
+			join "EventLevels" e
+				on l.id = e."levelId"
+				and e.type = 'Weekly'
+			where l.difficulty in ('EasyDemon', 'MediumDemon', 'HardDemon', 'InsaneDemon', 'ExtremeDemon')
+			group by l.length`,
+	]);
 
 	const result = {
 		coins: 164,
-		userCoins: data.reduce((c, { coins }) => c + Number(coins), 0),
+		userCoins: levelsData.reduce((c, { coins }) => c + Number(coins), 0),
 		stars: 212,
 		moons: 25,
-		demons: data.reduce(
-			(d, { easyDemons, mediumDemons, hardDemons, insaneDemons, extremeDemons }) =>
-				d + Number(easyDemons + mediumDemons + hardDemons + insaneDemons + extremeDemons),
-			3,
-		),
+		demons:
+			3 +
+			weeklyDemons.reduce((count, demon) => count + Number(demon.count), 0) +
+			levelsData.reduce(
+				(d, { easyDemons, mediumDemons, hardDemons, insaneDemons, extremeDemons }) =>
+					d + Number(easyDemons + mediumDemons + hardDemons + insaneDemons + extremeDemons),
+				0,
+			),
+		weeklyDemons: weeklyDemons.reduce((count, demon) => count + Number(demon.count), 0),
+		userDemons: 0,
 		platformer: {
-			userDemons: 0,
 			easyDemons: 0,
 			mediumDemons: 0,
 			hardDemons: 0,
 			insaneDemons: 0,
 			extremeDemons: 0,
 		},
-		userDemons: 0,
 		easyDemons: 0,
 		mediumDemons: 0,
 		hardDemons: 0,
 		insaneDemons: 0,
 		extremeDemons: 0,
 	};
-	const [[platformerLevels], otherLevels] = _.partition(data, ({ length }) => length === "Platformer");
+	const [[platformerLevels], otherLevels] = _.partition(levelsData, ({ length }) => length === "Platformer");
+	const [[platformerWeeklyDemons], otherWeeklyDemons] = _.partition(weeklyDemons, ({ length }) => length === "Platformer");
 	if (platformerLevels) {
-		result.moons += Number(platformerLevels.stars);
+		result.moons += Number(platformerLevels.stars) + Number(platformerWeeklyDemons.star);
 		result.platformer.easyDemons += Number(platformerLevels.easyDemons);
 		result.platformer.mediumDemons += Number(platformerLevels.mediumDemons);
 		result.platformer.hardDemons += Number(platformerLevels.hardDemons);
 		result.platformer.insaneDemons += Number(platformerLevels.insaneDemons);
 		result.platformer.extremeDemons += Number(platformerLevels.extremeDemons);
-		result.platformer.userDemons +=
-			result.platformer.easyDemons +
-			result.platformer.mediumDemons +
-			result.platformer.hardDemons +
-			result.platformer.insaneDemons +
-			result.platformer.extremeDemons;
 	}
 	if (otherLevels.length) {
-		result.stars += otherLevels.reduce((s, { stars }) => s + Number(stars), 0);
+		result.stars +=
+			otherLevels.reduce((s, { stars }) => s + Number(stars), 0) +
+			otherWeeklyDemons.reduce((s, { stars }) => s + Number(stars), 0);
 		result.easyDemons += otherLevels.reduce((demons, { easyDemons }) => demons + Number(easyDemons), 0);
 		result.mediumDemons += otherLevels.reduce((demons, { mediumDemons }) => demons + Number(mediumDemons), 0);
 		result.hardDemons += otherLevels.reduce((demons, { hardDemons }) => demons + Number(hardDemons), 0);
@@ -247,6 +260,6 @@ async function initCacheMaxValues() {
 }
 
 initCacheMaxValues();
-setInterval(initCacheMaxValues, 30 * 60_000);
+setInterval(initCacheMaxValues, 15 * 60_000);
 
 module.exports = { CacheManager, getPassword, checkPassword, database, getUser, saveUserPasswordToCache, getCustomSong };

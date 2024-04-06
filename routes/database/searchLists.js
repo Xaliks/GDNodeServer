@@ -2,7 +2,7 @@ const _ = require("lodash");
 const { database, checkPassword } = require("../../scripts/database");
 const { toBase64, getSolo2 } = require("../../scripts/security");
 const { secret, searchListsPageSize, listNamePattern, separatedNumbersPattern } = require("../../config/config");
-const { Constants } = require("../../scripts/util");
+const { Constants, separatedNumbersToArray } = require("../../scripts/util");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -142,7 +142,7 @@ module.exports = (fastify) => {
 					case 12: // Followed
 						if (!followed) return reply.send(await returnReplyString());
 
-						queryArgs.where.id = { in: _.uniq(followed.split(",")).map((id) => Number(id)) };
+						queryArgs.where.id = { in: separatedNumbersToArray(followed) };
 						break;
 					case 13: // Friends
 						if (!(await checkPassword(req.body))) return reply.send("-1");

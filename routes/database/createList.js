@@ -1,8 +1,7 @@
-const _ = require("lodash");
 const Logger = require("../../scripts/Logger");
 const { database, checkPassword } = require("../../scripts/database");
 const { fromSafeBase64 } = require("../../scripts/security");
-const { Constants } = require("../../scripts/util");
+const { Constants, separatedNumbersToArray } = require("../../scripts/util");
 const {
 	secret,
 	listNamePattern,
@@ -46,7 +45,7 @@ module.exports = (fastify) => {
 					const listDescription = fromSafeBase64(listDesc).toString();
 					if (listDescription.length > 300) return reply.send("-1");
 
-					const levelIds = _.uniq(listLevels.split(",").map(Number).filter(Boolean));
+					const levelIds = separatedNumbersToArray(listLevels);
 					if (!levelIds.length || levelIds.length > 75) return reply.send("-1");
 
 					if (!(await checkPassword(req.body))) return reply.send("-1");

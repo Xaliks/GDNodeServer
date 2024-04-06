@@ -1,8 +1,7 @@
-const _ = require("lodash");
 const Logger = require("../../scripts/Logger");
 const { database, checkPassword, getCustomSong } = require("../../scripts/database");
 const { fromSafeBase64 } = require("../../scripts/security");
-const { Constants, byteLengthOf } = require("../../scripts/util");
+const { Constants, byteLengthOf, separatedNumbersToArray } = require("../../scripts/util");
 const {
 	secret,
 	levelNamePattern,
@@ -133,8 +132,8 @@ module.exports = (fastify) => {
 						downloads: Math.max(0, defaultLevel.downloads) || 0,
 						likes: Math.max(0, defaultLevel.likes) || 0,
 						updatedAt: new Date(),
-						songIds: _.uniq(songIDs?.split(",").map(Number).filter(Boolean)),
-						sfxIds: _.uniq(sfxIDs?.split(",").map(Number).filter(Boolean)),
+						songIds: separatedNumbersToArray(songIDs),
+						sfxIds: separatedNumbersToArray(sfxIDs),
 					};
 
 					const existingLevel = await database.levels.findFirst({

@@ -8,7 +8,7 @@ const {
 	separatedNumbersPattern,
 	magicLevelRequirements,
 } = require("../../config/config");
-const { Constants } = require("../../scripts/util");
+const { Constants, separatedNumbersToArray } = require("../../scripts/util");
 
 /**
  * @param {import("fastify").FastifyInstance} fastify
@@ -247,7 +247,7 @@ module.exports = (fastify) => {
 					case 12: // Followed
 						if (!followed) return reply.send(await returnReplyString());
 
-						queryArgs.where.id = { in: _.uniq(followed.split(",")).map((id) => Number(id)) };
+						queryArgs.where.id = { in: separatedNumbersToArray(followed) };
 						break;
 					case 13: // Friends
 						if (!(await checkPassword(req.body))) return reply.send("-1");
@@ -266,6 +266,24 @@ module.exports = (fastify) => {
 					case 16: // Hall of fame
 						queryArgs.where.ratingType = "Epic";
 						break;
+					case 21: // Daily safe
+					case 22: // Weekly safe
+					case 23: // Event safe
+						const where = {
+							type: { 21: "Daily", 22: "Weekly", 23: "Event" }[type],
+							level: { isDeleted: false, visibility: "Listed" },
+						};
+						const eventLevels = await database.eventLevels.findMany({
+							where,
+							include: { level: true },
+							orderBy: { id: "desc" },
+						});
+
+						levels = eventLevels.map((level) => level.level).filter(Boolean);
+						if (!levels.length) return reply.send(await returnReplyString());
+						if (levels.length < searchLevelsPageSize) totalCount = page * searchLevelsPageSize + levels.length;
+						else if (!totalCount) totalCount = await database.eventLevels.count({ where });
+						break;
 					case 25: // List's levels
 						if (!isId) return reply.send(await returnReplyString());
 
@@ -276,17 +294,16 @@ module.exports = (fastify) => {
 
 						queryArgs.where.id = { in: list.levels };
 						break;
-					case 21: // Daily safe
-					case 22: // Weekly safe
-					case 23: // Event safe
 					case 27: // Mod sent
 					default:
 						return reply.send(await returnReplyString());
 				}
 
-				if (!levels.length) levels = await database.levels.findMany(queryArgs);
-				if (levels.length < searchLevelsPageSize) totalCount = page * searchLevelsPageSize + levels.length;
-				else if (!totalCount) totalCount = await database.levels.count(queryArgs);
+				if (![21, 22, 23].includes(type)) {
+					if (!levels.length) levels = await database.levels.findMany(queryArgs);
+					if (levels.length < searchLevelsPageSize) totalCount = page * searchLevelsPageSize + levels.length;
+					else if (!totalCount) totalCount = await database.levels.count(queryArgs);
+				}
 
 				return reply.send(await returnReplyString(levels, totalCount, page));
 			},
