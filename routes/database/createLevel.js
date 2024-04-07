@@ -9,6 +9,7 @@ const {
 	defaultLevel,
 	maxLevelSize,
 	separatedNumbersPattern,
+	maxLevelDescriptionLength,
 } = require("../../config/config");
 
 /**
@@ -102,7 +103,7 @@ module.exports = (fastify) => {
 
 				try {
 					const levelDescription = fromSafeBase64(levelDesc).toString();
-					if (levelDescription.length > 200) return reply.send("-1");
+					if (levelDescription.length > maxLevelDescriptionLength) return reply.send("-1");
 
 					if (!(await checkPassword(req.body))) return reply.send("-1");
 

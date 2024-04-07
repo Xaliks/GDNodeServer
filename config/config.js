@@ -107,7 +107,7 @@ module.exports = {
 		editorTime: 2700, // Seconds spent in the editor. Default: 2700 (45 min)
 	},
 
-	timeMaxCounts: 2, // -> years, months, days, hours, minutes, seconds
+	timeUnits: 2, // -> years, months, days, hours, minutes, seconds
 	userCommentsPageSize: 10, // Number of comments per page
 	userCommentMaxSize: 140, // Max length of user comment
 	userFriendsMax: 300, // User friends limit
@@ -120,8 +120,12 @@ module.exports = {
 	searchLevelsPageSize: 10, // Number of levels per page
 	searchListsPageSize: 10, // Number of lists per page
 	maxAccountBackupSize: 50 * 1024 * 1024, // Maximum size of the account backup in bytes
-	maxLevelSize: 5 * 1024 * 1024,
+	maxLevelSize: 5 * 1024 * 1024, // 5MB
 	maxLevelCommentLength: 100,
+	maxLevelDescriptionLength: 100,
+	maxListDescriptionLength: 300,
+	maxListLevelsCount: 75,
+	weeklyLevelIdInc: 100_001,
 
 	// Don't touch the lines below this one
 	secret: "Wmfd2893gb7",
@@ -142,5 +146,4 @@ module.exports = {
 	// From login form
 	usernameRegex: /^[a-zA-Z0-9]{3,15}$/,
 	passwordRegex: /^[ -_a-zA-Z0-9]{6,20}$/,
-	weeklyLevelIdInc: 100_001,
 };

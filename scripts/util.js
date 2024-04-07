@@ -1,7 +1,7 @@
 const _ = require("lodash");
-const { timeMaxCounts } = require("../config/config");
+const { timeUnits } = require("../config/config");
 
-function dateToRelative(_date, unitCount = timeMaxCounts) {
+function dateToRelative(_date, unitCount = timeUnits) {
 	let date = new Date(_date);
 	let date2 = new Date();
 

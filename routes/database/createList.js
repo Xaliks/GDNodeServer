@@ -8,6 +8,8 @@ const {
 	safeBase64Pattern,
 	defaultList,
 	separatedNumbersPattern,
+	maxListDescriptionLength,
+	maxListLevelsCount,
 } = require("../../config/config");
 
 /**
@@ -43,10 +45,10 @@ module.exports = (fastify) => {
 
 				try {
 					const listDescription = fromSafeBase64(listDesc).toString();
-					if (listDescription.length > 300) return reply.send("-1");
+					if (listDescription.length > maxListDescriptionLength) return reply.send("-1");
 
 					const levelIds = separatedNumbersToArray(listLevels);
-					if (!levelIds.length || levelIds.length > 75) return reply.send("-1");
+					if (!levelIds.length || levelIds.length > maxListLevelsCount) return reply.send("-1");
 
 					if (!(await checkPassword(req.body))) return reply.send("-1");
 

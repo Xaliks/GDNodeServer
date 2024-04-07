@@ -3,17 +3,17 @@ const Logger = require("../scripts/Logger");
 const prisma = new PrismaClient();
 
 const quests = [
-	{ name: "Orb finder", type: "Orbs", amount: 200, reward: 10 },
-	{ name: "Star collector", type: "Stars", amount: 5, reward: 10 },
-	{ name: "Coin master", type: "Coins", amount: 2, reward: 10 },
+	{ name: "Orb Finder", type: "Orbs", amount: 200, reward: 10 },
+	{ name: "Star Finder", type: "Stars", amount: 5, reward: 10 },
+	{ name: "Coin Finder", type: "Coins", amount: 2, reward: 10 },
 
-	{ name: "Orb finder", type: "Orbs", amount: 500, reward: 15 },
-	{ name: "Star collector", type: "Stars", amount: 10, reward: 15 },
-	{ name: "Coin master", type: "Coins", amount: 4, reward: 15 },
+	{ name: "Orb Collector", type: "Orbs", amount: 500, reward: 15 },
+	{ name: "Star Collector", type: "Stars", amount: 10, reward: 15 },
+	{ name: "Coin Collector", type: "Coins", amount: 4, reward: 15 },
 
-	{ name: "Orb finder", type: "Orbs", amount: 1000, reward: 20 },
-	{ name: "Star collector", type: "Stars", amount: 15, reward: 20 },
-	{ name: "Coin master", type: "Coins", amount: 6, reward: 20 },
+	{ name: "Orb Master", type: "Orbs", amount: 1000, reward: 20 },
+	{ name: "Star Master", type: "Stars", amount: 15, reward: 20 },
+	{ name: "Coin Master", type: "Coins", amount: 6, reward: 20 },
 ];
 
 const load = async () => {
