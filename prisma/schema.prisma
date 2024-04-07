@@ -64,6 +64,12 @@ model Users {
   lastBigChest     DateTime?
   /// easy,medium,hard,insane,extreme,platEasy,platMedium,platHard,platInsane,platExtreme,weekly,gauntlet
   demonsInfo       String    @default("0,0,0,0,0,0,0,0,0,0,0,0")
+
+  @@index(username)
+  @@index([stars, moons])
+  @@index(creatorPoints)
+  @@index(isRegistered)
+  @@index(isBanned)
 }
 
 model AccountComments {
@@ -74,6 +80,8 @@ model AccountComments {
   likes     Int      @default(0)
   isSpam    Boolean  @default(false)
   account   Accounts @relation(fields: [accountId], references: [id])
+
+  @@index(accountId)
 }
 
 model FriendRequests {
@@ -113,6 +121,9 @@ model Messages {
   content     String
   isNew       Boolean  @default(true)
   createdAt   DateTime @default(now())
+
+  @@index(accountId)
+  @@index(toAccountId)
 }
 
 model Likes {
@@ -166,6 +177,13 @@ model Levels {
   @@index(stars)
   @@index(difficulty)
   @@index(length)
+  @@index(visibility)
+  @@index(ratingType)
+  @@index(coins)
+  @@index(name)
+  @@index(likes)
+  @@index(downloads)
+  @@index(createdAt)
 }
 
 model EventLevels {
@@ -187,6 +205,9 @@ model Comments {
   likes     Int      @default(0)
   percent   Int      @default(0)
   createdAt DateTime @default(now())
+
+  @@index(levelId)
+  @@index(accountId)
 }
 
 model LevelsData {
@@ -222,6 +243,14 @@ model Lists {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @default(now())
   isDeleted      Boolean         @default(false)
+
+  @@index([accountId, name])
+  @@index(reward)
+  @@index(difficulty)
+  @@index(ratingType)
+  @@index(likes)
+  @@index(downloads)
+  @@index(createdAt)
 }
 
 model Songs {

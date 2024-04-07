@@ -27,7 +27,7 @@ module.exports = (fastify) => {
 			try {
 				if (!(await checkPassword(req.body))) return reply.send("-1");
 
-				await database.accountComments.deleteMany({ where: { id: commentID } });
+				await database.accountComments.delete({ where: { id: commentID } }).catch(_.noop);
 
 				Logger.log(
 					"Delete account comment",
