@@ -65,8 +65,7 @@ module.exports = (fastify) => {
 				length: Constants.levelLength[body["15"]],
 				stars: parseInt(body["18"]),
 				ratingType:
-					(body["19"] === "1" ? "Featured" : body["42"] === "0" ? "None" : Constants.levelRatingType[body["42"]]) ||
-					"None",
+					(body["19"] >= 1 ? "Featured" : body["42"] === "0" ? "None" : Constants.levelRatingType[body["42"]]) || "None",
 				password: body["27"].split("#")[0],
 				createdAt: relativeToDate(body["28"]),
 				updatedAt: relativeToDate(body["29"]),
