@@ -1,3 +1,4 @@
+const _ = require("lodash");
 const Logger = require("../../scripts/Logger");
 const { secret } = require("../../config/config");
 const { database, checkPassword } = require("../../scripts/database");

@@ -46,8 +46,8 @@ module.exports = (fastify) => {
 							accSwing: { type: "number", minimum: 1 },
 							accJetpack: { type: "number", minimum: 1 },
 							dinfo: { type: "string", pattern: separatedNumbersPattern }, // other demons
-							dinfow: { type: "string", pattern: separatedNumbersPattern }, // weekly demons
-							dinfog: { type: "string", pattern: separatedNumbersPattern }, // gauntlet demons
+							dinfow: { type: "number", minimum: 0 }, // weekly demons
+							dinfog: { type: "number", minimum: 0 }, // gauntlet demons
 							seed: { type: "string", pattern: "^[0-9a-zA-Z]{10}$" },
 							seed2: { type: "string", pattern: base64Pattern },
 						},
@@ -58,17 +58,6 @@ module.exports = (fastify) => {
 					try {
 						const { account, user } = await getUser(req.body);
 						if (account === 0 || !user || (!account && user.isRegistered)) return reply.send("-1");
-
-						const maxValues = CacheManager.getValue("maxValues");
-						if (checkIfInvalid(req.body, maxValues)) {
-							Logger.log(
-								"User update",
-								`User ${Logger.colors.cyan(userData.username)}/${Logger.colors.gray(account?.id ?? 0)}/${Logger.colors.gray(user.id)} tried to update invalid data!`,
-								req.body,
-							);
-
-							return reply.send("-1");
-						}
 
 						const userData = {
 							username: account?.username || req.body.userName,
@@ -82,6 +71,17 @@ module.exports = (fastify) => {
 							secondColor: req.body.color2,
 							isRegistered: Boolean(account),
 						};
+
+						const maxValues = CacheManager.getValue("maxValues");
+						if (checkIfInvalid(req.body, maxValues)) {
+							Logger.log(
+								"User update",
+								`User ${Logger.colors.cyan(userData.username)}/${Logger.colors.gray(account?.id ?? 0)}/${Logger.colors.gray(user.id)} tried to update invalid data!`,
+								req.body,
+							);
+
+							return reply.send("-1");
+						}
 
 						// 2.0
 						if ("accIcon" in req.body) userData.cube = req.body.accIcon;
@@ -103,29 +103,17 @@ module.exports = (fastify) => {
 						if ("color3" in req.body) userData.glowColor = req.body.color3;
 						if ("accSwing" in req.body) userData.swing = req.body.accSwing;
 						if ("accJetpack" in req.body) userData.jetpack = req.body.accJetpack;
-						if ("dinfo" in req.body || "dinfow" in req.body) {
-							const demonsIds = separatedNumbersToArray(req.body.dinfo);
-							const weeklyDemonsIds = separatedNumbersToArray(req.body.dinfow);
-
-							const [levels, weeklyLevelsCount] = await database.$transaction(async (tx) => {
-								let levels = [];
-								let weeklyDemonsCount = 0;
-								if (demonsIds.length) levels = await tx.levels.findMany({ where: { id: { in: demonsIds } } });
-								if (weeklyDemonsIds.length) {
-									weeklyDemonsCount = await database.eventLevels.count({
-										where: { id: { in: weeklyDemonsIds }, type: "Weekly" },
-									});
-								}
-
-								return [levels, weeklyDemonsCount];
-							});
+						if ("dinfo" in req.body || "dinfow" in req.body || "dinfog" in req.body) {
+							let demons = [];
+							const ids = separatedNumbersToArray(req.body.dinfo);
+							if (ids.length) demons = await database.levels.findMany({ where: { id: { in: ids } } });
 
 							userData.demonsInfo = `${[Constants.selectDemonDifficulty.keys(), Constants.selectDemonDifficulty.keys()]
 								.map((difficulties, i) =>
 									difficulties
 										.map(
 											(difficulty) =>
-												levels.filter(
+												demons.filter(
 													(level) =>
 														level.difficulty === difficulty &&
 														(i ? level.length === "Platformer" : level.length !== "Platformer"),
@@ -133,7 +121,7 @@ module.exports = (fastify) => {
 										)
 										.join(","),
 								)
-								.join(",")},${weeklyLevelsCount},0`; // [TODO]: gauntlets
+								.join(",")},${req.body.dinfow},${req.body.dinfog}`;
 						}
 
 						await database.users.update({ where: { id: user.id }, data: userData });
@@ -163,6 +151,7 @@ function checkIfInvalid(body, maxValues) {
 		body.userCoins > maxValues.userCoins ||
 		(!body.moons && !body.stars && body.userCoins) ||
 		(body.dinfo?.split(",").length || 0) > maxValues.userDemons ||
-		(body.dinfow?.split(",").length || 0) > maxValues.weeklyDemons
+		(body.dinfow || 0) > maxValues.weeklyDemons ||
+		(body.dinfog || 0) > maxValues.gauntletDemons
 	);
 }

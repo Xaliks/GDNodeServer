@@ -84,8 +84,8 @@ module.exports = (fastify) => {
 			};
 			if (body["17"] === "1") data.difficulty = Constants.returnDemonDifficulty[body["43"]];
 			else if (body["8"] === "10") data.difficulty = Constants.returnLevelDifficulty[body["9"]];
-			if (data.password !== "0") data.password = parseInt(cipher(fromSafeBase64(data.password), 26364));
-			else data.password = 0;
+			if (data.password === "0") data.password = 0;
+			else data.password = parseInt(cipher(fromSafeBase64(data.password), 26364));
 			if (data.songId) {
 				data.officialSongId = 0;
 				await getCustomSong(data.songId, req.ip);

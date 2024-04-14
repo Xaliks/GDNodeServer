@@ -142,7 +142,7 @@ module.exports = {
 	chest21Items: [FireShard, IceShard, PoisonShard, ShadowShard, LavaShard, Key],
 	// https://emailregex.com
 	emailRegex:
-		/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+		/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
 	// From login form
 	usernameRegex: /^[a-zA-Z0-9]{3,15}$/,
 	passwordRegex: /^[ -_a-zA-Z0-9]{6,20}$/,

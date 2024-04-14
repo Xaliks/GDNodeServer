@@ -130,9 +130,9 @@ module.exports = (fastify) => {
 						[52, level.songIds.join(",")],
 						[53, level.sfxIds.join(",")],
 						[57, level.ts || ""],
-						[41, eventId],
 					];
 
+					if (eventId) response.push([41, eventId]);
 					if (extras) response.push([26, level.levelInfo || ""]);
 
 					const levelResponse = `${user.id},${level.stars},${isDemon},${level.id},${level.coins && level.stars ? 1 : 0},${level.ratingType === "Featured" ? 1 : 0},${levelPasswordBeforeEncoding},${eventId}`; // last - daily/weekly/event id

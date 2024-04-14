@@ -30,6 +30,7 @@ module.exports = (fastify) => {
 							anyOf: [{ type: "number" }, { type: "string", pattern: `|${levelNamePattern}` }],
 						},
 						type: { type: "number", enum: [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 15, 16, 17, 21, 22, 23, 25, 27] },
+						gauntlet: { type: "number", minimum: 1 },
 						diff: { type: "array", items: { type: "string", pattern: "-|^(?:(?:-[1-3]|[1-5]),)*(?:-[1-3]|[1-5])$" } },
 						len: { type: "string", pattern: "-|^(?:[0-5],)*(?:[0-5])$" },
 						page: { type: "number", minimum: 0, default: 0 },
@@ -51,12 +52,13 @@ module.exports = (fastify) => {
 						completedLevels: { type: "string", pattern: `|\\(${separatedNumbersPattern}\\)` },
 						followed: { type: "string", pattern: `|${separatedNumbersPattern}` },
 					},
-					required: ["secret", "type"],
+					required: ["secret"],
 				},
 			},
 			handler: async (req, reply) => {
 				const {
 					type,
+					gauntlet,
 					str,
 					accountID,
 					page,
@@ -81,8 +83,33 @@ module.exports = (fastify) => {
 					completedLevels,
 				} = req.body;
 
-				if ((uncompleted === 1 && onlyCompleted === 1) || (star === 1 && noStar === 1)) {
+				if ((uncompleted && onlyCompleted) || (star && noStar) || (!gauntlet && !type)) {
 					return reply.send(await returnReplyString());
+				}
+
+				if (gauntlet) {
+					const gauntletLevels = await database.gauntlets.findFirst({ where: { id: gauntlet } });
+					if (!gauntletLevels) return reply.send(await returnReplyString());
+
+					const ids = [
+						gauntletLevels.levelId1,
+						gauntletLevels.levelId2,
+						gauntletLevels.levelId3,
+						gauntletLevels.levelId4,
+						gauntletLevels.levelId5,
+					];
+
+					const levels = await database.levels.findMany({ where: { id: { in: ids } } });
+					if (!levels.length || !ids.every((id) => levels.find((level) => level.id === id))) {
+						return reply.send(await returnReplyString());
+					}
+
+					return reply.send(
+						await returnReplyString(
+							ids.map((id) => ({ ...levels.find((level) => level.id === id), gauntletId: gauntletLevels.id })),
+							5,
+						),
+					);
 				}
 
 				let levels = [];
@@ -302,7 +329,11 @@ module.exports = (fastify) => {
 				if (![21, 22, 23].includes(type)) {
 					if (!levels.length) levels = await database.levels.findMany(queryArgs);
 					if (levels.length < searchLevelsPageSize) totalCount = page * searchLevelsPageSize + levels.length;
-					else if (!totalCount) totalCount = await database.levels.count(queryArgs);
+					else if (!totalCount) {
+						delete queryArgs.skip;
+						delete queryArgs.take;
+						totalCount = await database.levels.count(queryArgs);
+					}
 				}
 
 				return reply.send(await returnReplyString(levels, totalCount, page));
@@ -341,7 +372,6 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0) {
 				[14, level.likes],
 				[15, Constants.levelLength[level.length]],
 				[17, isDemon],
-				[16, 0],
 				[18, level.stars],
 				[19, level.ratingType === "Featured" ? 1 : 0],
 				[25, level.difficulty === "Auto" ? 1 : 0],
@@ -354,7 +384,7 @@ async function returnReplyString(levels = [], totalCount = 0, page = 0) {
 				[39, level.requestedStars],
 				[42, Constants.levelRatingType[level.ratingType]],
 				[43, isDemon ? Constants.returnDemonDifficulty[level.difficulty] : 0],
-				[44, 0],
+				[44, level.gauntletId ?? 0],
 				[45, level.objectCount],
 				[46, level.editorTime],
 				[47, level.editorTimeCopies],

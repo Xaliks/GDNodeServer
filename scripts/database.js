@@ -91,8 +91,8 @@ async function getUser(body) {
 			account = await database.accounts.findFirst({ where: { username: body.userName, password, isActive: true } });
 		}
 
-		if (!account) account = 0;
-		else saveUserPasswordToCache(account.id, account.password);
+		if (account) saveUserPasswordToCache(account.id, account.password);
+		else account = 0;
 	}
 
 	if (account) {
@@ -178,47 +178,50 @@ async function getCustomSong(songId, ip) {
 }
 
 async function initCacheMaxValues() {
-	const [levelsData, weeklyDemons] = await database.$transaction([
-		database.$queryRaw`
-			select
-				length,
-				coalesce(sum(coins) filter (where stars > 0), 0) as coins,
-				coalesce(sum(stars), 0) as stars,
-				count(*) filter (where difficulty = 'EasyDemon') as "easyDemons",
-				count(*) filter (where difficulty = 'MediumDemon') as "mediumDemons",
-				count(*) filter (where difficulty = 'HardDemon') as "hardDemons",
-				count(*) filter (where difficulty = 'InsaneDemon') as "insaneDemons",
-				count(*) filter (where difficulty = 'ExtremeDemon') as "extremeDemons"
-			from "public"."Levels"
-			group by length`,
-		database.$queryRaw`
-			select
-				l.length,
-				coalesce(sum(l.stars), 0) as stars,
-				coalesce(sum(l.coins) filter (where l.stars > 0), 0) as coins,
-				count(*)
+	const levels = await database.$queryRaw`
+		select
+			length,
+			coalesce(sum(stars), 0) as stars,
+			coalesce(sum(coins) filter (where stars > 0), 0) as coins,
+			count(*) filter (where difficulty = 'EasyDemon') as "easyDemons",
+			count(*) filter (where difficulty = 'MediumDemon') as "mediumDemons",
+			count(*) filter (where difficulty = 'HardDemon') as "hardDemons",
+			count(*) filter (where difficulty = 'InsaneDemon') as "insaneDemons",
+			count(*) filter (where difficulty = 'ExtremeDemon') as "extremeDemons",
+			count(*) filter (where type = 'Weekly' and difficulty in ('EasyDemon', 'MediumDemon', 'HardDemon', 'InsaneDemon', 'ExtremeDemon')) as "weeklyDemons",
+			count(*) filter (where type = 'Gauntlet' and difficulty in ('EasyDemon', 'MediumDemon', 'HardDemon', 'InsaneDemon', 'ExtremeDemon')) as "gauntletDemons"
+		from (
+			select id, length, stars, coins, difficulty, 'Level' as type
+			from "Levels"
+			
+			union all
+			
+			select l.id, l.length, l.stars, l.coins, l.difficulty, case when e.type = 'Weekly' then 'Weekly' else 'Level' end as type
 			from "Levels" l
-			join "EventLevels" e
-				on l.id = e."levelId"
-				and e.type = 'Weekly'
-			where l.difficulty in ('EasyDemon', 'MediumDemon', 'HardDemon', 'InsaneDemon', 'ExtremeDemon')
-			group by l.length`,
-	]);
+			join "EventLevels" e on l.id = e."levelId"
+			
+			union all
+			
+			select l.id, l.length, l.stars, l.coins, l.difficulty, 'Gauntlet' type
+			from "Levels" l
+			join "Gauntlets" g on l.id in (g."levelId1", g."levelId2", g."levelId3", g."levelId4", g."levelId5")
+		)
+		group by length`;
 
 	const result = {
 		coins: 164,
-		userCoins: levelsData.reduce((c, { coins }) => c + Number(coins), 0),
+		userCoins: levels.reduce((c, { coins }) => c + Number(coins), 0),
 		stars: 212,
 		moons: 25,
 		demons:
 			3 +
-			weeklyDemons.reduce((count, demon) => count + Number(demon.count), 0) +
-			levelsData.reduce(
+			levels.reduce(
 				(d, { easyDemons, mediumDemons, hardDemons, insaneDemons, extremeDemons }) =>
 					d + Number(easyDemons + mediumDemons + hardDemons + insaneDemons + extremeDemons),
 				0,
 			),
-		weeklyDemons: weeklyDemons.reduce((count, demon) => count + Number(demon.count), 0),
+		weeklyDemons: levels.reduce((count, { weeklyDemons }) => count + Number(weeklyDemons), 0),
+		gauntletDemons: levels.reduce((count, { gauntletDemons }) => count + Number(gauntletDemons), 0),
 		userDemons: 0,
 		platformer: {
 			easyDemons: 0,
@@ -233,10 +236,9 @@ async function initCacheMaxValues() {
 		insaneDemons: 0,
 		extremeDemons: 0,
 	};
-	const [[platformerLevels], otherLevels] = _.partition(levelsData, ({ length }) => length === "Platformer");
-	const [[platformerWeeklyDemons], otherWeeklyDemons] = _.partition(weeklyDemons, ({ length }) => length === "Platformer");
+	const [[platformerLevels], otherLevels] = _.partition(levels, ({ length }) => length === "Platformer");
 	if (platformerLevels) {
-		result.moons += Number(platformerLevels.stars) + Number(platformerWeeklyDemons.star);
+		result.moons += Number(platformerLevels.stars);
 		result.platformer.easyDemons += Number(platformerLevels.easyDemons);
 		result.platformer.mediumDemons += Number(platformerLevels.mediumDemons);
 		result.platformer.hardDemons += Number(platformerLevels.hardDemons);
@@ -244,9 +246,7 @@ async function initCacheMaxValues() {
 		result.platformer.extremeDemons += Number(platformerLevels.extremeDemons);
 	}
 	if (otherLevels.length) {
-		result.stars +=
-			otherLevels.reduce((s, { stars }) => s + Number(stars), 0) +
-			otherWeeklyDemons.reduce((s, { stars }) => s + Number(stars), 0);
+		result.stars += otherLevels.reduce((s, { stars }) => s + Number(stars), 0);
 		result.easyDemons += otherLevels.reduce((demons, { easyDemons }) => demons + Number(easyDemons), 0);
 		result.mediumDemons += otherLevels.reduce((demons, { mediumDemons }) => demons + Number(mediumDemons), 0);
 		result.hardDemons += otherLevels.reduce((demons, { hardDemons }) => demons + Number(hardDemons), 0);

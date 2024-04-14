@@ -41,7 +41,7 @@ module.exports = (fastify) => {
 				const toAccount = await database.accounts.findFirst({ where: { id: toAccountID } });
 				if (!toAccount?.isActive) return reply.send("-1");
 
-				let canSend = true;
+				let canSend;
 				if (toAccount.messageState === 2) canSend = false;
 				else if (toAccount.messageState === 1) {
 					const friendship = await database.friends.findFirst({

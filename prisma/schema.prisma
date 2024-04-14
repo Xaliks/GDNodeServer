@@ -253,6 +253,15 @@ model Lists {
   @@index(createdAt)
 }
 
+model Gauntlets {
+  id       Int @id @default(autoincrement())
+  levelId1 Int
+  levelId2 Int
+  levelId3 Int
+  levelId4 Int
+  levelId5 Int
+}
+
 model Songs {
   id         Int      @id
   name       String

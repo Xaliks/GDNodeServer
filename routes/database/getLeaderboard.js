@@ -61,15 +61,7 @@ module.exports = (fastify) => {
 
 					const userRank = await database.users.count({ where: { ...where, stars: { gte: user.stars || 1 } } });
 
-					if (!user.stars) {
-						const greaterUsers = await database.users.findMany({
-							where: { ...where, stars: { gt: 0 } },
-							orderBy: [{ stars: "asc" }, { moons: "asc" }],
-							take,
-						});
-
-						users = [...greaterUsers, user].map((user, i) => ({ ...user, rank: userRank - greaterUsers.length + i + 1 }));
-					} else {
+					if (user.stars) {
 						const highestRank = Math.floor(userRank / take) * take + 1;
 						const relativeUsers = await database.users.findMany({
 							where: { ...where, stars: { gt: 0 } },
@@ -79,6 +71,14 @@ module.exports = (fastify) => {
 						});
 
 						users = relativeUsers.map((user, i) => ({ ...user, rank: highestRank + i }));
+					} else {
+						const greaterUsers = await database.users.findMany({
+							where: { ...where, stars: { gt: 0 } },
+							orderBy: [{ stars: "asc" }, { moons: "asc" }],
+							take,
+						});
+
+						users = [...greaterUsers, user].map((user, i) => ({ ...user, rank: userRank - greaterUsers.length + i + 1 }));
 					}
 				}
 

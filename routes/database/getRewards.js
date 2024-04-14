@@ -32,7 +32,6 @@ module.exports = (fastify) => {
 			const { gameVersion, udid, accountID, chk, r1, r2, rewardType } = req.body;
 
 			try {
-				// eslint-disable-next-line prefer-const
 				let { account, user } = await getUser(req.body);
 				if (account === 0 || !user) return reply.send("-1");
 

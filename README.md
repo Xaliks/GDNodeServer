@@ -13,7 +13,7 @@
     - [x] Comments
     - [x] Lists
     - [x] Daily/Weekly levels
-    - [ ] Gauntlets
+    - [x] Gauntlets
     - [ ] Map Packs
     - [ ] Level game version based on level blocks/triggers/etc
 - [x] Rewards

@@ -105,7 +105,7 @@ module.exports = (fastify) => {
 			if (!message || (message.accountId === accountID && message.toAccountId === accountID)) return reply.send("-1");
 
 			const secondUser = await database.users.findFirst({
-				where: { extId: String(message.toAccountId !== accountID ? message.toAccountId : message.accountId) },
+				where: { extId: String(message.toAccountId === accountID ? message.accountId : message.toAccountId) },
 			});
 
 			reply.send(
