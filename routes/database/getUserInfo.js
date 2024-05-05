@@ -104,7 +104,6 @@ module.exports = (fastify) => {
 				[16, targetAccount.id],
 				[3, user.stars],
 				[4, user.demons],
-				[55, user.demonsInfo],
 				[8, user.creatorPoints],
 				[13, user.coins],
 				[17, user.userCoins],
@@ -133,6 +132,9 @@ module.exports = (fastify) => {
 				[19, targetAccount.friendRequestState],
 				[50, targetAccount.commentHistoryState],
 				[49, Constants.modBadge[targetAccount.modBadge]],
+				[55, user.demonsInfo],
+				// [56, user.levelsInfo], auto easy normal hard harder insane daily gauntlet
+				// [57, user.platformersInfo], auto easy normal hard harder insane daily gauntlet
 				[31, friendState],
 			];
 
