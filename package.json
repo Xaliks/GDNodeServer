@@ -9,16 +9,16 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@prisma/client": "^5.12.1",
+    "@prisma/client": "^5.13.0",
     "fastify": "^4.26.2",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@xaliksss/eslint-config": "^2.0.1",
     "cross-env": "^7.0.3",
-    "eslint": "^9.0.0",
+    "eslint": "^9.2.0",
     "prettier": "^3.2.5",
-    "prisma": "^5.12.1"
+    "prisma": "^5.13.0"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
