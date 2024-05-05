@@ -86,7 +86,14 @@ module.exports = (fastify) => {
 					const levelPasswordBeforeEncoding = level.password;
 
 					// <=1.8
-					if (i < urls.length - 3) levelData.data = zlib.inflateSync(fromSafeBase64(levelData.data)).toString();
+					if (i < urls.length - 3) {
+						// Old level format
+						if (levelData.data.startsWith("eJ")) {
+							levelData.data = zlib.inflateSync(fromSafeBase64(levelData.data)).toString();
+						} else if (levelData.data.startsWith("H4sI")) {
+							levelData.data = zlib.gunzipSync(fromSafeBase64(levelData.data)).toString();
+						}
+					}
 					// 2.0+
 					if (i > urls.length - 3) {
 						if (level.password !== 0) level.password = toBase64(cipher(level.password, 26364)).toString();
